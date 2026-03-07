@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star } from "lucide-react";
+import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const GAME_DURATION = 90;
@@ -62,6 +62,13 @@ function buildPlayerLookup() {
     }
   }
   return lookup;
+}
+
+function getStreakLevel(count: number): { label: string; color: string; glowColor: string } {
+  if (count >= 15) return { label: "LEGENDARY", color: "text-amber-400", glowColor: "shadow-amber-500/30" };
+  if (count >= 10) return { label: "ON FIRE", color: "text-orange-400", glowColor: "shadow-orange-500/20" };
+  if (count >= 5) return { label: "HOT STREAK", color: "text-emerald-400", glowColor: "shadow-emerald-500/20" };
+  return { label: "", color: "", glowColor: "" };
 }
 
 export default function Game() {
@@ -204,18 +211,9 @@ export default function Game() {
   );
 
   const timerPercent = (timeLeft / GAME_DURATION) * 100;
-  const timerColor =
-    timeLeft <= 10
-      ? "text-red-500"
-      : timeLeft <= 30
-        ? "text-amber-500"
-        : "text-primary";
-  const timerBarColor =
-    timeLeft <= 10
-      ? "bg-red-500"
-      : timeLeft <= 30
-        ? "bg-amber-500"
-        : "bg-primary";
+  const isUrgent = timeLeft <= 10;
+  const isWarning = timeLeft <= 30;
+  const streak = getStreakLevel(guessCount);
 
   if (gameState === "idle") {
     return <StartScreen highScore={highScore} onStart={startGame} />;
@@ -233,43 +231,48 @@ export default function Game() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="w-full max-w-2xl mx-auto px-4 py-4 flex flex-col flex-1">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex items-center gap-2">
-            <Timer className={`w-5 h-5 ${timerColor}`} />
+    <div className="min-h-screen bg-background relative">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-screen">
+        <div className="flex items-center justify-between gap-4 mb-1">
+          <div className="flex items-center gap-2.5">
+            <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : "bg-primary/15"}`}>
+              <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-primary"}`} />
+            </div>
             <span
-              className={`text-2xl font-mono font-bold tabular-nums ${timerColor} ${timeLeft <= 10 ? "animate-countdown-pulse" : ""}`}
+              className={`text-2xl font-mono font-bold tabular-nums ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-foreground"} ${isUrgent ? "animate-countdown-pulse" : ""}`}
               data-testid="text-timer"
             >
-              {Math.floor(timeLeft / 60)}:
-              {(timeLeft % 60).toString().padStart(2, "0")}
+              {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Target className="w-4 h-4" />
-              <span className="text-sm font-medium" data-testid="text-guess-count">
-                {guessCount} guesses
+            <div className="flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground" data-testid="text-guess-count">
+                {guessCount}
               </span>
             </div>
             {highScore > 0 && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Trophy className="w-4 h-4" />
-                <span className="text-sm font-medium" data-testid="text-high-score">
-                  Best: {highScore}
+              <div className="flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-sm font-medium text-amber-400/80" data-testid="text-high-score">
+                  {highScore}
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="w-full h-1.5 rounded-full bg-muted mb-6">
+        <div className="w-full h-1 rounded-full bg-muted/50 mb-6">
           <motion.div
-            className={`h-full rounded-full ${timerBarColor}`}
-            initial={{ width: "100%" }}
-            animate={{ width: `${timerPercent}%` }}
+            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-primary"}`}
+            style={{ width: `${timerPercent}%` }}
             transition={{ duration: 0.3 }}
           />
         </div>
@@ -277,47 +280,65 @@ export default function Game() {
         <div className="flex-1 flex flex-col items-center">
           <motion.div
             key={scoreKey}
-            className="text-center mb-6"
-            animate={scoreKey > 0 ? { scale: [1, 1.12, 1] } : {}}
-            transition={{ duration: 0.3 }}
+            className="text-center mb-4"
+            animate={scoreKey > 0 ? { scale: [1, 1.1, 1] } : {}}
+            transition={{ duration: 0.25 }}
           >
-            <div className="text-6xl font-bold text-foreground tabular-nums" data-testid="text-score">
+            <div
+              className="text-7xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent"
+              data-testid="text-score"
+            >
               {totalGoals}
             </div>
-            <div className="text-sm text-muted-foreground font-medium mt-1">
-              total goals
-              {lastAddedGoals > 0 && guessCount > 0 && (
-                <motion.span
-                  key={scoreKey}
-                  className="ml-2 text-primary font-bold"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  data-testid="text-last-added"
-                >
-                  +{lastAddedGoals}
-                </motion.span>
-              )}
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                goals
+              </span>
+              <AnimatePresence mode="wait">
+                {lastAddedGoals > 0 && guessCount > 0 && (
+                  <motion.span
+                    key={scoreKey}
+                    className="text-sm font-bold text-primary"
+                    initial={{ opacity: 0, y: -8, scale: 1.3 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.2 }}
+                    data-testid="text-last-added"
+                  >
+                    +{lastAddedGoals}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
 
+          <AnimatePresence>
+            {streak.label && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full mb-3 text-xs font-bold uppercase tracking-wider ${streak.color} bg-card border border-border`}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                {streak.label}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {guessedPlayers.length > 0 && (
-            <div className="w-full mb-4 max-h-[200px] overflow-y-auto rounded-md">
+            <div className="w-full mb-3 max-h-[160px] overflow-y-auto rounded-md scrollbar-thin">
               <div className="flex flex-wrap gap-1.5 justify-center px-2 py-2">
                 {guessedPlayers.slice(0, -1).map((p) => (
                   <motion.div
                     key={p.id}
                     initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="px-2.5 py-1 rounded-md bg-muted text-sm"
+                    animate={{ opacity: 0.7, scale: 1 }}
+                    className="px-2 py-0.5 rounded-md bg-card border border-border/50 text-xs"
                   >
-                    <span className="font-semibold">{p.lastName}</span>
-                    <span className="text-muted-foreground ml-1 text-xs">
-                      {p.firstName}
-                    </span>
-                    <span className="ml-1.5 text-xs font-mono text-primary font-bold">
-                      {p.goals}
-                    </span>
+                    <span className="font-semibold text-foreground/80">{p.lastName}</span>
+                    <span className="text-muted-foreground ml-1 text-[10px]">{p.firstName}</span>
+                    <span className="ml-1 text-[10px] font-mono text-primary/70 font-bold">{p.goals}</span>
                   </motion.div>
                 ))}
                 <div ref={answersEndRef} />
@@ -329,11 +350,11 @@ export default function Game() {
             {guessedPlayers.length > 0 && (
               <motion.div
                 key={guessedPlayers[guessedPlayers.length - 1].id}
-                initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                initial={{ opacity: 0, y: 12, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="mb-5 px-4 py-2.5 rounded-md bg-primary/10 border border-primary/20"
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="mb-4 px-5 py-2.5 rounded-md bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/25"
               >
                 <span className="text-lg font-bold text-foreground">
                   {guessedPlayers[guessedPlayers.length - 1].lastName}
@@ -341,26 +362,27 @@ export default function Game() {
                 <span className="text-sm text-muted-foreground ml-2">
                   {guessedPlayers[guessedPlayers.length - 1].firstName}
                 </span>
-                <span className="ml-2 text-sm font-mono text-primary font-bold">
-                  +{guessedPlayers[guessedPlayers.length - 1].goals} goals
+                <span className="ml-2.5 text-sm font-mono text-primary font-bold">
+                  +{guessedPlayers[guessedPlayers.length - 1].goals}
                 </span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="w-full max-w-md mx-auto mb-4">
+          <div className="w-full max-w-md mx-auto mb-4 mt-auto">
             {currentLetter && (
               <motion.div
                 key={currentLetter}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.5, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="text-center mb-3"
               >
-                <span className="text-sm text-muted-foreground">
-                  Next surname starts with
+                <span className="text-xs text-muted-foreground uppercase tracking-widest">
+                  Starts with
                 </span>
                 <div
-                  className="text-5xl font-bold text-primary uppercase tracking-wider"
+                  className="text-6xl font-black uppercase tracking-wider bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent"
                   data-testid="text-current-letter"
                 >
                   {currentLetter}
@@ -380,25 +402,25 @@ export default function Game() {
                 autoCapitalize="off"
                 spellCheck={false}
                 data-testid="input-surname"
-                className={`w-full text-center text-xl font-semibold px-6 py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground outline-none transition-all duration-150 ${
+                className={`w-full text-center text-xl font-semibold px-6 py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
-                    ? "border-green-500 bg-green-500/5"
+                    ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
                     : showWrong
-                      ? "border-red-500 bg-red-500/5 animate-shake"
-                      : "border-border focus:border-primary"
+                      ? "border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20 animate-shake"
+                      : "border-border/60 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/10"
                 }`}
               />
               <button
                 type="submit"
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground/50 transition-colors"
                 data-testid="button-submit"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
             </form>
 
-            <p className="text-center text-xs text-muted-foreground mt-2">
-              Press Enter to submit
+            <p className="text-center text-[10px] text-muted-foreground/60 mt-2 uppercase tracking-wider">
+              Enter to submit
             </p>
           </div>
         </div>
@@ -411,14 +433,34 @@ export default function Game() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none flex items-center justify-center z-50"
+            className="fixed inset-0 pointer-events-none z-50"
           >
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1.2, opacity: 0.15 }}
-              exit={{ scale: 2, opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="w-40 h-40 rounded-full bg-green-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.08 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 bg-emerald-500"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showWrong && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 pointer-events-none z-50"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.06 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-red-500"
             />
           </motion.div>
         )}
@@ -435,68 +477,106 @@ function StartScreen({
   onStart: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center max-w-md w-full"
+        transition={{ duration: 0.6 }}
+        className="text-center max-w-md w-full relative z-10"
       >
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.1, stiffness: 200 }}
-          className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
+          className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shadow-xl shadow-primary/10"
         >
-          <Zap className="w-10 h-10 text-primary" />
+          <Zap className="w-12 h-12 text-primary" />
         </motion.div>
 
-        <h1 className="text-4xl font-bold text-foreground mb-2">Chain Goal</h1>
-        <p className="text-muted-foreground mb-8 leading-relaxed">
-          Name Premier League goalscorers. Each surname must start with the
-          <span className="font-semibold text-foreground"> last letter </span>
-          of the previous one. Your score is the
-          <span className="font-semibold text-foreground"> total goals </span>
-          scored by every player you name.
-        </p>
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-5xl font-black text-foreground mb-3 tracking-tight"
+        >
+          Chain
+          <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+            Goal
+          </span>
+        </motion.h1>
 
-        <div className="flex flex-col gap-3 items-center mb-8">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Timer className="w-4 h-4" />
-            <span>90 seconds on the clock</span>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-muted-foreground mb-10 leading-relaxed text-sm"
+        >
+          Name Premier League goalscorers. Each surname starts with the
+          <span className="font-semibold text-foreground"> last letter </span>
+          of the previous one. Score =
+          <span className="font-semibold text-primary"> total goals </span>
+          of every player you name.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="flex justify-center gap-6 mb-10"
+        >
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
+              <Timer className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">90 sec</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Target className="w-4 h-4" />
-            <span>2,800+ players to choose from</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
+              <Target className="w-5 h-5 text-chart-2" />
+            </div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">2,800+</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Zap className="w-4 h-4" />
-            <span>Surnames only - chain the last letter</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
+              <Zap className="w-5 h-5 text-chart-4" />
+            </div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Chain</span>
           </div>
-        </div>
+        </motion.div>
 
         {highScore > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6 flex items-center justify-center gap-2 text-primary"
+            transition={{ delay: 0.5 }}
+            className="mb-8 flex items-center justify-center gap-2"
           >
-            <Trophy className="w-5 h-5" />
-            <span className="font-bold text-lg" data-testid="text-high-score-start">
-              Best: {highScore} goals
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <span className="font-bold text-lg text-amber-400" data-testid="text-high-score-start">
+              {highScore} goals
             </span>
           </motion.div>
         )}
 
-        <Button
-          onClick={onStart}
-          size="lg"
-          className="text-lg px-10"
-          data-testid="button-start"
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
         >
-          Start Game
-        </Button>
+          <Button
+            onClick={onStart}
+            size="lg"
+            className="text-lg px-12 py-6 font-bold shadow-xl shadow-primary/20"
+            data-testid="button-start"
+          >
+            Start Game
+          </Button>
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -516,23 +596,43 @@ function EndScreen({
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
-  const topContributors = sortedByGoals.slice(0, 10);
+  const topContributors = sortedByGoals.slice(0, 8);
   const maxGoals = topContributors.length > 0 ? topContributors[0].goals : 1;
 
+  const barColors = [
+    "from-primary to-emerald-400",
+    "from-chart-2 to-amber-400",
+    "from-chart-3 to-blue-400",
+    "from-chart-4 to-purple-400",
+    "from-chart-5 to-pink-400",
+    "from-primary/80 to-emerald-400/80",
+    "from-chart-2/80 to-amber-400/80",
+    "from-chart-3/80 to-blue-400/80",
+  ];
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        {isNewHighScore && (
+          <>
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/8 rounded-full blur-3xl animate-pulse-glow" />
+            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/8 rounded-full blur-3xl animate-pulse-glow" />
+          </>
+        )}
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center max-w-lg w-full"
+        className="text-center max-w-lg w-full relative z-10"
       >
         {isNewHighScore && (
           <motion.div
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-sm"
+            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20 text-amber-400 font-bold text-sm shadow-lg shadow-amber-500/10"
           >
             <Star className="w-4 h-4 fill-current" />
             New High Score!
@@ -543,15 +643,15 @@ function EndScreen({
           initial={{ scale: 0.5 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
-          className="mb-2"
+          className="mb-3"
         >
           <div
-            className="text-7xl font-bold text-foreground tabular-nums"
+            className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent"
             data-testid="text-final-score"
           >
             {totalGoals}
           </div>
-          <div className="text-muted-foreground text-sm mt-1">
+          <div className="text-muted-foreground text-xs uppercase tracking-widest mt-2">
             total goals from {guessedPlayers.length} players
           </div>
         </motion.div>
@@ -563,41 +663,41 @@ function EndScreen({
             transition={{ delay: 0.4 }}
             className="mt-8 mb-8"
           >
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
               Goal Contributions
             </h3>
-            <div className="space-y-2 max-w-sm mx-auto">
+            <div className="space-y-1.5 max-w-sm mx-auto">
               {topContributors.map((p, i) => (
                 <motion.div
                   key={p.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.06 }}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2.5"
                 >
-                  <div className="w-24 text-right flex-shrink-0">
-                    <span className="font-semibold text-sm text-foreground">
+                  <div className="w-20 text-right flex-shrink-0">
+                    <span className="font-semibold text-xs text-foreground/80">
                       {p.lastName}
                     </span>
                   </div>
-                  <div className="flex-1 h-7 bg-muted rounded-sm relative">
+                  <div className="flex-1 h-6 bg-card rounded-sm relative border border-border/30">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{
                         width: `${(p.goals / maxGoals) * 100}%`,
                       }}
-                      transition={{ delay: 0.6 + i * 0.06, duration: 0.5 }}
-                      className="h-full bg-primary/80 rounded-sm"
+                      transition={{ delay: 0.6 + i * 0.06, duration: 0.6, ease: "easeOut" }}
+                      className={`h-full bg-gradient-to-r ${barColors[i % barColors.length]} rounded-sm`}
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-foreground">
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-foreground/80">
                       {p.goals}
                     </span>
                   </div>
                 </motion.div>
               ))}
-              {guessedPlayers.length > 10 && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  +{guessedPlayers.length - 10} more players
+              {guessedPlayers.length > 8 && (
+                <div className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+                  +{guessedPlayers.length - 8} more players
                 </div>
               )}
             </div>
@@ -611,20 +711,20 @@ function EndScreen({
             transition={{ delay: 0.8 }}
             className="mb-8"
           >
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
               Your Chain
             </h3>
             <div className="flex flex-wrap gap-1.5 justify-center">
               {guessedPlayers.map((p, i) => (
                 <span key={p.id} className="flex items-center gap-0.5">
-                  <span className="px-2 py-0.5 rounded-sm bg-muted text-sm font-medium">
+                  <span className="px-2 py-0.5 rounded-sm bg-card border border-border/30 text-xs font-medium">
                     {p.lastName}
-                    <span className="ml-1 text-xs font-mono text-primary">
+                    <span className="ml-1 text-[10px] font-mono text-primary/70">
                       {p.goals}
                     </span>
                   </span>
                   {i < guessedPlayers.length - 1 && (
-                    <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    <ChevronRight className="w-2.5 h-2.5 text-muted-foreground/40 flex-shrink-0" />
                   )}
                 </span>
               ))}
@@ -640,7 +740,7 @@ function EndScreen({
           <Button
             onClick={onRestart}
             size="lg"
-            className="text-lg px-10"
+            className="text-lg px-10 font-bold shadow-xl shadow-primary/20"
             data-testid="button-restart"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
