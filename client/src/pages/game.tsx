@@ -106,6 +106,7 @@ export default function Game() {
   const [showWrong, setShowWrong] = useState(false);
   const [lastAddedGoals, setLastAddedGoals] = useState(0);
   const [scoreKey, setScoreKey] = useState(0);
+  const [passUsed, setPassUsed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -129,6 +130,7 @@ export default function Game() {
     setShowCorrect(false);
     setShowWrong(false);
     setLastAddedGoals(0);
+    setPassUsed(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [getRandomLetter]);
 
@@ -222,6 +224,14 @@ export default function Game() {
     },
     [gameState, inputValue, currentLetter, usedNames, playerLookup]
   );
+
+  const handlePass = useCallback(() => {
+    if (gameState !== "playing" || passUsed) return;
+    setPassUsed(true);
+    setCurrentLetter(getRandomLetter());
+    setInputValue("");
+    inputRef.current?.focus();
+  }, [gameState, passUsed, getRandomLetter]);
 
   const timerPercent = (timeLeft / GAME_DURATION) * 100;
   const isUrgent = timeLeft <= 10;
@@ -432,9 +442,25 @@ export default function Game() {
               </button>
             </form>
 
-            <p className="text-center text-[10px] text-muted-foreground/60 mt-2 uppercase tracking-wider">
-              Enter to submit
-            </p>
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+                Enter to submit
+              </p>
+              {!passUsed && (
+                <button
+                  onClick={handlePass}
+                  className="text-[10px] uppercase tracking-wider font-bold text-amber-400/70 px-2.5 py-1 rounded-md border border-amber-400/20 bg-amber-400/5 transition-colors"
+                  data-testid="button-pass"
+                >
+                  Pass
+                </button>
+              )}
+              {passUsed && (
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40 px-2.5 py-1">
+                  Pass used
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
