@@ -523,42 +523,49 @@ function StartScreen({
           </span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-muted-foreground mb-10 leading-relaxed text-sm"
-        >
-          Name Premier League goalscorers. Each surname starts with the
-          <span className="font-semibold text-foreground"> last letter </span>
-          of the previous one. Score =
-          <span className="font-semibold text-primary"> total goals </span>
-          of every player you name.
-        </motion.p>
-
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex justify-center gap-6 mb-10"
+          transition={{ delay: 0.3 }}
+          className="space-y-3 mb-10 max-w-xs mx-auto"
         >
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
-              <Timer className="w-5 h-5 text-primary" />
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Target className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">90 sec</span>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Name any player with a
+              <span className="font-semibold text-foreground"> Premier League goal</span>
+            </p>
           </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
-              <Target className="w-5 h-5 text-chart-2" />
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-chart-2/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <ChevronRight className="w-3.5 h-3.5 text-chart-2" />
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">2,800+</span>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Each surname must start with the
+              <span className="font-semibold text-foreground"> last letter </span>
+              of the previous one
+            </p>
           </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="w-10 h-10 rounded-md bg-card border border-border flex items-center justify-center">
-              <Zap className="w-5 h-5 text-chart-4" />
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-chart-4/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Flame className="w-3.5 h-3.5 text-chart-4" />
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Chain</span>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Your score is the
+              <span className="font-semibold text-primary"> total goals </span>
+              of every player you name
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Timer className="w-3.5 h-3.5 text-amber-400" />
+            </div>
+            <p className="text-sm text-muted-foreground leading-snug">
+              You have
+              <span className="font-semibold text-foreground"> 90 seconds</span>
+            </p>
           </div>
         </motion.div>
 
