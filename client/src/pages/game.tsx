@@ -517,9 +517,9 @@ function StartScreen({
           transition={{ delay: 0.2 }}
           className="text-5xl font-black text-foreground mb-8 tracking-tight"
         >
-          Chain
+          Goal
           <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-            Goal
+            Chain
           </span>
         </motion.h1>
 
