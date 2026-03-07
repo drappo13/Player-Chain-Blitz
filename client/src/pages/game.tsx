@@ -500,7 +500,7 @@ function StartScreen({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-center max-w-md w-full relative z-10"
+        className="text-center max-w-xl w-full relative z-10"
       >
         <motion.div
           initial={{ scale: 0, rotate: -20 }}
@@ -527,7 +527,7 @@ function StartScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-3 mb-10 max-w-xs mx-auto"
+          className="space-y-3 mb-10 mx-auto"
         >
           <div className="flex items-start gap-3 text-left">
             <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
