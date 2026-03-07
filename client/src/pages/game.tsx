@@ -515,7 +515,7 @@ function StartScreen({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-5xl font-black text-foreground mb-3 tracking-tight"
+          className="text-5xl font-black text-foreground mb-8 tracking-tight"
         >
           Chain
           <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
@@ -527,7 +527,7 @@ function StartScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-3 mb-10 mx-auto"
+          className="space-y-3 mb-10 inline-flex flex-col items-start"
         >
           <div className="flex items-start gap-3 text-left">
             <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
