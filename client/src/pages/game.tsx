@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag } from "lucide-react";
+import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const GAME_DURATION = 90;
@@ -143,6 +143,14 @@ export default function Game() {
     setPassUsed(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [getRandomLetter]);
+
+  const goHome = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setGameState("idle");
+  }, []);
 
   const endGame = useCallback(() => {
     setGameState("finished");
@@ -326,6 +334,13 @@ export default function Game() {
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={goHome}
+              className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+              data-testid="button-home"
+            >
+              <Home className="w-4 h-4" />
+            </button>
             <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : "bg-primary/15"}`}>
               <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-primary"}`} />
             </div>
