@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame } from "lucide-react";
+import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const GAME_DURATION = 90;
@@ -352,6 +352,14 @@ export default function Game() {
                 </span>
               </div>
             )}
+            <button
+              onClick={endGame}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              data-testid="button-give-up"
+            >
+              <Flag className="w-3.5 h-3.5" />
+              End
+            </button>
           </div>
         </div>
 
