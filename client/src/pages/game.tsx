@@ -712,12 +712,11 @@ function EndScreen({
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
-  const topContributors = sortedByGoals.slice(0, 8);
-  const maxGoals = topContributors.length > 0 ? topContributors[0].goals : 1;
+  const maxGoals = sortedByGoals.length > 0 ? sortedByGoals[0].goals : 1;
 
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative">
       <div className="absolute inset-0 pointer-events-none">
         {isNewHighScore && (
           <>
@@ -773,7 +772,7 @@ function EndScreen({
               Goal Contributions
             </h3>
             <div className="space-y-1.5 max-w-sm mx-auto">
-              {topContributors.map((p, i) => (
+              {sortedByGoals.map((p, i) => (
                 <motion.div
                   key={p.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -801,11 +800,6 @@ function EndScreen({
                   </div>
                 </motion.div>
               ))}
-              {guessedPlayers.length > 8 && (
-                <div className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
-                  +{guessedPlayers.length - 8} more players
-                </div>
-              )}
             </div>
           </motion.div>
         )}
