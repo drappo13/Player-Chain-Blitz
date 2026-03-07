@@ -248,6 +248,20 @@ export default function Game() {
   const isWarning = timeLeft <= 30;
   const streak = getStreakLevel(guessCount);
 
+  const streakTier = guessCount >= 15 ? 3 : guessCount >= 10 ? 2 : guessCount >= 5 ? 1 : 0;
+  const floatingEmojis = useMemo(() => {
+    if (!streak.emoji) return [];
+    const count = streakTier === 3 ? 12 : streakTier === 2 ? 8 : 4;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      emoji: streak.emoji,
+      left: `${5 + Math.random() * 90}%`,
+      delay: Math.random() * 3,
+      duration: 3 + Math.random() * 4,
+      size: 16 + Math.random() * 16,
+    }));
+  }, [streak.emoji, streakTier]);
+
   if (gameState === "idle") {
     return <StartScreen highScore={highScore} onStart={startGame} />;
   }
@@ -262,19 +276,6 @@ export default function Game() {
       />
     );
   }
-
-  const floatingEmojis = useMemo(() => {
-    if (!streak.emoji) return [];
-    const count = guessCount >= 15 ? 12 : guessCount >= 10 ? 8 : 4;
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      emoji: streak.emoji,
-      left: `${5 + Math.random() * 90}%`,
-      delay: Math.random() * 3,
-      duration: 3 + Math.random() * 4,
-      size: 16 + Math.random() * 16,
-    }));
-  }, [streak.emoji, guessCount >= 15 ? 3 : guessCount >= 10 ? 2 : guessCount >= 5 ? 1 : 0]);
 
   return (
     <div className="min-h-screen bg-background relative transition-colors duration-1000">
