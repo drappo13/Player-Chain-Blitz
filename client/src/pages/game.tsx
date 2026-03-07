@@ -77,11 +77,21 @@ function buildPlayerLookup() {
   return lookup;
 }
 
-function getStreakLevel(count: number): { label: string; color: string; glowColor: string } {
-  if (count >= 15) return { label: "LEGENDARY", color: "text-amber-400", glowColor: "shadow-amber-500/30" };
-  if (count >= 10) return { label: "ON FIRE", color: "text-orange-400", glowColor: "shadow-orange-500/20" };
-  if (count >= 5) return { label: "HOT STREAK", color: "text-emerald-400", glowColor: "shadow-emerald-500/20" };
-  return { label: "", color: "", glowColor: "" };
+function getStreakLevel(count: number): { label: string; color: string; glowColor: string; bgClass: string; emoji: string } {
+  if (count >= 15) return { label: "LEGENDARY", color: "text-amber-400", glowColor: "shadow-amber-500/30", bgClass: "bg-amber-500/8", emoji: "🔥" };
+  if (count >= 10) return { label: "ON FIRE", color: "text-orange-400", glowColor: "shadow-orange-500/20", bgClass: "bg-orange-500/6", emoji: "🔥" };
+  if (count >= 5) return { label: "HOT STREAK", color: "text-emerald-400", glowColor: "shadow-emerald-500/20", bgClass: "bg-emerald-500/5", emoji: "⚡" };
+  return { label: "", color: "", glowColor: "", bgClass: "", emoji: "" };
+}
+
+function getBarColor(goals: number): string {
+  if (goals >= 150) return "from-red-500 to-red-400";
+  if (goals >= 100) return "from-orange-500 to-orange-400";
+  if (goals >= 80) return "from-amber-500 to-yellow-400";
+  if (goals >= 50) return "from-yellow-500 to-lime-400";
+  if (goals >= 20) return "from-emerald-500 to-green-400";
+  if (goals >= 10) return "from-teal-500 to-cyan-400";
+  return "from-sky-500 to-blue-400";
 }
 
 export default function Game() {
@@ -253,11 +263,63 @@ export default function Game() {
     );
   }
 
+  const floatingEmojis = useMemo(() => {
+    if (!streak.emoji) return [];
+    const count = guessCount >= 15 ? 12 : guessCount >= 10 ? 8 : 4;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      emoji: streak.emoji,
+      left: `${5 + Math.random() * 90}%`,
+      delay: Math.random() * 3,
+      duration: 3 + Math.random() * 4,
+      size: 16 + Math.random() * 16,
+    }));
+  }, [streak.emoji, guessCount >= 15 ? 3 : guessCount >= 10 ? 2 : guessCount >= 5 ? 1 : 0]);
+
   return (
-    <div className="min-h-screen bg-background relative">
-      <div className="fixed inset-0 pointer-events-none">
+    <div className="min-h-screen bg-background relative transition-colors duration-1000">
+      <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
+        {streak.bgClass && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`absolute inset-0 ${streak.bgClass} transition-all duration-1000`}
+            />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`absolute top-0 left-0 w-full h-1/2 ${streak.bgClass} blur-3xl`}
+            />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`absolute bottom-0 right-0 w-full h-1/2 ${streak.bgClass} blur-3xl`}
+            />
+          </>
+        )}
+        <AnimatePresence>
+          {floatingEmojis.map((e) => (
+            <motion.span
+              key={`${e.id}-${streak.emoji}`}
+              initial={{ opacity: 0, y: "100vh" }}
+              animate={{ opacity: [0, 0.6, 0.6, 0], y: "-20vh" }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: e.duration,
+                delay: e.delay,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="absolute select-none"
+              style={{ left: e.left, fontSize: e.size }}
+            >
+              {e.emoji}
+            </motion.span>
+          ))}
+        </AnimatePresence>
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-screen">
@@ -442,21 +504,20 @@ export default function Game() {
               </button>
             </form>
 
-            <div className="flex items-center justify-center gap-3 mt-3">
-              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+            <div className="flex items-center justify-center gap-4 mt-3">
+              <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider">
                 Enter to submit
               </p>
-              {!passUsed && (
+              {!passUsed ? (
                 <button
                   onClick={handlePass}
-                  className="text-[10px] uppercase tracking-wider font-bold text-amber-400/70 px-2.5 py-1 rounded-md border border-amber-400/20 bg-amber-400/5 transition-colors"
+                  className="text-sm uppercase tracking-wider font-bold text-amber-400 px-4 py-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/20 transition-all duration-150 shadow-sm shadow-amber-500/10"
                   data-testid="button-pass"
                 >
-                  Pass
+                  🔀 Pass
                 </button>
-              )}
-              {passUsed && (
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40 px-2.5 py-1">
+              ) : (
+                <span className="text-xs uppercase tracking-wider text-muted-foreground/40 px-4 py-1.5">
                   Pass used
                 </span>
               )}
@@ -645,16 +706,6 @@ function EndScreen({
   const topContributors = sortedByGoals.slice(0, 8);
   const maxGoals = topContributors.length > 0 ? topContributors[0].goals : 1;
 
-  const barColors = [
-    "from-primary to-emerald-400",
-    "from-chart-2 to-amber-400",
-    "from-chart-3 to-blue-400",
-    "from-chart-4 to-purple-400",
-    "from-chart-5 to-pink-400",
-    "from-primary/80 to-emerald-400/80",
-    "from-chart-2/80 to-amber-400/80",
-    "from-chart-3/80 to-blue-400/80",
-  ];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
@@ -733,7 +784,7 @@ function EndScreen({
                         width: `${(p.goals / maxGoals) * 100}%`,
                       }}
                       transition={{ delay: 0.6 + i * 0.06, duration: 0.6, ease: "easeOut" }}
-                      className={`h-full bg-gradient-to-r ${barColors[i % barColors.length]} rounded-sm`}
+                      className={`h-full bg-gradient-to-r ${getBarColor(p.goals)} rounded-sm`}
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-foreground/80">
                       {p.goals}
