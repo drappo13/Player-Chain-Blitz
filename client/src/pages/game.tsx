@@ -25,7 +25,8 @@ function normalizeName(name: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/ß/g, "ss");
+    .replace(/ß/g, "ss")
+    .replace(/['\-\s]/g, "");
 }
 
 function getCommonSurname(p: Player): string {
