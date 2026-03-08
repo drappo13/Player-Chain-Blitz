@@ -12,7 +12,12 @@ function normalizeChar(c: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/ß/g, "s");
+    .replace(/ß/g, "s")
+    .replace(/ø/g, "o")
+    .replace(/æ/g, "e")
+    .replace(/ð/g, "d")
+    .replace(/þ/g, "h")
+    .replace(/đ/g, "d");
 }
 
 interface GuessedPlayer extends Player {
@@ -27,6 +32,11 @@ function normalizeName(name: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/ß/g, "ss")
+    .replace(/ø/g, "o")
+    .replace(/æ/g, "ae")
+    .replace(/ð/g, "d")
+    .replace(/þ/g, "th")
+    .replace(/đ/g, "d")
     .replace(/['\-\s]/g, "");
 }
 
