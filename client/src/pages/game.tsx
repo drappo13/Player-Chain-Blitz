@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 
 const GAME_DURATION = 90;
 
@@ -183,6 +184,7 @@ export default function Game() {
             endGame();
             return 0;
           }
+          if (prev <= 11) playTick();
           return prev - 1;
         });
       }, 1000);
@@ -215,6 +217,7 @@ export default function Game() {
 
       if (currentLetter && !guessNorm.startsWith(currentLetter)) {
         setShowWrong(true);
+        playWrong();
         setTimeout(() => setShowWrong(false), 400);
         return;
       }
@@ -222,6 +225,7 @@ export default function Game() {
       const player = playerLookup.get(guessNorm);
       if (!player) {
         setShowWrong(true);
+        playWrong();
         setTimeout(() => setShowWrong(false), 400);
         return;
       }
@@ -229,11 +233,13 @@ export default function Game() {
       const playerKey = player.displayName.toLowerCase();
       if (usedNames.has(playerKey)) {
         setShowWrong(true);
+        playWrong();
         setTimeout(() => setShowWrong(false), 400);
         return;
       }
 
       setShowCorrect(true);
+      playCorrect();
       setTimeout(() => setShowCorrect(false), 500);
 
       const newGuessed: GuessedPlayer = { ...player, id: Date.now() };
@@ -747,6 +753,14 @@ function EndScreen({
   onHome: () => void;
 }) {
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
+
+  useEffect(() => {
+    if (isNewHighScore) {
+      playHighScore();
+    } else {
+      playGameEnd();
+    }
+  }, []);
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
   const maxGoals = sortedByGoals.length > 0 ? sortedByGoals[0].goals : 1;

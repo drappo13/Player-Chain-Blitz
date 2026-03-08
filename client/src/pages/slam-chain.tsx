@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -262,6 +263,7 @@ export default function SlamChain() {
           endGame("Time's up!");
           return 0;
         }
+        if (prev <= 11) playTick();
         return prev - 1;
       });
     }, 1000);
@@ -286,6 +288,7 @@ export default function SlamChain() {
 
       if (!matchedPlayer) {
         setShowWrong(true);
+        playWrong();
         setTimeout(() => setShowWrong(false), 500);
         const knownName = globalNames.get(normalizedInput);
         const displayGuess = knownName || toSentenceCase(trimmed);
@@ -296,12 +299,14 @@ export default function SlamChain() {
       const playerKey = normalizeName(matchedPlayer.name);
       if (usedPlayers.has(playerKey)) {
         setShowWrong(true);
+        playWrong();
         setTimeout(() => setShowWrong(false), 500);
         endGame(`You already used ${matchedPlayer.name}!`);
         return;
       }
 
       setShowCorrect(true);
+      playCorrect();
       setTimeout(() => setShowCorrect(false), 400);
 
       setUsedPlayers((prev) => new Set(prev).add(playerKey));
@@ -778,6 +783,15 @@ function SlamEndScreen({
   onHome: () => void;
 }) {
   const isNewHighScore = score >= highScore && score > 0;
+
+  useEffect(() => {
+    if (isNewHighScore) {
+      playHighScore();
+    } else {
+      playGameEnd();
+    }
+  }, []);
+
   const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];
   const chronologicalAnswers = [...answeredTournaments].sort((a, b) => {
     if (a.tournament.year !== b.tournament.year) return a.tournament.year - b.tournament.year;
