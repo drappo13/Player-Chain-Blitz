@@ -234,7 +234,15 @@ export default function GridLock() {
         setTimeout(() => setShowWrong(false), 500);
         const knownName = globalNames.get(normalizedInput);
         const displayGuess = knownName || toSentenceCase(trimmed);
-        endGame(`${displayGuess} didn't score points in ${currentSeason.year}`);
+        const racedInSeason = currentSeason.drivers.some(
+          (d) => normalizeName(d.name) === normalizeName(knownName || trimmed) ||
+            (d.name.trim().split(/\s+/).length > 1 && normalizeName(d.name.trim().split(/\s+/).pop()!) === normalizedInput)
+        );
+        if (racedInSeason) {
+          endGame(`${displayGuess} didn't score points in ${currentSeason.year}`);
+        } else {
+          endGame(`${displayGuess} did not race in ${currentSeason.year}`);
+        }
         return;
       }
 
