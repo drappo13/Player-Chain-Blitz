@@ -289,7 +289,7 @@ export default function Game() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative transition-colors duration-1000">
+    <div className="h-[100dvh] sm:min-h-screen sm:h-auto bg-background relative transition-colors duration-1000 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
@@ -334,7 +334,7 @@ export default function Game() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-screen">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col h-[100dvh] sm:min-h-screen sm:h-auto">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -381,7 +381,7 @@ export default function Game() {
           </div>
         </div>
 
-        <div className="w-full h-1 rounded-full bg-muted/50 mb-6">
+        <div className="w-full h-1 rounded-full bg-muted/50 mb-3 sm:mb-6">
           <motion.div
             className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-primary"}`}
             style={{ width: `${timerPercent}%` }}
@@ -389,15 +389,15 @@ export default function Game() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center min-h-0">
           <motion.div
             key={scoreKey}
-            className="text-center mb-4"
+            className="text-center mb-2 sm:mb-4"
             animate={scoreKey > 0 ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 0.25 }}
           >
             <div
-              className="text-7xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent"
+              className="text-5xl sm:text-7xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent"
               data-testid="text-score"
             >
               {totalGoals}
@@ -439,7 +439,7 @@ export default function Game() {
           </AnimatePresence>
 
           {guessedPlayers.length > 0 && (
-            <div className="w-full mb-3 max-h-[160px] overflow-y-auto rounded-md scrollbar-thin">
+            <div className="w-full mb-2 sm:mb-3 max-h-[80px] sm:max-h-[160px] overflow-y-auto rounded-md scrollbar-thin">
               <div className="flex flex-wrap gap-1.5 justify-center px-2 py-2">
                 {guessedPlayers.slice(0, -1).map((p) => (
                   <motion.div
@@ -466,7 +466,7 @@ export default function Game() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="mb-4 px-5 py-2.5 rounded-md bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/25"
+                className="mb-2 sm:mb-4 px-4 sm:px-5 py-1.5 sm:py-2.5 rounded-md bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/25"
               >
                 <span className="text-lg font-bold text-foreground">
                   {guessedPlayers[guessedPlayers.length - 1].lastName}
@@ -481,20 +481,20 @@ export default function Game() {
             )}
           </AnimatePresence>
 
-          <div className="w-full max-w-md mx-auto mb-4 mt-auto">
+          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 mt-auto">
             {currentLetter && (
               <motion.div
                 key={currentLetter}
                 initial={{ opacity: 0, scale: 0.5, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="text-center mb-3"
+                className="text-center mb-2 sm:mb-3"
               >
-                <span className="text-xs text-muted-foreground uppercase tracking-widest">
+                <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest">
                   Starts with
                 </span>
                 <div
-                  className="text-6xl font-black uppercase tracking-wider bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent"
+                  className="text-4xl sm:text-6xl font-black uppercase tracking-wider bg-gradient-to-b from-primary to-primary/60 bg-clip-text text-transparent"
                   data-testid="text-current-letter"
                 >
                   {currentLetter}
@@ -514,7 +514,7 @@ export default function Game() {
                 autoCapitalize="off"
                 spellCheck={false}
                 data-testid="input-surname"
-                className={`w-full text-center text-xl font-semibold px-6 py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
+                className={`w-full text-center text-lg sm:text-xl font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
                     ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
                     : showWrong

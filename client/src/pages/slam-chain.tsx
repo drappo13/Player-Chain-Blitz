@@ -340,7 +340,7 @@ export default function SlamChain() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative transition-colors duration-700">
+    <div className="h-[100dvh] sm:min-h-screen sm:h-auto bg-background relative transition-colors duration-700 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <motion.div
           key={currentTournament?.tournament}
@@ -380,7 +380,7 @@ export default function SlamChain() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-screen">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col h-[100dvh] sm:min-h-screen sm:h-auto">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -435,7 +435,7 @@ export default function SlamChain() {
           </div>
         </div>
 
-        <div className="w-full h-1 rounded-full bg-muted/50 mb-6">
+        <div className="w-full h-1 rounded-full bg-muted/50 mb-3 sm:mb-6">
           <motion.div
             className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : `bg-gradient-to-r ${theme.accent}`}`}
             animate={{ width: `${timerPercent}%` }}
@@ -443,17 +443,17 @@ export default function SlamChain() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center min-h-0">
           <motion.div
             key={scoreKey(score)}
-            className="text-center mb-2"
+            className="text-center mb-1 sm:mb-2"
             animate={score > 0 ? { scale: [1, 1.08, 1] } : {}}
             transition={{ duration: 0.2 }}
           >
-            <div className={`text-6xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent`} data-testid="text-main-score">
+            <div className={`text-4xl sm:text-6xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent`} data-testid="text-main-score">
               {score}
             </div>
-            <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest font-medium">
               correct
             </span>
           </motion.div>
@@ -473,7 +473,7 @@ export default function SlamChain() {
           </AnimatePresence>
 
           {answeredTournaments.length > 0 && (
-            <div className="w-full mb-3 max-h-[140px] overflow-y-auto rounded-md scrollbar-thin">
+            <div className="w-full mb-2 sm:mb-3 max-h-[80px] sm:max-h-[140px] overflow-y-auto rounded-md scrollbar-thin">
               <div className="flex flex-wrap gap-1.5 justify-center px-2 py-2">
                 {answeredTournaments.map((a) => (
                   <motion.div
@@ -501,22 +501,22 @@ export default function SlamChain() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -15, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className="mb-6 text-center"
+                className="mb-3 sm:mb-6 text-center"
               >
-                <div className={`text-sm font-bold uppercase tracking-widest mb-2 ${theme.accentText}`}>
+                <div className={`text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-1 sm:mb-2 ${theme.accentText}`}>
                   {theme.name} Court
                 </div>
-                <div className="text-4xl sm:text-5xl font-black text-foreground tracking-tight mb-1">
+                <div className="text-2xl sm:text-5xl font-black text-foreground tracking-tight mb-0.5 sm:mb-1">
                   {currentTournament.tournament}
                 </div>
-                <div className={`text-5xl sm:text-6xl font-black bg-gradient-to-r ${theme.accent} bg-clip-text text-transparent`}>
+                <div className={`text-3xl sm:text-6xl font-black bg-gradient-to-r ${theme.accent} bg-clip-text text-transparent`}>
                   {currentTournament.year}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="w-full max-w-md mx-auto mb-4 mt-auto">
+          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 mt-auto">
             <form onSubmit={handleSubmit} className="relative">
               <input
                 ref={inputRef}
@@ -529,7 +529,7 @@ export default function SlamChain() {
                 autoCapitalize="off"
                 spellCheck={false}
                 data-testid="input-player"
-                className={`w-full text-center text-xl font-semibold px-6 py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
+                className={`w-full text-center text-lg sm:text-xl font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
                     ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
                     : showWrong
