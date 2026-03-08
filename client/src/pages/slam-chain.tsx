@@ -649,16 +649,16 @@ function SlamStartScreen({
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.1, stiffness: 200 }}
-          className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/5 border border-emerald-500/20 flex items-center justify-center shadow-xl shadow-emerald-500/10"
+          className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-8 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/5 border border-emerald-500/20 flex items-center justify-center shadow-xl shadow-emerald-500/10"
         >
-          <Trophy className="w-12 h-12 text-emerald-400" />
+          <Trophy className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-400" />
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-5xl font-black text-foreground mb-8 tracking-tight"
+          className="text-3xl sm:text-5xl font-black text-foreground mb-4 sm:mb-8 tracking-tight"
         >
           Slam
           <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
@@ -670,7 +670,7 @@ function SlamStartScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="space-y-3 mb-10 inline-flex flex-col items-start"
+          className="space-y-2 sm:space-y-3 mb-6 sm:mb-10 inline-flex flex-col items-start"
         >
           <div className="flex items-start gap-3 text-left">
             <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -727,7 +727,7 @@ function SlamStartScreen({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mb-6"
+            className="mb-4 sm:mb-6"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/15 text-amber-400 font-bold text-sm">
               <Star className="w-4 h-4 fill-current" />
