@@ -63,12 +63,6 @@ function buildPlayerLookup() {
     }
 
     const displayParts = p.displayName.trim().split(/\s+/);
-    for (const part of displayParts) {
-      const partKey = normalizeName(part);
-      if (partKey.length > 2 && !lookup.has(partKey)) {
-        lookup.set(partKey, { ...p, lastName: part });
-      }
-    }
     const fullDisplayKey = normalizeName(p.displayName);
     if (!lookup.has(fullDisplayKey)) {
       const lastWord = displayParts[displayParts.length - 1] || p.lastName;
