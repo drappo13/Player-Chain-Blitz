@@ -5,7 +5,7 @@ import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward,
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
-const QUESTION_TIME = 20;
+const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
 
 function normalizeName(name: string): string {
@@ -709,7 +709,15 @@ function SlamStartScreen({
               <Timer className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">20 seconds</span> per question
+              <span className="text-foreground font-semibold">30 seconds</span> per question
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-cyan-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <SkipForward className="w-3.5 h-3.5 text-cyan-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              You get <span className="text-foreground font-semibold">three passes</span>
             </p>
           </div>
         </motion.div>
