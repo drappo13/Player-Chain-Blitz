@@ -763,6 +763,11 @@ function SlamEndScreen({
   onHome: () => void;
 }) {
   const isNewHighScore = score >= highScore && score > 0;
+  const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];
+  const chronologicalAnswers = [...answeredTournaments].sort((a, b) => {
+    if (a.tournament.year !== b.tournament.year) return a.tournament.year - b.tournament.year;
+    return tournamentOrder.indexOf(a.tournament.tournament) - tournamentOrder.indexOf(b.tournament.tournament);
+  });
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative">
@@ -829,30 +834,35 @@ function SlamEndScreen({
             transition={{ delay: 0.4 }}
             className="mt-6 mb-8"
           >
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
               Your Answers
             </h3>
-            <div className="space-y-1.5 max-w-sm mx-auto">
-              {answeredTournaments.map((a, i) => {
+            <div className="flex justify-between max-w-md mx-auto px-1 mb-3">
+              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">ATP</span>
+              <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">WTA</span>
+            </div>
+            <div className="space-y-1.5 max-w-md mx-auto">
+              {chronologicalAnswers.map((a, i) => {
                 const t = getSurfaceTheme(a.tournament);
+                const label = `${a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} ${a.tournament.year}`;
+                const isWTA = a.player.tour === "WTA";
                 return (
                   <motion.div
                     key={a.id}
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: isWTA ? 20 : -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 + i * 0.04 }}
-                    className="flex items-center gap-2.5"
+                    className={`flex items-center gap-2 ${isWTA ? "flex-row-reverse" : ""}`}
                   >
-                    <div className="w-28 text-right flex-shrink-0">
+                    <div className={`w-20 flex-shrink-0 ${isWTA ? "text-left" : "text-right"}`}>
                       <span className={`font-bold text-xs ${t.accentText}`}>
-                        {a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} {a.tournament.year}
+                        {label}
                       </span>
                     </div>
-                    <div className={`flex-1 h-7 bg-gradient-to-r ${t.accent} rounded-sm flex items-center px-2.5 gap-1.5`}>
+                    <div className={`flex-1 h-7 rounded-sm flex items-center px-2.5 ${isWTA ? "bg-gradient-to-l justify-end" : "bg-gradient-to-r"} ${t.accent}`}>
                       <span className="text-xs font-bold text-white truncate">
                         {a.player.name}
                       </span>
-                      <span className="text-[9px] font-bold text-white/60">{a.player.tour}</span>
                     </div>
                   </motion.div>
                 );
