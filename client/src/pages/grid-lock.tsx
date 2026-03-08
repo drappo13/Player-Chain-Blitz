@@ -701,7 +701,7 @@ function GridLockStartScreen({
           <Button
             onClick={onStart}
             size="lg"
-            className="text-lg px-12 py-6 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
+            className="text-lg px-12 py-6 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white focus-visible:ring-orange-500"
             data-testid="button-start"
           >
             Start Game
@@ -767,7 +767,7 @@ function GridLockEndScreen({
             onClick={onHome}
             variant="outline"
             size="lg"
-            className="font-bold"
+            className="font-bold focus-visible:ring-orange-500"
             data-testid="button-home-end"
           >
             <Home className="w-5 h-5 mr-2" />
@@ -776,7 +776,7 @@ function GridLockEndScreen({
           <Button
             onClick={onRestart}
             size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
+            className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white focus-visible:ring-orange-500"
             data-testid="button-restart"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
