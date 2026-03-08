@@ -528,6 +528,7 @@ export default function SlamChain() {
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck={false}
+                onFocus={() => setTimeout(() => window.scrollTo({ top: 0 }), 300)}
                 data-testid="input-player"
                 className={`w-full text-center text-lg sm:text-xl font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
