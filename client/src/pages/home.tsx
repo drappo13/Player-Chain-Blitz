@@ -20,7 +20,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-4xl font-black text-foreground mb-2 tracking-tight"
+          className="text-3xl sm:text-4xl font-black text-foreground mb-2 tracking-tight"
           data-testid="text-app-title"
         >
           Pick Your Game
@@ -29,7 +29,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm text-muted-foreground mb-10"
+          className="text-sm text-muted-foreground mb-6 sm:mb-10"
         >
           Test your sports knowledge
         </motion.p>
@@ -41,17 +41,17 @@ export default function Home() {
             transition={{ delay: 0.3 }}
           >
             <Link href="/goalchain" data-testid="link-goalchain">
-              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-6 text-left hover-elevate transition-all duration-200">
-                <div className="w-12 h-12 rounded-md bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center mb-4">
-                  <Zap className="w-6 h-6 text-primary" />
+              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center mb-3 sm:mb-4">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-1.5">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
                   Goal
                   <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
                     Chain
                   </span>
                 </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
                   Chain Premier League scorers by the last letter of their surname. Score = total goals.
                 </p>
                 <div className="flex items-center gap-1 text-xs font-medium text-primary">
@@ -68,17 +68,17 @@ export default function Home() {
             transition={{ delay: 0.4 }}
           >
             <Link href="/slamchain" data-testid="link-slamchain">
-              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-6 text-left hover-elevate transition-all duration-200">
-                <div className="w-12 h-12 rounded-md bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center mb-4">
-                  <Trophy className="w-6 h-6 text-emerald-400" />
+              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center mb-3 sm:mb-4">
+                  <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-1.5">
+                <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
                   Slam
                   <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                     Chain
                   </span>
                 </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
                   Name players from Grand Slam tournaments. One wrong answer ends the game.
                 </p>
                 <div className="flex items-center gap-1 text-xs font-medium text-emerald-400">
