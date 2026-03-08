@@ -625,7 +625,7 @@ function SlamStartScreen({
   onHome: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex items-start pt-12 sm:items-center sm:pt-0 justify-center p-4 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-emerald-500/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-blue-500/6 rounded-full blur-3xl" />

@@ -609,7 +609,7 @@ function StartScreen({
   onHome: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex items-start pt-12 sm:items-center sm:pt-0 justify-center p-4 relative overflow-x-hidden">
       <button
         onClick={onHome}
         className="absolute top-4 left-4 z-20 p-2 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
