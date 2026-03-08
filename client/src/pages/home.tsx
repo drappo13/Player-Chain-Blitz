@@ -4,8 +4,8 @@ import { Zap, Trophy, ChevronRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
-      <div className="absolute inset-0 pointer-events-none">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-x-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
       </div>
