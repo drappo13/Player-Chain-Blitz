@@ -685,7 +685,7 @@ function SlamStartScreen({
               <ChevronRight className="w-3.5 h-3.5 text-blue-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Name any player who reached the <span className="text-foreground font-semibold">Round of 16 or later</span>
+              Name any player who reached the <span className="text-foreground font-semibold">Round of 16</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -693,7 +693,7 @@ function SlamStartScreen({
               <X className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">No player</span> can be named twice across the whole game
+              You <span className="text-foreground font-semibold">cannot use the same player</span> twice
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
