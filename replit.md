@@ -1,29 +1,54 @@
-# Chain Goal - Premier League Word Chain Game
+# Sports Quiz Games Hub
 
 ## Overview
-A single-page game where players name Premier League goalscorers in a word chain. Each surname must start with the last letter of the previous surname. Score is based on total goals scored by all correctly named players.
+A multi-game sports knowledge app featuring two games:
+1. **GoalChain** — Chain Premier League goalscorers by surname letters. Score = total goals.
+2. **SlamChain** — Name Grand Slam tennis players from R16+ rounds. One wrong answer ends the game.
 
 ## Architecture
-- **Frontend-only game** - no backend/database needed
-- All player data loaded client-side from `client/src/data/players.ts`
-- High score stored in sessionStorage (session-only persistence)
+- **Frontend-only** — no backend/database needed for game logic
+- All data loaded client-side from TypeScript data files
+- High scores stored in sessionStorage (separate keys per game)
+- Routing via `wouter`: `/` (home), `/goalchain`, `/slamchain`
 
 ## Key Files
-- `client/src/pages/game.tsx` - Main game component with 3 states: idle, playing, finished
-- `client/src/data/players.ts` - 2858 Premier League goalscorers with surname, first name, display name, and goals
-- `client/src/App.tsx` - Simple app shell, renders Game component directly
+- `client/src/App.tsx` — Router with 3 routes + NotFound
+- `client/src/pages/home.tsx` — Landing page / game selector
+- `client/src/pages/game.tsx` — GoalChain game (3 states: idle, playing, finished)
+- `client/src/pages/slam-chain.tsx` — SlamChain game (3 states: idle, playing, finished)
+- `client/src/data/players.ts` — 2858 PL goalscorers (surname, first name, display name, goals)
+- `client/src/data/slams.ts` — 100 Grand Slam tournaments (2000–2024) with R16+ player lists
 
-## Game Mechanics
+## GoalChain Mechanics
 - 90-second timer
 - Score = total PL goals of all correctly guessed players
-- Names normalized (accents stripped) for matching
+- Each surname must start with the last letter of the previous one
+- 1 pass per game (new random letter)
+- Names normalized (accents stripped, hyphens/spaces removed) for matching
 - Duplicate guesses rejected
-- Wrong guesses shake input, correct ones flash green
-- End screen shows animated goal contribution chart
+- Streak badges at 5/10/15 correct with floating emojis
+- End screen: goal contribution chart (bars colored by goal count)
+
+## SlamChain Mechanics
+- Random Grand Slam shown (e.g. "Wimbledon 2004")
+- 15 seconds per question
+- Name any player from R16 or later
+- No player can be named twice across the whole game
+- One wrong answer or timeout = game over
+- 3 skips per game
+- Score = total correct answers
+- Court-surface-themed visuals (green/clay/blue)
 
 ## Tech Stack
 - React + TypeScript + Vite
-- Tailwind CSS for styling
+- Tailwind CSS (dark mode forced)
 - Framer Motion for animations
-- Space Grotesk font for sporty feel
+- wouter for routing
+- Space Grotesk + JetBrains Mono fonts
 - shadcn/ui components (Button)
+
+## Design
+- Dark mode: bg hsl(220 20% 6%), primary emerald hsl(150 80% 50%)
+- SlamChain uses surface-themed accents (green/orange/blue)
+- Ambient glow blobs, screen flash on correct/wrong
+- Streak system with progressive background changes and floating emojis

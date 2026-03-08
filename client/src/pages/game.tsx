@@ -3,6 +3,7 @@ import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 const GAME_DURATION = 90;
 
@@ -96,6 +97,7 @@ function getBarColor(goals: number): string {
 
 export default function Game() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
+  const [, navigate] = useLocation();
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
@@ -149,8 +151,8 @@ export default function Game() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    setGameState("idle");
-  }, []);
+    navigate("/");
+  }, [navigate]);
 
   const endGame = useCallback(() => {
     setGameState("finished");
@@ -271,7 +273,7 @@ export default function Game() {
   }, [streak.emoji, streakTier]);
 
   if (gameState === "idle") {
-    return <StartScreen highScore={highScore} onStart={startGame} />;
+    return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
   }
 
   if (gameState === "finished") {
@@ -281,6 +283,7 @@ export default function Game() {
         totalGoals={totalGoals}
         highScore={highScore}
         onRestart={startGame}
+        onHome={goHome}
       />
     );
   }
@@ -596,12 +599,21 @@ export default function Game() {
 function StartScreen({
   highScore,
   onStart,
+  onHome,
 }: {
   highScore: number;
   onStart: () => void;
+  onHome: () => void;
 }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      <button
+        onClick={onHome}
+        className="absolute top-4 left-4 z-20 p-2 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+        data-testid="button-home-start"
+      >
+        <Home className="w-5 h-5" />
+      </button>
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
@@ -718,11 +730,13 @@ function EndScreen({
   totalGoals,
   highScore,
   onRestart,
+  onHome,
 }: {
   guessedPlayers: GuessedPlayer[];
   totalGoals: number;
   highScore: number;
   onRestart: () => void;
+  onHome: () => void;
 }) {
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
@@ -851,7 +865,18 @@ function EndScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
+          className="flex items-center justify-center gap-3 flex-wrap"
         >
+          <Button
+            onClick={onHome}
+            variant="outline"
+            size="lg"
+            className="font-bold"
+            data-testid="button-home-end"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            Home
+          </Button>
           <Button
             onClick={onRestart}
             size="lg"
