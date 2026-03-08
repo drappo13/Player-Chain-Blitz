@@ -104,6 +104,30 @@ function buildPlayerLookup(tournament: Tournament): Map<string, SlamPlayer> {
   return lookup;
 }
 
+function buildGlobalNameLookup(): Map<string, string> {
+  const lookup = new Map<string, string>();
+  for (const t of tournaments) {
+    for (const p of t.players) {
+      const fullKey = normalizeName(p.name);
+      if (!lookup.has(fullKey)) lookup.set(fullKey, p.name);
+      const parts = p.name.trim().split(/\s+/);
+      if (parts.length > 1) {
+        const lastKey = normalizeName(parts[parts.length - 1]);
+        if (!lookup.has(lastKey)) lookup.set(lastKey, p.name);
+      }
+      for (const part of parts) {
+        const partKey = normalizeName(part);
+        if (partKey.length > 2 && !lookup.has(partKey)) lookup.set(partKey, p.name);
+      }
+    }
+  }
+  return lookup;
+}
+
+function toSentenceCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -119,6 +143,7 @@ export default function SlamChain() {
   const [, setLocation] = useLocation();
 
   const [shuffledTournaments, setShuffledTournaments] = useState(() => shuffleArray(validTournaments));
+  const globalNames = useMemo(() => buildGlobalNameLookup(), []);
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -256,7 +281,9 @@ export default function SlamChain() {
       if (!matchedPlayer) {
         setShowWrong(true);
         setTimeout(() => setShowWrong(false), 500);
-        endGame(`"${trimmed}" didn't play in the R16+ of ${currentTournament.tournament} ${currentTournament.year}`);
+        const knownName = globalNames.get(normalizedInput);
+        const displayGuess = knownName || toSentenceCase(trimmed);
+        endGame(`${displayGuess} didn't play in the R16+ of ${currentTournament.tournament} ${currentTournament.year}`);
         return;
       }
 
