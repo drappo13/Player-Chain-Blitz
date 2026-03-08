@@ -689,8 +689,16 @@ function SlamStartScreen({
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <X className="w-3.5 h-3.5 text-purple-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <span className="text-foreground font-semibold">No player</span> can be named twice across the whole game
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
             <div className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <X className="w-3.5 h-3.5 text-red-400" />
+              <Flame className="w-3.5 h-3.5 text-red-400" />
             </div>
             <p className="text-sm text-muted-foreground">
               <span className="text-foreground font-semibold">One wrong answer</span> and the game is over
@@ -701,7 +709,7 @@ function SlamStartScreen({
               <Timer className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">15 seconds</span> per question · no player can be named twice
+              <span className="text-foreground font-semibold">15 seconds</span> per question
             </p>
           </div>
         </motion.div>
