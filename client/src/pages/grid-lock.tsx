@@ -737,8 +737,8 @@ function GridLockEndScreen({
     }
   }, []);
 
-  const sortedByPoints = [...answeredDrivers].sort((a, b) => b.driver.points - a.driver.points);
-  const maxPoints = sortedByPoints.length > 0 ? sortedByPoints[0].driver.points : 1;
+  const sortedByPoints = [...answeredDrivers].sort((a, b) => a.season.year - b.season.year);
+  const maxPoints = sortedByPoints.length > 0 ? Math.max(...sortedByPoints.map(a => a.driver.points)) : 1;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
@@ -865,7 +865,7 @@ function GridLockEndScreen({
                       style={{ width: `${barWidth}%` }}
                     >
                       <span className="text-xs font-bold text-white truncate">
-                        {a.driver.name}
+                        {a.driver.name.trim().split(/\s+/).pop()}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
