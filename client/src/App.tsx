@@ -6,6 +6,7 @@ import { Switch, Route } from "wouter";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import SlamChain from "@/pages/slam-chain";
+import GridLock from "@/pages/grid-lock";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/goalchain" component={Game} />
       <Route path="/slamchain" component={SlamChain} />
+      <Route path="/gridlock" component={GridLock} />
       <Route component={NotFound} />
     </Switch>
   );

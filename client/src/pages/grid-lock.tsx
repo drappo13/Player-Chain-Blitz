@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { tournaments, type Tournament, type SlamPlayer } from "@/data/slams";
+import { seasons, getTeamColor, type F1Driver, type F1Season } from "@/data/f1seasons";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
@@ -23,108 +23,33 @@ function normalizeName(name: string): string {
     .replace(/['\-\s]/g, "");
 }
 
-function getStreakLevel(count: number): { label: string; color: string; emoji: string } {
-  if (count >= 15) return { label: "LEGENDARY", color: "text-amber-400", emoji: "🔥" };
-  if (count >= 10) return { label: "ON FIRE", color: "text-orange-400", emoji: "🔥" };
-  if (count >= 5) return { label: "HOT STREAK", color: "text-emerald-400", emoji: "⚡" };
-  return { label: "", color: "", emoji: "" };
-}
+function buildDriverLookup(season: F1Season): Map<string, F1Driver> {
+  const lookup = new Map<string, F1Driver>();
+  for (const driver of season.drivers) {
+    if (driver.points <= 0) continue;
+    const fullKey = normalizeName(driver.name);
+    if (!lookup.has(fullKey)) lookup.set(fullKey, driver);
 
-interface AnsweredTournament {
-  tournament: Tournament;
-  player: SlamPlayer;
-  id: number;
-}
-
-type GameState = "idle" | "playing" | "finished";
-
-interface SurfaceTheme {
-  bg: string;
-  glow1: string;
-  glow2: string;
-  accent: string;
-  accentText: string;
-  name: string;
-}
-
-function getSurfaceTheme(tournament: Tournament): SurfaceTheme {
-  if (tournament.tournament === "Wimbledon") {
-    return {
-      bg: "bg-green-500/5",
-      glow1: "bg-green-500/10",
-      glow2: "bg-emerald-500/8",
-      accent: "from-green-500 to-emerald-400",
-      accentText: "text-green-400",
-      name: "Grass",
-    };
-  }
-  if (tournament.tournament === "Roland Garros") {
-    return {
-      bg: "bg-orange-500/5",
-      glow1: "bg-orange-500/10",
-      glow2: "bg-red-500/8",
-      accent: "from-orange-500 to-red-400",
-      accentText: "text-orange-400",
-      name: "Clay",
-    };
-  }
-  if (tournament.tournament === "Australian Open") {
-    return {
-      bg: "bg-blue-500/5",
-      glow1: "bg-blue-500/10",
-      glow2: "bg-cyan-500/8",
-      accent: "from-blue-500 to-cyan-400",
-      accentText: "text-blue-400",
-      name: "Hard",
-    };
-  }
-  return {
-    bg: "bg-indigo-500/5",
-    glow1: "bg-indigo-500/10",
-    glow2: "bg-blue-500/8",
-    accent: "from-indigo-500 to-blue-400",
-    accentText: "text-indigo-400",
-    name: "Hard",
-  };
-}
-
-function buildPlayerLookup(tournament: Tournament): Map<string, SlamPlayer> {
-  const lookup = new Map<string, SlamPlayer>();
-  for (const player of tournament.players) {
-    const fullKey = normalizeName(player.name);
-    if (!lookup.has(fullKey)) lookup.set(fullKey, player);
-
-    const parts = player.name.trim().split(/\s+/);
+    const parts = driver.name.trim().split(/\s+/);
     if (parts.length > 1) {
       const lastName = parts[parts.length - 1];
       const lastKey = normalizeName(lastName);
-      if (!lookup.has(lastKey)) lookup.set(lastKey, player);
-    }
-
-    for (const part of parts) {
-      const partKey = normalizeName(part);
-      if (partKey.length > 2 && !lookup.has(partKey)) {
-        lookup.set(partKey, player);
-      }
+      if (!lookup.has(lastKey)) lookup.set(lastKey, driver);
     }
   }
   return lookup;
 }
 
-function buildGlobalNameLookup(): Map<string, string> {
+function buildGlobalDriverLookup(): Map<string, string> {
   const lookup = new Map<string, string>();
-  for (const t of tournaments) {
-    for (const p of t.players) {
-      const fullKey = normalizeName(p.name);
-      if (!lookup.has(fullKey)) lookup.set(fullKey, p.name);
-      const parts = p.name.trim().split(/\s+/);
+  for (const s of seasons) {
+    for (const d of s.drivers) {
+      const fullKey = normalizeName(d.name);
+      if (!lookup.has(fullKey)) lookup.set(fullKey, d.name);
+      const parts = d.name.trim().split(/\s+/);
       if (parts.length > 1) {
         const lastKey = normalizeName(parts[parts.length - 1]);
-        if (!lookup.has(lastKey)) lookup.set(lastKey, p.name);
-      }
-      for (const part of parts) {
-        const partKey = normalizeName(part);
-        if (partKey.length > 2 && !lookup.has(partKey)) lookup.set(partKey, p.name);
+        if (!lookup.has(lastKey)) lookup.set(lastKey, d.name);
       }
     }
   }
@@ -144,25 +69,41 @@ function shuffleArray<T>(arr: T[]): T[] {
   return shuffled;
 }
 
-const validTournaments = tournaments.filter((t) => t.players.length > 0);
+function getStreakLevel(score: number) {
+  if (score >= 15) return { label: "LEGENDARY", emoji: "🏎️", color: "text-red-400" };
+  if (score >= 10) return { label: "ON FIRE", emoji: "🔥", color: "text-orange-400" };
+  if (score >= 5) return { label: "HOT STREAK", emoji: "🏁", color: "text-amber-400" };
+  return { label: "", emoji: "", color: "" };
+}
 
-export default function SlamChain() {
+type GameState = "idle" | "playing" | "finished";
+
+interface AnsweredDriver {
+  season: F1Season;
+  driver: F1Driver;
+  id: number;
+}
+
+const validSeasons = seasons.filter((s) => s.drivers.some((d) => d.points > 0));
+
+export default function GridLock() {
   const [, setLocation] = useLocation();
 
-  const [shuffledTournaments, setShuffledTournaments] = useState(() => shuffleArray(validTournaments));
-  const globalNames = useMemo(() => buildGlobalNameLookup(), []);
+  const [shuffledSeasons, setShuffledSeasons] = useState(() => shuffleArray(validSeasons));
+  const globalNames = useMemo(() => buildGlobalDriverLookup(), []);
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [inputValue, setInputValue] = useState("");
-  const [usedPlayers, setUsedPlayers] = useState<Set<string>>(new Set());
-  const [answeredTournaments, setAnsweredTournaments] = useState<AnsweredTournament[]>([]);
+  const [usedDrivers, setUsedDrivers] = useState<Set<string>>(new Set());
+  const [answeredDrivers, setAnsweredDrivers] = useState<AnsweredDriver[]>([]);
   const [score, setScore] = useState(0);
+  const [lastAddedPoints, setLastAddedPoints] = useState(0);
   const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
   const [highScore, setHighScore] = useState(() => {
     try {
-      return parseInt(sessionStorage.getItem("slamchain-highscore") || "0");
+      return parseInt(sessionStorage.getItem("gridlock-highscore") || "0");
     } catch {
       return 0;
     }
@@ -174,14 +115,14 @@ export default function SlamChain() {
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentTournament = shuffledTournaments[currentIndex] || null;
-  const theme = currentTournament ? getSurfaceTheme(currentTournament) : getSurfaceTheme(tournaments[0]);
-  const streak = getStreakLevel(score);
+  const currentSeason = shuffledSeasons[currentIndex] || null;
+  const streak = getStreakLevel(answeredDrivers.length);
   const currentLookup = useMemo(
-    () => (currentTournament ? buildPlayerLookup(currentTournament) : new Map<string, string>()),
-    [currentTournament]
+    () => (currentSeason ? buildDriverLookup(currentSeason) : new Map<string, F1Driver>()),
+    [currentSeason]
   );
-  const streakTier = score >= 15 ? 3 : score >= 10 ? 2 : score >= 5 ? 1 : 0;
+  const streakCount = answeredDrivers.length;
+  const streakTier = streakCount >= 15 ? 3 : streakCount >= 10 ? 2 : streakCount >= 5 ? 1 : 0;
 
   const floatingEmojis = useMemo(() => {
     if (!streak.emoji) return [];
@@ -216,7 +157,7 @@ export default function SlamChain() {
         if (prev > highScore) {
           setHighScore(prev);
           try {
-            sessionStorage.setItem("slamchain-highscore", prev.toString());
+            sessionStorage.setItem("gridlock-highscore", prev.toString());
           } catch {}
         }
         return prev;
@@ -226,14 +167,15 @@ export default function SlamChain() {
   );
 
   const startGame = useCallback(() => {
-    setShuffledTournaments(shuffleArray(validTournaments));
+    setShuffledSeasons(shuffleArray(validSeasons));
     setGameState("playing");
     setCurrentIndex(0);
     setTimeLeft(QUESTION_TIME);
     setInputValue("");
-    setUsedPlayers(new Set());
-    setAnsweredTournaments([]);
+    setUsedDrivers(new Set());
+    setAnsweredDrivers([]);
     setScore(0);
+    setLastAddedPoints(0);
     setSkipsLeft(MAX_SKIPS);
     setShowCorrect(false);
     setShowWrong(false);
@@ -243,15 +185,15 @@ export default function SlamChain() {
 
   const moveToNext = useCallback(() => {
     const nextIndex = currentIndex + 1;
-    if (nextIndex >= shuffledTournaments.length) {
-      endGame("You've answered every tournament!");
+    if (nextIndex >= shuffledSeasons.length) {
+      endGame("You've answered every season!");
       return;
     }
     setCurrentIndex(nextIndex);
     setTimeLeft(QUESTION_TIME);
     setInputValue("");
     setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
-  }, [currentIndex, shuffledTournaments.length, endGame]);
+  }, [currentIndex, shuffledSeasons.length, endGame]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -278,30 +220,30 @@ export default function SlamChain() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (gameState !== "playing" || !currentTournament) return;
+      if (gameState !== "playing" || !currentSeason) return;
 
       const trimmed = inputValue.trim();
       if (!trimmed) return;
 
       const normalizedInput = normalizeName(trimmed);
-      const matchedPlayer = currentLookup.get(normalizedInput);
+      const matchedDriver = currentLookup.get(normalizedInput);
 
-      if (!matchedPlayer) {
+      if (!matchedDriver) {
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 500);
         const knownName = globalNames.get(normalizedInput);
         const displayGuess = knownName || toSentenceCase(trimmed);
-        endGame(`${displayGuess} didn't play in the R16+ of ${currentTournament.tournament} ${currentTournament.year}`);
+        endGame(`${displayGuess} didn't score points in ${currentSeason.year}`);
         return;
       }
 
-      const playerKey = normalizeName(matchedPlayer.name);
-      if (usedPlayers.has(playerKey)) {
+      const driverKey = normalizeName(matchedDriver.name);
+      if (usedDrivers.has(driverKey)) {
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 500);
-        endGame(`You already used ${matchedPlayer.name}!`);
+        endGame(`You already used ${matchedDriver.name}!`);
         return;
       }
 
@@ -309,16 +251,17 @@ export default function SlamChain() {
       playCorrect();
       setTimeout(() => setShowCorrect(false), 400);
 
-      setUsedPlayers((prev) => new Set(prev).add(playerKey));
-      setAnsweredTournaments((prev) => [
+      setUsedDrivers((prev) => new Set(prev).add(driverKey));
+      setAnsweredDrivers((prev) => [
         ...prev,
-        { tournament: currentTournament, player: matchedPlayer, id: Date.now() },
+        { season: currentSeason, driver: matchedDriver, id: Date.now() },
       ]);
-      setScore((prev) => prev + 1);
-
+      setLastAddedPoints(matchedDriver.points);
+      setScore((prev) => prev + matchedDriver.points);
+      setInputValue("");
       moveToNext();
     },
-    [gameState, inputValue, currentTournament, currentLookup, usedPlayers, endGame, moveToNext]
+    [gameState, inputValue, currentSeason, currentLookup, usedDrivers, endGame, moveToNext, globalNames]
   );
 
   const handleSkip = useCallback(() => {
@@ -333,14 +276,14 @@ export default function SlamChain() {
 
   if (gameState === "idle") {
     return (
-      <SlamStartScreen highScore={highScore} onStart={startGame} onHome={goHome} />
+      <GridLockStartScreen highScore={highScore} onStart={startGame} onHome={goHome} />
     );
   }
 
   if (gameState === "finished") {
     return (
-      <SlamEndScreen
-        answeredTournaments={answeredTournaments}
+      <GridLockEndScreen
+        answeredDrivers={answeredDrivers}
         score={score}
         highScore={highScore}
         failReason={failReason}
@@ -353,27 +296,9 @@ export default function SlamChain() {
   return (
     <div className="bg-background relative transition-colors duration-700 overflow-x-hidden sm:min-h-screen">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
-        <motion.div
-          key={currentTournament?.tournament}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7 }}
-          className={`absolute inset-0 ${theme.bg}`}
-        />
-        <motion.div
-          key={`g1-${currentTournament?.tournament}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7 }}
-          className={`absolute top-0 left-1/4 w-96 h-96 ${theme.glow1} rounded-full blur-3xl`}
-        />
-        <motion.div
-          key={`g2-${currentTournament?.tournament}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7 }}
-          className={`absolute bottom-0 right-1/4 w-80 h-80 ${theme.glow2} rounded-full blur-3xl`}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-orange-500/6 rounded-full blur-3xl" />
         <AnimatePresence>
           {floatingEmojis.map((em) => (
             <motion.span
@@ -414,10 +339,23 @@ export default function SlamChain() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <Trophy className={`w-3.5 h-3.5 ${theme.accentText}`} />
-              <span className={`text-sm font-bold ${theme.accentText}`} data-testid="text-score">
+              <Flag className="w-3.5 h-3.5 text-red-400" />
+              <span className="text-sm font-bold text-red-400" data-testid="text-score">
                 {score}
               </span>
+              <AnimatePresence>
+                {lastAddedPoints > 0 && showCorrect && (
+                  <motion.span
+                    initial={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 0, y: -15 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="text-xs font-bold text-emerald-400"
+                  >
+                    +{lastAddedPoints}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
             <div className="flex items-center gap-1">
               {Array.from({ length: MAX_SKIPS }).map((_, i) => (
@@ -448,7 +386,7 @@ export default function SlamChain() {
 
         <div className="w-full h-1 rounded-full bg-muted/50 mb-3 sm:mb-6">
           <motion.div
-            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : `bg-gradient-to-r ${theme.accent}`}`}
+            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-gradient-to-r from-red-500 to-orange-500"}`}
             animate={{ width: `${timerPercent}%` }}
             transition={{ duration: 0.3 }}
           />
@@ -456,16 +394,16 @@ export default function SlamChain() {
 
         <div className="sm:flex-1 flex flex-col items-center min-h-0">
           <motion.div
-            key={scoreKey(score)}
+            key={`score-${score}`}
             className="text-center mb-1 sm:mb-2"
             animate={score > 0 ? { scale: [1, 1.08, 1] } : {}}
             transition={{ duration: 0.2 }}
           >
-            <div className={`text-4xl sm:text-6xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent`} data-testid="text-main-score">
+            <div className="text-4xl sm:text-6xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent" data-testid="text-main-score">
               {score}
             </div>
             <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest font-medium">
-              correct
+              points
             </span>
           </motion.div>
 
@@ -483,21 +421,19 @@ export default function SlamChain() {
             )}
           </AnimatePresence>
 
-          {answeredTournaments.length > 0 && (
+          {answeredDrivers.length > 0 && (
             <div className="hidden sm:block w-full mb-2 sm:mb-3 max-h-[80px] sm:max-h-[140px] overflow-y-auto rounded-md scrollbar-thin">
               <div className="flex flex-wrap gap-1.5 justify-center px-2 py-2">
-                {answeredTournaments.map((a) => (
+                {answeredDrivers.map((a) => (
                   <motion.div
                     key={a.id}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 0.7, scale: 1 }}
                     className="px-2 py-0.5 rounded-md bg-card border border-border/50 text-xs"
                   >
-                    <span className="font-semibold text-foreground/80">{a.player.name}</span>
-                    <span className={`ml-1 text-[9px] font-bold ${a.player.tour === "WTA" ? "text-pink-400/60" : "text-blue-400/60"}`}>{a.player.tour}</span>
-                    <span className="text-muted-foreground ml-1 text-[10px]">
-                      {a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} '{String(a.tournament.year).slice(2)}
-                    </span>
+                    <span className="font-semibold text-foreground/80">{a.driver.name}</span>
+                    <span className={`ml-1 text-[9px] font-bold ${getTeamColor(a.driver.team)}`}>{a.driver.team}</span>
+                    <span className="text-muted-foreground ml-1 text-[10px]">+{a.driver.points}</span>
                   </motion.div>
                 ))}
               </div>
@@ -505,7 +441,7 @@ export default function SlamChain() {
           )}
 
           <AnimatePresence mode="wait">
-            {currentTournament && (
+            {currentSeason && (
               <motion.div
                 key={currentIndex}
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -514,14 +450,11 @@ export default function SlamChain() {
                 transition={{ duration: 0.3 }}
                 className="mb-3 sm:mb-6 text-center"
               >
-                <div className={`text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-1 sm:mb-2 ${theme.accentText}`}>
-                  {theme.name} Court
+                <div className="text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-1 sm:mb-2 text-red-400">
+                  Season
                 </div>
-                <div className="text-2xl sm:text-5xl font-black text-foreground tracking-tight mb-0.5 sm:mb-1">
-                  {currentTournament.tournament}
-                </div>
-                <div className={`text-3xl sm:text-6xl font-black bg-gradient-to-r ${theme.accent} bg-clip-text text-transparent`}>
-                  {currentTournament.year}
+                <div className="text-5xl sm:text-8xl font-black bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                  {currentSeason.year}
                 </div>
               </motion.div>
             )}
@@ -534,19 +467,19 @@ export default function SlamChain() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Name a player..."
+                placeholder="Name a driver..."
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck={false}
                 onFocus={() => setTimeout(() => window.scrollTo({ top: 0 }), 300)}
-                data-testid="input-player"
+                data-testid="input-driver"
                 className={`w-full text-center text-lg sm:text-xl font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
                     ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
                     : showWrong
                       ? "border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20 animate-shake"
-                      : "border-border/60 focus:border-primary/60 focus:shadow-lg focus:shadow-primary/10"
+                      : "border-border/60 focus:border-red-500/60 focus:shadow-lg focus:shadow-red-500/10"
                 }`}
               />
               <button
@@ -623,11 +556,7 @@ export default function SlamChain() {
   );
 }
 
-function scoreKey(s: number) {
-  return `score-${s}`;
-}
-
-function SlamStartScreen({
+function GridLockStartScreen({
   highScore,
   onStart,
   onHome,
@@ -639,8 +568,8 @@ function SlamStartScreen({
   return (
     <div className="min-h-screen bg-background flex items-start pt-12 sm:items-center sm:pt-0 justify-center p-4 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-emerald-500/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-blue-500/6 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-red-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-orange-500/6 rounded-full blur-3xl" />
       </div>
 
       <button
@@ -661,9 +590,9 @@ function SlamStartScreen({
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.1, stiffness: 200 }}
-          className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-8 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/5 border border-emerald-500/20 flex items-center justify-center shadow-xl shadow-emerald-500/10"
+          className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-8 rounded-2xl bg-gradient-to-br from-red-500/20 to-orange-500/5 border border-red-500/20 flex items-center justify-center shadow-xl shadow-red-500/10"
         >
-          <Trophy className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-400" />
+          <Flag className="w-8 h-8 sm:w-12 sm:h-12 text-red-400" />
         </motion.div>
 
         <motion.h1
@@ -672,9 +601,9 @@ function SlamStartScreen({
           transition={{ delay: 0.2 }}
           className="text-3xl sm:text-5xl font-black text-foreground mb-4 sm:mb-8 tracking-tight"
         >
-          Slam
-          <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            16
+          Grid
+          <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+            Lock
           </span>
         </motion.h1>
 
@@ -685,11 +614,11 @@ function SlamStartScreen({
           className="space-y-2 sm:space-y-3 mb-6 sm:mb-10 inline-flex flex-col items-start"
         >
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Trophy className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Flag className="w-3.5 h-3.5 text-red-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              You'll be shown a <span className="text-foreground font-semibold">Grand Slam tournament</span>
+              You'll be shown an <span className="text-foreground font-semibold">F1 season year</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -697,7 +626,7 @@ function SlamStartScreen({
               <ChevronRight className="w-3.5 h-3.5 text-blue-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Name any player who reached the <span className="text-foreground font-semibold">Round of 16</span>
+              Name a driver who <span className="text-foreground font-semibold">scored points</span> that year
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -705,7 +634,15 @@ function SlamStartScreen({
               <X className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <p className="text-sm text-muted-foreground">
-              You <span className="text-foreground font-semibold">cannot use the same player</span> twice
+              You <span className="text-foreground font-semibold">cannot use the same driver</span> twice
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-orange-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Trophy className="w-3.5 h-3.5 text-orange-400" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Score = <span className="text-foreground font-semibold">their championship points</span> that year
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -756,7 +693,7 @@ function SlamStartScreen({
           <Button
             onClick={onStart}
             size="lg"
-            className="text-lg px-12 py-6 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+            className="text-lg px-12 py-6 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
             data-testid="button-start"
           >
             Start Game
@@ -767,15 +704,15 @@ function SlamStartScreen({
   );
 }
 
-function SlamEndScreen({
-  answeredTournaments,
+function GridLockEndScreen({
+  answeredDrivers,
   score,
   highScore,
   failReason,
   onRestart,
   onHome,
 }: {
-  answeredTournaments: AnsweredTournament[];
+  answeredDrivers: AnsweredDriver[];
   score: number;
   highScore: number;
   failReason: string;
@@ -792,11 +729,8 @@ function SlamEndScreen({
     }
   }, []);
 
-  const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];
-  const chronologicalAnswers = [...answeredTournaments].sort((a, b) => {
-    if (a.tournament.year !== b.tournament.year) return a.tournament.year - b.tournament.year;
-    return tournamentOrder.indexOf(a.tournament.tournament) - tournamentOrder.indexOf(b.tournament.tournament);
-  });
+  const sortedByPoints = [...answeredDrivers].sort((a, b) => b.driver.points - a.driver.points);
+  const maxPoints = sortedByPoints.length > 0 ? sortedByPoints[0].driver.points : 1;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
@@ -804,7 +738,7 @@ function SlamEndScreen({
         {isNewHighScore && (
           <>
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/8 rounded-full blur-3xl animate-pulse-glow" />
-            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/8 rounded-full blur-3xl animate-pulse-glow" />
+            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-red-500/8 rounded-full blur-3xl animate-pulse-glow" />
           </>
         )}
       </div>
@@ -834,7 +768,7 @@ function SlamEndScreen({
           <Button
             onClick={onRestart}
             size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+            className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white"
             data-testid="button-restart"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
@@ -867,8 +801,17 @@ function SlamEndScreen({
             {score}
           </div>
           <div className="text-muted-foreground text-xs uppercase tracking-widest mt-2">
-            tournaments answered correctly
+            championship points
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="mb-4 text-muted-foreground text-sm"
+        >
+          {answeredDrivers.length} driver{answeredDrivers.length !== 1 ? "s" : ""} named
         </motion.div>
 
         {failReason && (
@@ -883,41 +826,46 @@ function SlamEndScreen({
           </motion.div>
         )}
 
-        {answeredTournaments.length > 0 && (
+        {answeredDrivers.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="mt-6 mb-8"
           >
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
-              Your Answers
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
+              Your Drivers
             </h3>
-            <div className="flex justify-between max-w-md mx-auto px-1 mb-3">
-              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">ATP</span>
-              <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">WTA</span>
-            </div>
             <div className="space-y-1.5 max-w-md mx-auto">
-              {chronologicalAnswers.map((a, i) => {
-                const t = getSurfaceTheme(a.tournament);
-                const label = `${a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} ${a.tournament.year}`;
-                const isWTA = a.player.tour === "WTA";
+              {sortedByPoints.map((a, i) => {
+                const barWidth = Math.max(15, (a.driver.points / maxPoints) * 100);
                 return (
                   <motion.div
                     key={a.id}
-                    initial={{ opacity: 0, x: isWTA ? 20 : -20 }}
+                    initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 + i * 0.04 }}
-                    className={`flex items-center gap-2 ${isWTA ? "flex-row-reverse" : ""}`}
+                    className="flex items-center gap-2"
                   >
-                    <div className={`w-20 flex-shrink-0 ${isWTA ? "text-left" : "text-right"}`}>
-                      <span className={`font-bold text-xs ${t.accentText}`}>
-                        {label}
+                    <div className="w-8 flex-shrink-0 text-right">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {a.season.year}
                       </span>
                     </div>
-                    <div className={`flex-1 h-7 rounded-sm flex items-center px-2.5 ${isWTA ? "bg-gradient-to-l justify-end" : "bg-gradient-to-r"} ${t.accent}`}>
+                    <div
+                      className="h-7 rounded-sm flex items-center px-2.5 bg-gradient-to-r from-red-500 to-orange-500"
+                      style={{ width: `${barWidth}%` }}
+                    >
                       <span className="text-xs font-bold text-white truncate">
-                        {a.player.name}
+                        {a.driver.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className={`text-[9px] font-bold ${getTeamColor(a.driver.team)}`}>
+                        {a.driver.team}
+                      </span>
+                      <span className="text-xs font-bold text-foreground/80">
+                        {a.driver.points}
                       </span>
                     </div>
                   </motion.div>
@@ -926,7 +874,6 @@ function SlamEndScreen({
             </div>
           </motion.div>
         )}
-
       </motion.div>
     </div>
   );
