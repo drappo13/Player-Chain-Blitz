@@ -442,7 +442,7 @@ export default function Game() {
           </AnimatePresence>
 
           {guessedPlayers.length > 0 && (
-            <div className="w-full mb-2 sm:mb-3 max-h-[80px] sm:max-h-[160px] overflow-y-auto rounded-md scrollbar-thin">
+            <div className="hidden sm:block w-full mb-2 sm:mb-3 max-h-[80px] sm:max-h-[160px] overflow-y-auto rounded-md scrollbar-thin">
               <div className="flex flex-wrap gap-1.5 justify-center px-2 py-2">
                 {guessedPlayers.slice(0, -1).map((p) => (
                   <motion.div
@@ -765,6 +765,33 @@ function EndScreen({
         transition={{ duration: 0.5 }}
         className="text-center max-w-lg w-full relative z-10"
       >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex items-center justify-center gap-3 mb-6 flex-wrap"
+        >
+          <Button
+            onClick={onHome}
+            variant="outline"
+            size="lg"
+            className="font-bold"
+            data-testid="button-home-end"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            Home
+          </Button>
+          <Button
+            onClick={onRestart}
+            size="lg"
+            className="text-lg px-10 font-bold shadow-xl shadow-primary/20"
+            data-testid="button-restart"
+          >
+            <RotateCcw className="w-5 h-5 mr-2" />
+            Play Again
+          </Button>
+        </motion.div>
+
         {isNewHighScore && (
           <motion.div
             initial={{ scale: 0, rotate: -10 }}
@@ -865,32 +892,6 @@ function EndScreen({
           </motion.div>
         )}
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="flex items-center justify-center gap-3 flex-wrap"
-        >
-          <Button
-            onClick={onHome}
-            variant="outline"
-            size="lg"
-            className="font-bold"
-            data-testid="button-home-end"
-          >
-            <Home className="w-5 h-5 mr-2" />
-            Home
-          </Button>
-          <Button
-            onClick={onRestart}
-            size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-primary/20"
-            data-testid="button-restart"
-          >
-            <RotateCcw className="w-5 h-5 mr-2" />
-            Play Again
-          </Button>
-        </motion.div>
       </motion.div>
     </div>
   );
