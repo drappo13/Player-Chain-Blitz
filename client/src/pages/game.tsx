@@ -289,7 +289,7 @@ export default function Game() {
   }
 
   return (
-    <div className="h-[100dvh] sm:min-h-screen sm:h-auto bg-background relative transition-colors duration-1000 overflow-hidden">
+    <div className="min-h-screen bg-background relative transition-colors duration-1000 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
@@ -334,7 +334,7 @@ export default function Game() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col h-[100dvh] sm:min-h-screen sm:h-auto">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -389,7 +389,7 @@ export default function Game() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col items-center min-h-0">
+        <div className="sm:flex-1 flex flex-col items-center min-h-0">
           <motion.div
             key={scoreKey}
             className="text-center mb-2 sm:mb-4"
@@ -481,7 +481,7 @@ export default function Game() {
             )}
           </AnimatePresence>
 
-          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 mt-auto">
+          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 sm:mt-auto">
             {currentLetter && (
               <motion.div
                 key={currentLetter}

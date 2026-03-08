@@ -340,7 +340,7 @@ export default function SlamChain() {
   }
 
   return (
-    <div className="h-[100dvh] sm:min-h-screen sm:h-auto bg-background relative transition-colors duration-700 overflow-hidden">
+    <div className="min-h-screen bg-background relative transition-colors duration-700 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <motion.div
           key={currentTournament?.tournament}
@@ -380,7 +380,7 @@ export default function SlamChain() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col h-[100dvh] sm:min-h-screen sm:h-auto">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -443,7 +443,7 @@ export default function SlamChain() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col items-center min-h-0">
+        <div className="sm:flex-1 flex flex-col items-center min-h-0">
           <motion.div
             key={scoreKey(score)}
             className="text-center mb-1 sm:mb-2"
@@ -516,7 +516,7 @@ export default function SlamChain() {
             )}
           </AnimatePresence>
 
-          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 mt-auto">
+          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 sm:mt-auto">
             <form onSubmit={handleSubmit} className="relative">
               <input
                 ref={inputRef}
