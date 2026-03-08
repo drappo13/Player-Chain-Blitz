@@ -350,7 +350,7 @@ export default function GridLock() {
                     animate={{ opacity: 0, y: -15 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="text-xs font-bold text-emerald-400"
+                    className="text-xs font-bold text-orange-400"
                   >
                     +{lastAddedPoints}
                   </motion.span>
@@ -432,7 +432,7 @@ export default function GridLock() {
                     className="px-2 py-0.5 rounded-md bg-card border border-border/50 text-xs"
                   >
                     <span className="font-semibold text-foreground/80">{a.driver.name}</span>
-                    <span className={`ml-1 text-[9px] font-bold ${getTeamColor(a.driver.team)}`}>{a.driver.team}</span>
+                    <span className="ml-1 text-[9px] font-bold" style={{ color: getTeamColor(a.driver.team) }}>{a.driver.team}</span>
                     <span className="text-muted-foreground ml-1 text-[10px]">+{a.driver.points}</span>
                   </motion.div>
                 ))}
@@ -476,7 +476,7 @@ export default function GridLock() {
                 data-testid="input-driver"
                 className={`w-full text-center text-lg sm:text-xl font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-md border-2 bg-card text-foreground placeholder:text-muted-foreground/50 outline-none transition-all duration-150 ${
                   showCorrect
-                    ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
+                    ? "border-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/20"
                     : showWrong
                       ? "border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20 animate-shake"
                       : "border-border/60 focus:border-red-500/60 focus:shadow-lg focus:shadow-red-500/10"
@@ -527,7 +527,7 @@ export default function GridLock() {
               animate={{ opacity: 0.08 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-emerald-500"
+              className="absolute inset-0 bg-orange-500"
             />
           </motion.div>
         )}
@@ -861,7 +861,7 @@ function GridLockEndScreen({
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className={`text-[9px] font-bold ${getTeamColor(a.driver.team)}`}>
+                      <span className="text-[9px] font-bold" style={{ color: getTeamColor(a.driver.team) }}>
                         {a.driver.team}
                       </span>
                       <span className="text-xs font-bold text-foreground/80">
