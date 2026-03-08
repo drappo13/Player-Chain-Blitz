@@ -340,7 +340,7 @@ export default function SlamChain() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative transition-colors duration-700 overflow-hidden">
+    <div className="bg-background relative transition-colors duration-700 overflow-x-hidden sm:min-h-screen">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <motion.div
           key={currentTournament?.tournament}
@@ -380,7 +380,7 @@ export default function SlamChain() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col min-h-screen">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -625,8 +625,8 @@ function SlamStartScreen({
   onHome: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
-      <div className="absolute inset-0 pointer-events-none">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-x-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-emerald-500/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-blue-500/6 rounded-full blur-3xl" />
       </div>
@@ -778,7 +778,7 @@ function SlamEndScreen({
   });
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none">
         {isNewHighScore && (
           <>

@@ -289,7 +289,7 @@ export default function Game() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative transition-colors duration-1000 overflow-hidden">
+    <div className="bg-background relative transition-colors duration-1000 overflow-x-hidden sm:min-h-screen">
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
@@ -334,7 +334,7 @@ export default function Game() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col min-h-screen">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
         <div className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-2.5">
             <button
@@ -606,7 +606,7 @@ function StartScreen({
   onHome: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-x-hidden">
       <button
         onClick={onHome}
         className="absolute top-4 left-4 z-20 p-2 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
@@ -614,7 +614,7 @@ function StartScreen({
       >
         <Home className="w-5 h-5" />
       </button>
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
       </div>
@@ -745,7 +745,7 @@ function EndScreen({
 
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none">
         {isNewHighScore && (
           <>
