@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { tournaments, type Tournament } from "@/data/slams";
+import { tournaments, type Tournament, type SlamPlayer } from "@/data/slams";
 import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ function getStreakLevel(count: number): { label: string; color: string; emoji: s
 
 interface AnsweredTournament {
   tournament: Tournament;
-  playerName: string;
+  player: SlamPlayer;
   id: number;
 }
 
@@ -81,23 +81,23 @@ function getSurfaceTheme(tournament: Tournament): SurfaceTheme {
   };
 }
 
-function buildPlayerLookup(tournament: Tournament): Map<string, string> {
-  const lookup = new Map<string, string>();
-  for (const playerName of tournament.players) {
-    const fullKey = normalizeName(playerName);
-    if (!lookup.has(fullKey)) lookup.set(fullKey, playerName);
+function buildPlayerLookup(tournament: Tournament): Map<string, SlamPlayer> {
+  const lookup = new Map<string, SlamPlayer>();
+  for (const player of tournament.players) {
+    const fullKey = normalizeName(player.name);
+    if (!lookup.has(fullKey)) lookup.set(fullKey, player);
 
-    const parts = playerName.trim().split(/\s+/);
+    const parts = player.name.trim().split(/\s+/);
     if (parts.length > 1) {
       const lastName = parts[parts.length - 1];
       const lastKey = normalizeName(lastName);
-      if (!lookup.has(lastKey)) lookup.set(lastKey, playerName);
+      if (!lookup.has(lastKey)) lookup.set(lastKey, player);
     }
 
     for (const part of parts) {
       const partKey = normalizeName(part);
       if (partKey.length > 2 && !lookup.has(partKey)) {
-        lookup.set(partKey, playerName);
+        lookup.set(partKey, player);
       }
     }
   }
@@ -251,20 +251,20 @@ export default function SlamChain() {
       if (!trimmed) return;
 
       const normalizedInput = normalizeName(trimmed);
-      const matchedName = currentLookup.get(normalizedInput);
+      const matchedPlayer = currentLookup.get(normalizedInput);
 
-      if (!matchedName) {
+      if (!matchedPlayer) {
         setShowWrong(true);
         setTimeout(() => setShowWrong(false), 500);
         endGame(`"${trimmed}" didn't play in the R16+ of ${currentTournament.tournament} ${currentTournament.year}`);
         return;
       }
 
-      const playerKey = normalizeName(matchedName);
+      const playerKey = normalizeName(matchedPlayer.name);
       if (usedPlayers.has(playerKey)) {
         setShowWrong(true);
         setTimeout(() => setShowWrong(false), 500);
-        endGame(`You already used ${matchedName}!`);
+        endGame(`You already used ${matchedPlayer.name}!`);
         return;
       }
 
@@ -274,7 +274,7 @@ export default function SlamChain() {
       setUsedPlayers((prev) => new Set(prev).add(playerKey));
       setAnsweredTournaments((prev) => [
         ...prev,
-        { tournament: currentTournament, playerName: matchedName, id: Date.now() },
+        { tournament: currentTournament, player: matchedPlayer, id: Date.now() },
       ]);
       setScore((prev) => prev + 1);
 
@@ -455,7 +455,8 @@ export default function SlamChain() {
                     animate={{ opacity: 0.7, scale: 1 }}
                     className="px-2 py-0.5 rounded-md bg-card border border-border/50 text-xs"
                   >
-                    <span className="font-semibold text-foreground/80">{a.playerName}</span>
+                    <span className="font-semibold text-foreground/80">{a.player.name}</span>
+                    <span className={`ml-1 text-[9px] font-bold ${a.player.tour === "WTA" ? "text-pink-400/60" : "text-blue-400/60"}`}>{a.player.tour}</span>
                     <span className="text-muted-foreground ml-1 text-[10px]">
                       {a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} '{String(a.tournament.year).slice(2)}
                     </span>
@@ -812,10 +813,11 @@ function SlamEndScreen({
                         {a.tournament.tournament.replace("Australian Open", "AO").replace("Roland Garros", "RG").replace("Wimbledon", "W").replace("US Open", "USO")} {a.tournament.year}
                       </span>
                     </div>
-                    <div className={`flex-1 h-7 bg-gradient-to-r ${t.accent} rounded-sm flex items-center px-2.5`}>
+                    <div className={`flex-1 h-7 bg-gradient-to-r ${t.accent} rounded-sm flex items-center px-2.5 gap-1.5`}>
                       <span className="text-xs font-bold text-white truncate">
-                        {a.playerName}
+                        {a.player.name}
                       </span>
+                      <span className="text-[9px] font-bold text-white/60">{a.player.tour}</span>
                     </div>
                   </motion.div>
                 );
