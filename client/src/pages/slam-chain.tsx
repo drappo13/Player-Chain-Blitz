@@ -231,7 +231,7 @@ export default function SlamChain() {
     setShowCorrect(false);
     setShowWrong(false);
     setFailReason("");
-    setTimeout(() => inputRef.current?.focus(), 100);
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
   }, []);
 
   const moveToNext = useCallback(() => {
@@ -243,7 +243,7 @@ export default function SlamChain() {
     setCurrentIndex(nextIndex);
     setTimeLeft(QUESTION_TIME);
     setInputValue("");
-    setTimeout(() => inputRef.current?.focus(), 100);
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
   }, [currentIndex, shuffledTournaments.length, endGame]);
 
   useEffect(() => {

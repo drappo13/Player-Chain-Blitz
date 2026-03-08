@@ -143,7 +143,7 @@ export default function Game() {
     setShowWrong(false);
     setLastAddedGoals(0);
     setPassUsed(false);
-    setTimeout(() => inputRef.current?.focus(), 100);
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
   }, [getRandomLetter]);
 
   const goHome = useCallback(() => {
@@ -192,7 +192,10 @@ export default function Game() {
 
   useEffect(() => {
     if (answersEndRef.current) {
-      answersEndRef.current.scrollIntoView({ behavior: "smooth" });
+      const container = answersEndRef.current.closest('.overflow-y-auto');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   }, [guessedPlayers.length]);
 
@@ -250,7 +253,7 @@ export default function Game() {
     setPassUsed(true);
     setCurrentLetter(getRandomLetter());
     setInputValue("");
-    inputRef.current?.focus();
+    inputRef.current?.focus({ preventScroll: true });
   }, [gameState, passUsed, getRandomLetter]);
 
   const timerPercent = (timeLeft / GAME_DURATION) * 100;
