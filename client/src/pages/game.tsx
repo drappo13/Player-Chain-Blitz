@@ -80,6 +80,19 @@ function buildPlayerLookup() {
       }
     }
   }
+
+  // Alternate spellings
+  const alternates: Record<string, string> = {
+    "vannistelrooij": "vannistelrooy",
+    "nistelrooij": "nistelrooy",
+  };
+  for (const [alt, official] of Object.entries(alternates)) {
+    const target = lookup.get(official);
+    if (target && !lookup.has(alt)) {
+      lookup.set(alt, target);
+    }
+  }
+
   return lookup;
 }
 

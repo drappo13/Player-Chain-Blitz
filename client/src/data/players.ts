@@ -43,7 +43,7 @@ export const players: Player[] = [
   { lastName: "Le Tissier", firstName: "Matthew", displayName: "Matthew Le Tissier", goals: 100 },
   { lastName: "Adebayor", firstName: "Emmanuel", displayName: "Emmanuel Adebayor", goals: 97 },
   { lastName: "Aiyegbeni", firstName: "Yakubu", displayName: "Yakubu", goals: 95 },
-  { lastName: "van Nistelrooij", firstName: "Ruud", displayName: "Ruud van Nistelrooij", goals: 95 },
+  { lastName: "van Nistelrooy", firstName: "Ruud", displayName: "Ruud van Nistelrooy", goals: 95 },
   { lastName: "Berbatov", firstName: "Dimitar", displayName: "Dimitar Berbatov", goals: 94 },
   { lastName: "Wilson", firstName: "Callum", displayName: "Callum Wilson", goals: 93 },
   { lastName: "Phillips", firstName: "Kevin", displayName: "Kevin Phillips", goals: 92 },
