@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 
 const GAME_DURATION = 90;
-const COMBO_WINDOW = 4;
+const COMBO_WINDOW = 6;
 
 // --- Reused from GoalChain ---
 
@@ -125,18 +125,19 @@ function calculateBaseScore(targetGoals: number, playerGoals: number): number {
 
   if (targetGoals < 10) {
     if (diff === 0) return 50;
-    if (diff <= 1) return 18;
-    if (diff <= 2) return 12;
-    if (diff <= 3) return 8;
+    if (diff <= 1) return 20;
+    if (diff <= 2) return 16;
+    if (diff <= 3) return 12;
+    if (diff <= 5) return 8;
     return 0;
   }
 
   const percentDiff = diff / targetGoals;
   if (diff === 0) return 50;
-  if (percentDiff <= 0.05) return 20;
-  if (percentDiff <= 0.1) return 16;
-  if (percentDiff <= 0.2) return 12;
-  if (percentDiff <= 0.3) return 8;
+  if (percentDiff <= 0.1) return 20;
+  if (percentDiff <= 0.2) return 16;
+  if (percentDiff <= 0.35) return 12;
+  if (percentDiff <= 0.5) return 8;
   return 0;
 }
 
@@ -580,10 +581,12 @@ export default function TargetMan() {
             key={boostLetter}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-2 mb-3 sm:mb-4 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/25"
+            className="flex items-center gap-3 mb-3 sm:mb-4"
           >
-            <span className="text-[10px] text-violet-400 uppercase tracking-wider font-medium">3x Boost</span>
-            <span className="text-lg font-black text-violet-400 uppercase">{boostLetter}</span>
+            <span className="text-[10px] text-violet-400/70 uppercase tracking-wider font-medium px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">3x boost</span>
+            <div className="w-9 h-9 rounded-lg bg-violet-500/15 border-2 border-violet-500/40 flex items-center justify-center shadow-md shadow-violet-500/10">
+              <span className="text-xl font-black text-violet-400 uppercase leading-none">{boostLetter}</span>
+            </div>
           </motion.div>
 
           {/* Last result feedback */}
@@ -929,7 +932,7 @@ function StartScreen({
           <Button
             onClick={onStart}
             size="lg"
-            className="text-lg px-12 py-6 font-bold shadow-xl shadow-orange-500/20 bg-orange-500 hover:bg-orange-600"
+            className="text-lg px-12 py-6 font-bold shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-orange-600 focus-visible:ring-orange-500"
           >
             Start Game
           </Button>
@@ -992,14 +995,14 @@ function EndScreen({
           transition={{ delay: 0.1 }}
           className="flex items-center justify-center gap-3 mb-6 flex-wrap"
         >
-          <Button onClick={onHome} variant="outline" size="lg" className="font-bold">
+          <Button onClick={onHome} variant="outline" size="lg" className="font-bold border-border focus-visible:ring-orange-500">
             <Home className="w-5 h-5 mr-2" />
             Home
           </Button>
           <Button
             onClick={onRestart}
             size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-orange-500/20 bg-orange-500 hover:bg-orange-600"
+            className="text-lg px-10 font-bold shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-orange-600 focus-visible:ring-orange-500"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Play Again
