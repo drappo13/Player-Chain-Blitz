@@ -95,6 +95,7 @@ interface RoundResult {
   basePoints: number;
   comboMultiplier: number;
   boostHit: boolean;
+  boostMultiplier: number;
   finalPoints: number;
   wasInvalid: boolean;
 }
@@ -153,27 +154,6 @@ function getComboMultiplier(streak: number): number {
   return 1.0;
 }
 
-function getBoostLetterWeighted(): string {
-  const letterCounts: Record<string, number> = {};
-  const exclude = new Set(["q", "x", "u"]);
-
-  for (const p of players) {
-    if (p.goals < 1) continue;
-    const surname = getCommonSurname(p);
-    const firstChar = normalizeName(surname)[0];
-    if (!firstChar || exclude.has(firstChar)) continue;
-    letterCounts[firstChar] = (letterCounts[firstChar] || 0) + 1;
-  }
-
-  const entries = Object.entries(letterCounts);
-  const totalWeight = entries.reduce((sum, [, count]) => sum + count, 0);
-  let r = Math.random() * totalWeight;
-  for (const [letter, count] of entries) {
-    r -= count;
-    if (r <= 0) return letter;
-  }
-  return entries[0][0];
-}
 
 function getComboLevel(streak: number): { label: string; color: string; bgClass: string; glowColor: string } {
   if (streak >= 5) return { label: "MAX COMBO", color: "text-amber-400", bgClass: "bg-amber-500/10", glowColor: "shadow-amber-500/30" };
@@ -207,6 +187,7 @@ export default function TargetMan() {
   const [comboStreak, setComboStreak] = useState(0);
   const [scoringCount, setScoringCount] = useState(0);
   const [boostLetter, setBoostLetter] = useState("");
+  const [boostMultiplier, setBoostMultiplier] = useState(1);
   const [highScore, setHighScore] = useState(() => {
     try {
       return parseInt(sessionStorage.getItem("targetman-highscore") || "0");
@@ -253,8 +234,8 @@ export default function TargetMan() {
     setShowWrong(false);
     setShowExactMatch(false);
     setRoundResults([]);
-    const letter = getBoostLetterWeighted();
-    setBoostLetter(letter);
+    setBoostLetter("");
+    setBoostMultiplier(1);
     pickNewTarget();
     setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
   }, [pickNewTarget]);
@@ -337,6 +318,17 @@ export default function TargetMan() {
       const player = playerLookup.get(guessNorm);
       const wasWithinComboWindow = comboActive && comboTimeLeft > 0;
 
+      // Helper: set boost letter from a guess
+      const setBoostFromGuess = (name: string) => {
+        const letter = normalizeName(name)[0] || "";
+        if (letter && letter === boostLetter) {
+          setBoostMultiplier((prev) => prev + 1);
+        } else {
+          setBoostLetter(letter);
+          setBoostMultiplier(2);
+        }
+      };
+
       // Invalid player (not in dataset)
       if (!player) {
         setShowWrong(true);
@@ -344,6 +336,7 @@ export default function TargetMan() {
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
         setTimeLeft((prev) => Math.max(0, prev - 5));
+        setBoostFromGuess(guess);
         setLastResult({
           id: Date.now(),
           targetGoals,
@@ -353,11 +346,11 @@ export default function TargetMan() {
           basePoints: 0,
           comboMultiplier: 1,
           boostHit: false,
+          boostMultiplier: 1,
           finalPoints: 0,
           wasInvalid: true,
         });
         setInputValue("");
-        // Check if time ran out from penalty
         setTimeLeft((prev) => {
           if (prev <= 0) {
             setTimeout(() => endGame(), 0);
@@ -375,6 +368,8 @@ export default function TargetMan() {
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
         setTimeLeft((prev) => Math.max(0, prev - 5));
+        const surname = getCommonSurname(player);
+        setBoostFromGuess(surname);
         setLastResult({
           id: Date.now(),
           targetGoals,
@@ -384,6 +379,7 @@ export default function TargetMan() {
           basePoints: 0,
           comboMultiplier: 1,
           boostHit: false,
+          boostMultiplier: 1,
           finalPoints: 0,
           wasInvalid: true,
         });
@@ -398,6 +394,10 @@ export default function TargetMan() {
       const basePoints = calculateBaseScore(targetGoals, player.goals);
       const diff = Math.abs(targetGoals - player.goals);
 
+      // Set boost letter from this player's surname
+      const surname = getCommonSurname(player);
+      const surnameFirst = normalizeName(surname)[0];
+
       if (basePoints === 0) {
         // 0 points — combo reset, time penalty
         setShowWrong(true);
@@ -405,6 +405,7 @@ export default function TargetMan() {
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
         setTimeLeft((prev) => Math.max(0, prev - 2));
+        setBoostFromGuess(surname);
 
         const result: RoundResult = {
           id: Date.now(),
@@ -415,6 +416,7 @@ export default function TargetMan() {
           basePoints: 0,
           comboMultiplier: 1,
           boostHit: false,
+          boostMultiplier: 1,
           finalPoints: 0,
           wasInvalid: false,
         };
@@ -440,12 +442,14 @@ export default function TargetMan() {
 
       const comboMult = getComboMultiplier(newComboStreak);
 
-      // Boost letter check
-      const surname = getCommonSurname(player);
-      const surnameFirst = normalizeName(surname)[0];
-      const boostHit = surnameFirst === boostLetter;
+      // Boost letter check — did this player's surname match the active boost?
+      const boostHit = boostLetter !== "" && surnameFirst === boostLetter;
+      const currentBoostMult = boostHit ? boostMultiplier : 1;
 
-      let finalPoints = Math.round(basePoints * comboMult * (boostHit ? 3 : 1));
+      let finalPoints = Math.round(basePoints * comboMult * currentBoostMult);
+
+      // Update boost letter for next round
+      setBoostFromGuess(surname);
 
       // Exact match celebration
       if (basePoints === 50) {
@@ -476,22 +480,17 @@ export default function TargetMan() {
         basePoints,
         comboMultiplier: comboMult,
         boostHit,
+        boostMultiplier: currentBoostMult,
         finalPoints,
         wasInvalid: false,
       };
       setLastResult(result);
       setRoundResults((prev) => [...prev, result]);
 
-      // Refresh boost letter every 5 scoring answers
-      if (newScoringCount % 5 === 0) {
-        const newLetter = getBoostLetterWeighted();
-        setBoostLetter(newLetter);
-      }
-
       setInputValue("");
       pickNewTarget();
     },
-    [gameState, inputValue, targetGoals, usedNames, playerLookup, comboActive, comboTimeLeft, comboStreak, scoringCount, boostLetter, pickNewTarget, endGame]
+    [gameState, inputValue, targetGoals, usedNames, playerLookup, comboActive, comboTimeLeft, comboStreak, scoringCount, boostLetter, boostMultiplier, pickNewTarget, endGame]
   );
 
   const timerPercent = (timeLeft / GAME_DURATION) * 100;
@@ -633,18 +632,53 @@ export default function TargetMan() {
         </div>
 
         <div className="sm:flex-1 flex flex-col items-center min-h-0">
-          {/* Score display */}
-          <motion.div
-            key={totalScore}
-            className="text-center mb-2"
-            animate={totalScore > 0 ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="text-4xl sm:text-5xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent">
-              {totalScore}
-            </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">points</span>
-          </motion.div>
+          {/* Score + Boost — side by side on mobile, stacked on desktop */}
+          <div className="flex items-center gap-4 sm:flex-col sm:gap-0 mb-2 sm:mb-2">
+            {/* Score display */}
+            <motion.div
+              key={totalScore}
+              className="text-center"
+              animate={totalScore > 0 ? { scale: [1, 1.05, 1] } : {}}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="text-4xl sm:text-5xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent">
+                {totalScore}
+              </div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">points</span>
+            </motion.div>
+
+            {/* Boost letter badge */}
+            {boostLetter ? (
+              <motion.div
+                key={boostLetter + boostMultiplier}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex items-center gap-2 sm:mt-2"
+              >
+                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
+                  boostMultiplier >= 4 ? "text-amber-400 bg-amber-500/15 border-amber-500/30" :
+                  boostMultiplier >= 3 ? "text-violet-400 bg-violet-500/15 border-violet-500/30" :
+                  "text-violet-400/70 bg-violet-500/10 border-violet-500/20"
+                }`}>{boostMultiplier}x</span>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shadow-md ${
+                  boostMultiplier >= 4 ? "bg-amber-500/20 border-2 border-amber-500/50 shadow-amber-500/15" :
+                  boostMultiplier >= 3 ? "bg-violet-500/20 border-2 border-violet-500/50 shadow-violet-500/15" :
+                  "bg-violet-500/15 border-2 border-violet-500/40 shadow-violet-500/10"
+                }`}>
+                  <span className={`text-xl font-black uppercase leading-none ${
+                    boostMultiplier >= 4 ? "text-amber-400" : "text-violet-400"
+                  }`}>{boostLetter}</span>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex items-center gap-2 sm:mt-2 opacity-40">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium px-2 py-0.5 rounded bg-muted/30 border border-border/30">boost</span>
+                <div className="w-9 h-9 rounded-lg bg-muted/20 border-2 border-border/30 flex items-center justify-center">
+                  <span className="text-lg text-muted-foreground/30 font-bold">—</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Combo streak label */}
           <AnimatePresence>
@@ -660,19 +694,6 @@ export default function TargetMan() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Boost letter badge */}
-          <motion.div
-            key={boostLetter}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-3 mb-3 sm:mb-4"
-          >
-            <span className="text-[10px] text-violet-400/70 uppercase tracking-wider font-medium px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">3x boost</span>
-            <div className="w-9 h-9 rounded-lg bg-violet-500/15 border-2 border-violet-500/40 flex items-center justify-center shadow-md shadow-violet-500/10">
-              <span className="text-xl font-black text-violet-400 uppercase leading-none">{boostLetter}</span>
-            </div>
-          </motion.div>
 
           {/* Last result feedback */}
           <AnimatePresence mode="wait">
@@ -724,7 +745,7 @@ export default function TargetMan() {
                             <span className="text-[10px] text-amber-400 font-bold">{lastResult.comboMultiplier}x</span>
                           )}
                           {lastResult.boostHit && (
-                            <span className="text-[10px] text-violet-400 font-bold">3x</span>
+                            <span className="text-[10px] text-violet-400 font-bold">{lastResult.boostMultiplier}x</span>
                           )}
                         </>
                       )}
@@ -984,7 +1005,7 @@ function StartScreen({
               <Zap className="w-3.5 h-3.5 text-violet-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Answer fast for <span className="font-semibold text-foreground">combo multipliers</span> &middot; hit the boost letter for <span className="font-semibold text-violet-400">3x</span>
+              Answer fast for <span className="font-semibold text-foreground">combo multipliers</span> &middot; chain same-letter surnames for <span className="font-semibold text-violet-400">escalating boosts</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
