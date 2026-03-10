@@ -1005,7 +1005,15 @@ function StartScreen({
               <Zap className="w-3.5 h-3.5 text-violet-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Answer fast for <span className="font-semibold text-foreground">combo multipliers</span> &middot; chain same-letter surnames for <span className="font-semibold text-violet-400">escalating boosts</span>
+              Answer fast for <span className="font-semibold text-foreground">combo multipliers</span>
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Star className="w-3.5 h-3.5 text-violet-400" />
+            </div>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Keep using same <span className="font-semibold text-foreground">starting letter</span> for <span className="font-semibold text-violet-400">escalating boosts</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
