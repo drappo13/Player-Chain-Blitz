@@ -4,13 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { playCorrect, playWrong, playTick, playGameEnd, playHighScore, playComboCorrect, playExactMatch, playBoostHit, playOkCorrect } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 
 const theme = gameThemes.warm;
 
 const GAME_DURATION = 90;
-const COMBO_WINDOW = 6;
+const COMBO_WINDOW = 8;
 
 // --- Reused from GoalChain ---
 
@@ -172,6 +172,14 @@ function getBoostLetterWeighted(): string {
     if (r <= 0) return letter;
   }
   return entries[0][0];
+}
+
+function getComboLevel(streak: number): { label: string; color: string; bgClass: string; glowColor: string } {
+  if (streak >= 5) return { label: "MAX COMBO", color: "text-amber-400", bgClass: "bg-amber-500/10", glowColor: "shadow-amber-500/30" };
+  if (streak >= 4) return { label: "MEGA COMBO", color: "text-orange-400", bgClass: "bg-orange-500/8", glowColor: "shadow-orange-500/20" };
+  if (streak >= 3) return { label: "COMBO", color: "text-yellow-400", bgClass: "bg-yellow-500/6", glowColor: "shadow-yellow-500/15" };
+  if (streak >= 2) return { label: "STREAK", color: "text-emerald-400", bgClass: "bg-emerald-500/5", glowColor: "shadow-emerald-500/10" };
+  return { label: "", color: "", bgClass: "", glowColor: "" };
 }
 
 function getScoreBandLabel(basePoints: number): { label: string; color: string } {
@@ -441,11 +449,19 @@ export default function TargetMan() {
       // Exact match celebration
       if (basePoints === 50) {
         setShowExactMatch(true);
+        playExactMatch();
         setTimeout(() => setShowExactMatch(false), 1500);
+      } else if (boostHit) {
+        playBoostHit();
+      } else if (newComboStreak >= 2) {
+        playComboCorrect(newComboStreak);
+      } else if (basePoints >= 16) {
+        playCorrect();
+      } else {
+        playOkCorrect();
       }
 
       setShowCorrect(true);
-      playCorrect();
       setTimeout(() => setShowCorrect(false), 500);
 
       setTotalScore((prev) => prev + finalPoints);
@@ -482,6 +498,22 @@ export default function TargetMan() {
   const isWarning = timeLeft <= 30;
   const comboPercent = (comboTimeLeft / COMBO_WINDOW) * 100;
   const comboMult = getComboMultiplier(comboStreak);
+  const comboLevel = getComboLevel(comboStreak);
+
+  const comboTier = comboStreak >= 5 ? 3 : comboStreak >= 4 ? 2 : comboStreak >= 3 ? 1 : 0;
+  const floatingEmojis = useMemo(() => {
+    if (comboStreak < 2) return [];
+    const emoji = comboStreak >= 5 ? "🔥" : comboStreak >= 3 ? "⚡" : "🎯";
+    const count = comboTier === 3 ? 10 : comboTier === 2 ? 7 : comboTier === 1 ? 4 : 2;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      emoji,
+      left: `${5 + Math.random() * 90}%`,
+      delay: Math.random() * 3,
+      duration: 3 + Math.random() * 4,
+      size: 14 + Math.random() * 14,
+    }));
+  }, [comboStreak >= 5 ? 5 : comboStreak >= 3 ? 3 : comboStreak >= 2 ? 2 : 0]);
 
   if (gameState === "idle") {
     return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
@@ -505,6 +537,40 @@ export default function TargetMan() {
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className={`absolute top-0 left-1/4 w-96 h-96 ${theme.glowA} rounded-full blur-3xl`} />
         <div className={`absolute bottom-0 right-1/4 w-80 h-80 ${theme.glowB} rounded-full blur-3xl`} />
+        {comboLevel.bgClass && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`absolute inset-0 ${comboLevel.bgClass} transition-all duration-700`}
+            />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`absolute top-0 left-0 w-full h-1/2 ${comboLevel.bgClass} blur-3xl`}
+            />
+          </>
+        )}
+        <AnimatePresence>
+          {floatingEmojis.map((e) => (
+            <motion.span
+              key={`${e.id}-${comboTier}`}
+              initial={{ opacity: 0, y: "100vh" }}
+              animate={{ opacity: [0, 0.5, 0.5, 0], y: "-20vh" }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: e.duration,
+                delay: e.delay,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="absolute select-none"
+              style={{ left: e.left, fontSize: e.size }}
+            >
+              {e.emoji}
+            </motion.span>
+          ))}
+        </AnimatePresence>
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
@@ -578,6 +644,21 @@ export default function TargetMan() {
             </div>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">points</span>
           </motion.div>
+
+          {/* Combo streak label */}
+          <AnimatePresence>
+            {comboLevel.label && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full mb-2 text-xs font-bold uppercase tracking-wider ${comboLevel.color} bg-card border border-border`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                {comboLevel.label} {comboMult}x
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Boost letter badge */}
           <motion.div
@@ -781,9 +862,9 @@ export default function TargetMan() {
         )}
       </AnimatePresence>
 
-      {/* Correct flash */}
+      {/* Correct flash — intensity varies by score band */}
       <AnimatePresence>
-        {showCorrect && !showExactMatch && (
+        {showCorrect && !showExactMatch && lastResult && lastResult.basePoints > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -793,9 +874,9 @@ export default function TargetMan() {
           >
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.08 }}
+              animate={{ opacity: lastResult.basePoints >= 16 ? 0.1 : 0.04 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-emerald-500"
+              className={`absolute inset-0 ${lastResult.basePoints >= 16 ? "bg-emerald-500" : "bg-blue-500"}`}
             />
           </motion.div>
         )}
