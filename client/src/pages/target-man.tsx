@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playTick, playGameEnd, playHighScore, playComboCorrect, playExactMatch, playBoostHit, playOkCorrect } from "@/lib/sounds";
+import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 
 const theme = gameThemes.warm;
@@ -201,6 +201,7 @@ export default function TargetMan() {
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [showExactMatch, setShowExactMatch] = useState(false);
+  const [showBoostFlash, setShowBoostFlash] = useState(false);
   const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
 
   // Combo timer
@@ -451,19 +452,23 @@ export default function TargetMan() {
       // Update boost letter for next round
       setBoostFromGuess(surname);
 
-      // Exact match celebration
+      // Sound — unified, scales with result quality
+      playScoreSound({
+        finalPoints,
+        basePoints,
+        isExact: basePoints === 50,
+        isBoostHit: boostHit,
+        comboStreak: newComboStreak,
+      });
+
+      // Visual celebrations
       if (basePoints === 50) {
         setShowExactMatch(true);
-        playExactMatch();
         setTimeout(() => setShowExactMatch(false), 1500);
-      } else if (boostHit) {
-        playBoostHit();
-      } else if (newComboStreak >= 2) {
-        playComboCorrect(newComboStreak);
-      } else if (basePoints >= 16) {
-        playCorrect();
-      } else {
-        playOkCorrect();
+      }
+      if (boostHit) {
+        setShowBoostFlash(true);
+        setTimeout(() => setShowBoostFlash(false), 600);
       }
 
       setShowCorrect(true);
@@ -652,7 +657,14 @@ export default function TargetMan() {
               <motion.div
                 key={boostLetter + boostMultiplier}
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
+                animate={boostMultiplier >= 3
+                  ? { scale: [1, 1.05, 1], opacity: 1 }
+                  : { scale: 1, opacity: 1 }
+                }
+                transition={boostMultiplier >= 3
+                  ? { scale: { repeat: Infinity, duration: 1.2, ease: "easeInOut" } }
+                  : {}
+                }
                 className="flex items-center gap-2 sm:mt-2"
               >
                 <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
@@ -919,6 +931,26 @@ export default function TargetMan() {
               animate={{ opacity: 0.06 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-red-500"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Boost letter hit flash — violet/amber pulse */}
+      <AnimatePresence>
+        {showBoostFlash && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 pointer-events-none z-50"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.12, 0.06, 0] }}
+              transition={{ duration: 0.6 }}
+              className={`absolute inset-0 ${boostMultiplier >= 4 ? "bg-amber-500" : "bg-violet-500"}`}
             />
           </motion.div>
         )}

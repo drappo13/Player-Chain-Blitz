@@ -67,10 +67,150 @@ export function playGameEnd() {
   });
 }
 
+// --- Helper layers ---
+
+function playBassThump(intensity: number = 1) {
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(80 + intensity * 20, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.2);
+  gain.gain.setValueAtTime(0.12 * intensity, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.25);
+}
+
+function playShimmer(baseFreq: number = 2200) {
+  const ctx = getCtx();
+  // Two slightly detuned oscillators for width
+  [0, 7].forEach((detune) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
+    osc.detune.setValueAtTime(detune, ctx.currentTime);
+    osc.frequency.setValueAtTime(baseFreq * 1.5, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  });
+}
+
+function playChord(notes: number[], vol: number = 0.12, duration: number = 0.35) {
+  const ctx = getCtx();
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.06);
+    gain.gain.setValueAtTime(vol, ctx.currentTime + i * 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + duration);
+    osc.start(ctx.currentTime + i * 0.06);
+    osc.stop(ctx.currentTime + i * 0.06 + duration);
+  });
+}
+
+// --- Target Man: unified score sound ---
+
+/**
+ * Play a sound that scales with the result quality.
+ * finalPoints drives the intensity — more points = more layers.
+ * isExact / isBoostHit add specific flavors on top.
+ */
+export function playScoreSound(opts: {
+  finalPoints: number;
+  basePoints: number;
+  isExact: boolean;
+  isBoostHit: boolean;
+  comboStreak: number;
+}) {
+  const { finalPoints, basePoints, isExact, isBoostHit, comboStreak } = opts;
+
+  if (isExact) {
+    // Triumphant rising chord + bass drop + shimmer
+    playChord([880, 1100, 1320, 1760], 0.14, 0.45);
+    playBassThump(1.5);
+    playShimmer(2400);
+    return;
+  }
+
+  if (finalPoints >= 60) {
+    // Massive score — full chord + bass + shimmer
+    const pitch = 880 + Math.min(comboStreak, 5) * 80;
+    playChord([pitch, pitch * 1.25, pitch * 1.5], 0.13, 0.35);
+    playBassThump(1.2);
+    playShimmer();
+    return;
+  }
+
+  if (finalPoints >= 30) {
+    // Big score — ascending tone + bass thump
+    const pitch = 880 + Math.min(comboStreak, 5) * 80;
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(pitch, ctx.currentTime);
+    osc.frequency.setValueAtTime(pitch * 1.25, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.14, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+    playBassThump(0.8);
+    if (isBoostHit) playShimmer(2000);
+    return;
+  }
+
+  if (finalPoints >= 14) {
+    // Decent score — standard correct with slight pitch variation
+    const pitch = 880 + Math.min(comboStreak, 3) * 60;
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(pitch, ctx.currentTime);
+    osc.frequency.setValueAtTime(pitch * 1.2, ctx.currentTime + 0.07);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.22);
+    if (isBoostHit) playShimmer(1800);
+    return;
+  }
+
+  // Low score — muted, short
+  const ctx = getCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(660, ctx.currentTime);
+  osc.frequency.setValueAtTime(730, ctx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.08, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.12);
+}
+
+// --- Legacy individual sounds (used by other games) ---
+
 /** Ascending correct sound — pitch rises with combo streak */
 export function playComboCorrect(streak: number) {
   const ctx = getCtx();
-  // Base pitch rises with streak: 880 -> 990 -> 1100 -> 1210 -> 1320
   const basePitch = 880 + Math.min(streak, 5) * 110;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -79,14 +219,11 @@ export function playComboCorrect(streak: number) {
   osc.type = "sine";
   osc.frequency.setValueAtTime(basePitch, ctx.currentTime);
   osc.frequency.setValueAtTime(basePitch * 1.25, ctx.currentTime + 0.08);
-  // Louder at higher streaks
   const vol = 0.12 + Math.min(streak, 5) * 0.02;
   gain.gain.setValueAtTime(vol, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
   osc.start(ctx.currentTime);
   osc.stop(ctx.currentTime + 0.25);
-
-  // Add harmonic overtone at streak 3+
   if (streak >= 3) {
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
@@ -101,56 +238,16 @@ export function playComboCorrect(streak: number) {
   }
 }
 
-/** Exact match — triumphant rising chord */
 export function playExactMatch() {
-  const ctx = getCtx();
-  const notes = [880, 1100, 1320, 1760];
-  notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.07);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.07);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.07 + 0.4);
-    osc.start(ctx.currentTime + i * 0.07);
-    osc.stop(ctx.currentTime + i * 0.07 + 0.4);
-  });
+  playScoreSound({ finalPoints: 50, basePoints: 50, isExact: true, isBoostHit: false, comboStreak: 0 });
 }
 
-/** Letter boost hit — shimmery sparkle sound */
 export function playBoostHit() {
-  const ctx = getCtx();
-  const notes = [1320, 1760, 2200];
-  notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.05);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.05 + 0.25);
-    osc.start(ctx.currentTime + i * 0.05);
-    osc.stop(ctx.currentTime + i * 0.05 + 0.25);
-  });
+  playShimmer(1800);
 }
 
-/** Mediocre hit — lower, shorter, less satisfying */
 export function playOkCorrect() {
-  const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(660, ctx.currentTime);
-  osc.frequency.setValueAtTime(770, ctx.currentTime + 0.06);
-  gain.gain.setValueAtTime(0.1, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.15);
+  playScoreSound({ finalPoints: 8, basePoints: 8, isExact: false, isBoostHit: false, comboStreak: 0 });
 }
 
 export function playHighScore() {
