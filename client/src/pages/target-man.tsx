@@ -5,6 +5,9 @@ import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Cross
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { gameThemes } from "@/lib/game-themes";
+
+const theme = gameThemes.warm;
 
 const GAME_DURATION = 90;
 const COMBO_WINDOW = 6;
@@ -500,8 +503,8 @@ export default function TargetMan() {
     <div className="bg-background relative transition-colors duration-1000 overflow-x-hidden sm:min-h-screen">
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl" />
+        <div className={`absolute top-0 left-1/4 w-96 h-96 ${theme.glowA} rounded-full blur-3xl`} />
+        <div className={`absolute bottom-0 right-1/4 w-80 h-80 ${theme.glowB} rounded-full blur-3xl`} />
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
@@ -514,8 +517,8 @@ export default function TargetMan() {
             >
               <Home className="w-4 h-4" />
             </button>
-            <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : "bg-orange-500/15"}`}>
-              <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-orange-400"}`} />
+            <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : theme.timerIcon}`}>
+              <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : theme.timerIconColor}`} />
             </div>
             <span
               className={`text-2xl font-mono font-bold tabular-nums ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-foreground"} ${isUrgent ? "animate-countdown-pulse" : ""}`}
@@ -556,7 +559,7 @@ export default function TargetMan() {
         {/* Main timer bar */}
         <div className="w-full h-1 rounded-full bg-muted/50 mb-3 sm:mb-4">
           <motion.div
-            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-orange-500"}`}
+            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : theme.timerBar}`}
             style={{ width: `${timerPercent}%` }}
             transition={{ duration: 0.3 }}
           />
@@ -732,7 +735,7 @@ export default function TargetMan() {
                     ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20"
                     : showWrong
                       ? "border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20 animate-shake"
-                      : "border-border/60 focus:border-orange-500/60 focus:shadow-lg focus:shadow-orange-500/10"
+                      : `border-border/60 ${theme.inputFocus}`
                 }`}
               />
               <button
@@ -841,8 +844,8 @@ function StartScreen({
         <Home className="w-5 h-5" />
       </button>
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-orange-500/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-amber-500/6 rounded-full blur-3xl" />
+        <div className={`absolute top-1/4 left-1/3 w-80 h-80 ${theme.glowA} rounded-full blur-3xl`} />
+        <div className={`absolute bottom-1/3 right-1/4 w-64 h-64 ${theme.glowB} rounded-full blur-3xl`} />
       </div>
 
       <motion.div
@@ -932,7 +935,7 @@ function StartScreen({
           <Button
             onClick={onStart}
             size="lg"
-            className="text-lg px-12 py-6 font-bold shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-orange-600 focus-visible:ring-orange-500"
+            className={`text-lg px-12 py-6 font-bold ${theme.primaryBtn}`}
           >
             Start Game
           </Button>
@@ -995,14 +998,14 @@ function EndScreen({
           transition={{ delay: 0.1 }}
           className="flex items-center justify-center gap-3 mb-6 flex-wrap"
         >
-          <Button onClick={onHome} variant="outline" size="lg" className="font-bold border-border focus-visible:ring-orange-500">
+          <Button onClick={onHome} variant="outline" size="lg" className={theme.outlineBtn}>
             <Home className="w-5 h-5 mr-2" />
             Home
           </Button>
           <Button
             onClick={onRestart}
             size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-orange-500/20 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-orange-600 focus-visible:ring-orange-500"
+            className={`text-lg px-10 font-bold ${theme.primaryBtn}`}
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Play Again
