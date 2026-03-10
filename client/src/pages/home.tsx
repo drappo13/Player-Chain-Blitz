@@ -34,7 +34,7 @@ export default function Home() {
           Test your sports knowledge
         </motion.p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,6 +93,33 @@ export default function Home() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+          >
+            <Link href="/targetman" data-testid="link-targetman">
+              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-orange-500/20 to-orange-500/5 border border-orange-500/20 flex items-center justify-center mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">🎯</span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
+                  Target
+                  <span className="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
+                    Man
+                  </span>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
+                  Match the target goal number. Combos, boosts & precision scoring.
+                </p>
+                <div className="flex items-center gap-1 text-xs font-medium text-orange-400">
+                  Play
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
           >
             <Link href="/gridlock" data-testid="link-gridlock">
               <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200">

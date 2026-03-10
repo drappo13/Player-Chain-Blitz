@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Game from "@/pages/game";
 import SlamChain from "@/pages/slam-chain";
 import GridLock from "@/pages/grid-lock";
+import TargetMan from "@/pages/target-man";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/goalchain" component={Game} />
       <Route path="/slamchain" component={SlamChain} />
       <Route path="/gridlock" component={GridLock} />
+      <Route path="/targetman" component={TargetMan} />
       <Route component={NotFound} />
     </Switch>
   );
