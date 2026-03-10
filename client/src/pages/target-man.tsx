@@ -109,12 +109,11 @@ function getUniqueGoalTotals(): number[] {
 }
 
 function getWeightedTarget(totals: number[]): number {
-  // Nearly flat distribution across all unique totals, with a gentle
-  // bump for higher numbers to offset the heavy clustering at 1-5.
-  // 1-5: weight 1, 6-20: weight 1.5, 21-50: weight 2, 51+: weight 2.5
+  // Gentle bump for higher numbers to offset clustering at low totals.
+  // 1-30: weight 1, 31-100: weight 1.5, 101+: weight 2
   const weighted: { total: number; weight: number }[] = totals.map((t) => ({
     total: t,
-    weight: t <= 5 ? 1 : t <= 20 ? 1.5 : t <= 50 ? 2 : 2.5,
+    weight: t <= 30 ? 1 : t <= 100 ? 1.5 : 2,
   }));
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let r = Math.random() * totalWeight;
@@ -1033,19 +1032,19 @@ function StartScreen({
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Zap className="w-3.5 h-3.5 text-violet-400" />
+            <div className="w-6 h-6 rounded-md bg-yellow-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Zap className="w-3.5 h-3.5 text-yellow-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
               Answer fast for <span className="font-semibold text-foreground">combo multipliers</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Star className="w-3.5 h-3.5 text-violet-400" />
+            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Star className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Keep using same <span className="font-semibold text-foreground">starting letter</span> for <span className="font-semibold text-violet-400">escalating boosts</span>
+              Keep using same <span className="font-semibold text-foreground">starting letter</span> for <span className="font-semibold text-foreground">escalating boosts</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
