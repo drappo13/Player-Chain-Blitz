@@ -108,11 +108,12 @@ function getUniqueGoalTotals(): number[] {
 }
 
 function getWeightedTarget(totals: number[]): number {
-  // Weight toward mid/high targets to keep it interesting
-  // Low targets (1-5) get weight 1, mid (6-30) get weight 3, high (31+) get weight 5
+  // Nearly flat distribution across all unique totals, with a gentle
+  // bump for higher numbers to offset the heavy clustering at 1-5.
+  // 1-5: weight 1, 6-20: weight 1.5, 21-50: weight 2, 51+: weight 2.5
   const weighted: { total: number; weight: number }[] = totals.map((t) => ({
     total: t,
-    weight: t <= 5 ? 1 : t <= 30 ? 3 : 5,
+    weight: t <= 5 ? 1 : t <= 20 ? 1.5 : t <= 50 ? 2 : 2.5,
   }));
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let r = Math.random() * totalWeight;
