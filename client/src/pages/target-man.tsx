@@ -147,19 +147,17 @@ function calculateBaseScore(targetGoals: number, playerGoals: number): number {
 }
 
 function getComboMultiplier(streak: number): number {
-  if (streak >= 5) return 2.0;
-  if (streak >= 4) return 1.6;
-  if (streak >= 3) return 1.4;
-  if (streak >= 2) return 1.2;
-  return 1.0;
+  // streak 0-1 = 1x, 2 = 2x, 3 = 3x, 4 = 4x, 5+ = 5x cap
+  if (streak <= 1) return 1;
+  return Math.min(streak, 5);
 }
 
 
 function getComboLevel(streak: number): { label: string; color: string; bgClass: string; glowColor: string } {
   if (streak >= 5) return { label: "MAX COMBO", color: "text-amber-400", bgClass: "bg-amber-500/10", glowColor: "shadow-amber-500/30" };
   if (streak >= 4) return { label: "MEGA COMBO", color: "text-orange-400", bgClass: "bg-orange-500/8", glowColor: "shadow-orange-500/20" };
-  if (streak >= 3) return { label: "COMBO", color: "text-yellow-400", bgClass: "bg-yellow-500/6", glowColor: "shadow-yellow-500/15" };
-  if (streak >= 2) return { label: "STREAK", color: "text-emerald-400", bgClass: "bg-emerald-500/5", glowColor: "shadow-emerald-500/10" };
+  if (streak >= 3) return { label: "COMBO x3", color: "text-yellow-400", bgClass: "bg-yellow-500/6", glowColor: "shadow-yellow-500/15" };
+  if (streak >= 2) return { label: "COMBO x2", color: "text-emerald-400", bgClass: "bg-emerald-500/5", glowColor: "shadow-emerald-500/10" };
   return { label: "", color: "", bgClass: "", glowColor: "" };
 }
 
@@ -323,7 +321,7 @@ export default function TargetMan() {
       const setBoostFromGuess = (name: string) => {
         const letter = normalizeName(name)[0] || "";
         if (letter && letter === boostLetter) {
-          setBoostMultiplier((prev) => prev + 1);
+          setBoostMultiplier((prev) => Math.min(prev + 1, 5));
         } else {
           setBoostLetter(letter);
           setBoostMultiplier(2);
@@ -336,8 +334,9 @@ export default function TargetMan() {
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
+        setBoostLetter("");
+        setBoostMultiplier(1);
         setTimeLeft((prev) => Math.max(0, prev - 5));
-        setBoostFromGuess(guess);
         setLastResult({
           id: Date.now(),
           targetGoals,
@@ -368,9 +367,9 @@ export default function TargetMan() {
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
+        setBoostLetter("");
+        setBoostMultiplier(1);
         setTimeLeft((prev) => Math.max(0, prev - 5));
-        const surname = getCommonSurname(player);
-        setBoostFromGuess(surname);
         setLastResult({
           id: Date.now(),
           targetGoals,
@@ -405,8 +404,9 @@ export default function TargetMan() {
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
         setComboStreak(0);
+        setBoostLetter("");
+        setBoostMultiplier(1);
         setTimeLeft((prev) => Math.max(0, prev - 2));
-        setBoostFromGuess(surname);
 
         const result: RoundResult = {
           id: Date.now(),
