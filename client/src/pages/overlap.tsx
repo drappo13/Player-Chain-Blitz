@@ -291,6 +291,7 @@ export default function Overlap() {
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const questionStartRef = useRef<number>(Date.now());
+  const questionResolvedRef = useRef(false);
 
   const clearQuestionTimer = useCallback(() => {
     if (questionTimerRef.current) {
@@ -323,6 +324,7 @@ export default function Overlap() {
     setQuestionNum(nextNum);
     setQuestionTimeLeft(QUESTION_TIME);
     setShowOneClub(null);
+    questionResolvedRef.current = false;
 
     const pair = pickPair(allPairs, usedPairKeys);
     if (pair) {
@@ -364,44 +366,59 @@ export default function Overlap() {
     navigate("/");
   }, [navigate, clearQuestionTimer]);
 
-  // Per-question timer
+  // Per-question timer — uses ref to track time, avoids side effects in state updaters
+  const questionTimeRef = useRef(QUESTION_TIME);
+
   useEffect(() => {
     if (gameState === "playing") {
+      questionTimeRef.current = questionTimeLeft;
+      questionResolvedRef.current = false;
+
       questionTimerRef.current = setInterval(() => {
-        setQuestionTimeLeft((prev) => {
-          if (prev <= 0.1) {
-            // Timeout — wrong, advance
-            playWrong();
-            setComboStreak(0);
-            setShowWrong(true);
-            setTimeout(() => setShowWrong(false), 400);
-            const result: RoundResult = {
-              id: Date.now(),
-              questionNum,
-              clubA: currentPair?.clubA || "",
-              clubB: currentPair?.clubB || "",
-              player: null,
-              appsA: 0, appsB: 0, goalsA: 0, goalsB: 0,
-              timeScore: 0, appBonus: 0, goalBonus: 0,
-              comboMultiplier: 1, finalPoints: 0, elapsed: QUESTION_TIME,
-              wasPass: false, wasTimeout: true,
-            };
-            setLastResult(result);
-            setRoundResults((prev) => [...prev, result]);
-            setTimeout(() => advanceQuestion(), 600);
-            return 0;
-          }
-          if (prev <= 6 && prev > 5) playTick();
-          if (prev <= 4) playTick();
-          return prev - 0.1;
-        });
+        if (questionResolvedRef.current) return;
+
+        questionTimeRef.current -= 0.1;
+        const t = questionTimeRef.current;
+
+        if (t <= 0) {
+          // Timeout — clear timer first to prevent re-firing
+          clearQuestionTimer();
+          questionResolvedRef.current = true;
+          setQuestionTimeLeft(0);
+
+          playWrong();
+          setComboStreak(0);
+          setShowWrong(true);
+          setTimeout(() => setShowWrong(false), 400);
+          const result: RoundResult = {
+            id: Date.now(),
+            questionNum,
+            clubA: currentPair?.clubA || "",
+            clubB: currentPair?.clubB || "",
+            player: null,
+            appsA: 0, appsB: 0, goalsA: 0, goalsB: 0,
+            timeScore: 0, appBonus: 0, goalBonus: 0,
+            comboMultiplier: 1, finalPoints: 0, elapsed: QUESTION_TIME,
+            wasPass: false, wasTimeout: true,
+          };
+          setLastResult(result);
+          setRoundResults((prev) => [...prev, result]);
+          setTimeout(() => advanceQuestion(), 600);
+          return;
+        }
+
+        setQuestionTimeLeft(t);
+        // Tick on each whole second in the last 5 seconds
+        const rounded = Math.round(t * 10) / 10;
+        if (rounded <= 5 && Math.abs(rounded - Math.round(rounded)) < 0.05) playTick();
       }, 100);
     }
     return () => clearQuestionTimer();
   }, [gameState, questionNum, currentPair, advanceQuestion, clearQuestionTimer]);
 
   const handlePass = useCallback(() => {
-    if (gameState !== "playing" || !currentPair) return;
+    if (gameState !== "playing" || !currentPair || questionResolvedRef.current) return;
+    questionResolvedRef.current = true;
     clearQuestionTimer();
     setComboStreak(0);
     playNeutral();
@@ -428,7 +445,7 @@ export default function Overlap() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (gameState !== "playing" || !currentPair) return;
+      if (gameState !== "playing" || !currentPair || questionResolvedRef.current) return;
 
       const guess = inputValue.trim();
       if (!guess) return;
@@ -501,6 +518,7 @@ export default function Overlap() {
       }
 
       // Correct answer!
+      questionResolvedRef.current = true;
       clearQuestionTimer();
       setShowOneClub(null);
       const playerKey = matchedPlayer.displayName.toLowerCase();
