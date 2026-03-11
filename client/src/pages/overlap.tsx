@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Flag, Zap, SkipForward, GitMerge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
+import { playWrong, playNeutral, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 
 const theme = gameThemes.overlap;
 
-const GAME_DURATION = 90;
-const COMBO_WINDOW = 6;
-const MAX_SKIPS = 2;
+const GAME_DURATION = 120;
+const COMBO_WINDOW = 9;
+const MAX_SKIPS = 1;
 const WRONG_PENALTY = 3;
 
 // --- Types ---
@@ -34,6 +34,7 @@ interface ClubPair {
   clubB: string;
   players: PLPlayer[];
   difficulty: "easy" | "medium" | "hard";
+  eraWeight: number; // 1-3, higher = more recent players
 }
 
 interface RoundResult {
@@ -138,6 +139,34 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
   return lookup;
 }
 
+// --- DOB parsing & era weighting ---
+
+const MONTH_MAP: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+};
+
+function parseBirthYear(dob: string): number | null {
+  // Format: "29 November 1973"
+  const parts = dob.trim().split(/\s+/);
+  if (parts.length >= 3) {
+    const year = parseInt(parts[2]);
+    if (!isNaN(year) && year > 1900 && year < 2010) return year;
+  }
+  return null;
+}
+
+function computeEraWeight(players: PLPlayer[]): number {
+  // Average birth year of players in this pair, mapped to 1-3 weight
+  // Youngest avg (~2000) = 3x, oldest avg (~1965) = 1x
+  const years = players.map((p) => parseBirthYear(p.dob)).filter((y): y is number => y !== null);
+  if (years.length === 0) return 2; // neutral default
+  const avgYear = years.reduce((a, b) => a + b, 0) / years.length;
+  // Linear scale: 1965 -> 1.0, 2000 -> 3.0
+  const t = Math.max(0, Math.min(1, (avgYear - 1965) / (2000 - 1965)));
+  return 1 + t * 2;
+}
+
 // --- Build club pairs ---
 
 function buildClubPairs(): ClubPair[] {
@@ -160,7 +189,7 @@ function buildClubPairs(): ClubPair[] {
     const [clubA, clubB] = key.split("|");
     const difficulty =
       players.length >= 8 ? "easy" : players.length >= 4 ? "medium" : "hard";
-    pairs.push({ clubA, clubB, players, difficulty });
+    pairs.push({ clubA, clubB, players, difficulty, eraWeight: computeEraWeight(players) });
   }
 
   return pairs;
@@ -239,10 +268,10 @@ function isBigSixPair(pair: ClubPair): boolean {
 }
 
 function weightedPickFromBucket(bucket: ClubPair[]): ClubPair {
-  // Big six pairs get 2x weight
+  // Weight = big six bonus (2x if big six) * era weight (1-3x, recent = higher)
   const weighted: { pair: ClubPair; weight: number }[] = bucket.map((p) => ({
     pair: p,
-    weight: isBigSixPair(p) ? 2 : 1,
+    weight: (isBigSixPair(p) ? 2 : 1) * p.eraWeight,
   }));
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let r = Math.random() * totalWeight;
@@ -549,9 +578,7 @@ export default function Overlap() {
           const playerKey = oneClubPlayer.displayName.toLowerCase();
           setUsedPlayerKeys((prev) => new Set(prev).add(playerKey));
           setComboStreak(0);
-          playWrong();
-          setShowWrong(true);
-          setTimeout(() => setShowWrong(false), 400);
+          playNeutral();
 
           const playedA = oneClubPlayer.clubs[currentPair.clubA];
           const playedB = oneClubPlayer.clubs[currentPair.clubB];
@@ -1191,7 +1218,7 @@ function StartScreen({
               <Zap className="w-3.5 h-3.5 text-yellow-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Answer within <span className="font-semibold text-foreground">6 seconds</span> for combo multipliers
+              Answer within <span className="font-semibold text-foreground">9 seconds</span> for combo multipliers
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1199,7 +1226,7 @@ function StartScreen({
               <SkipForward className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">2 skips</span> per run &middot; wrong answers cost <span className="font-semibold text-foreground">3 seconds</span>
+              <span className="font-semibold text-foreground">1 skip</span> per run &middot; wrong answers cost <span className="font-semibold text-foreground">3 seconds</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1207,7 +1234,7 @@ function StartScreen({
               <Timer className="w-3.5 h-3.5 text-red-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              You have <span className="font-semibold text-foreground">90 seconds</span>
+              You have <span className="font-semibold text-foreground">2 minutes</span>
             </p>
           </div>
         </motion.div>
