@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Flag, Zap, SkipForward, GitMerge } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Zap, SkipForward, GitMerge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playNeutral, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
@@ -9,10 +9,8 @@ import { gameThemes } from "@/lib/game-themes";
 
 const theme = gameThemes.overlap;
 
-const GAME_DURATION = 120;
-const COMBO_WINDOW = 9;
-const MAX_SKIPS = 1;
-const WRONG_PENALTY = 3;
+const TOTAL_QUESTIONS = 10;
+const QUESTION_TIME = 30;
 
 // --- Types ---
 
@@ -34,11 +32,12 @@ interface ClubPair {
   clubB: string;
   players: PLPlayer[];
   difficulty: "easy" | "medium" | "hard";
-  eraWeight: number; // 1-3, higher = more recent players
+  eraWeight: number;
 }
 
 interface RoundResult {
   id: number;
+  questionNum: number;
   clubA: string;
   clubB: string;
   player: PLPlayer | null;
@@ -46,18 +45,19 @@ interface RoundResult {
   appsB: number;
   goalsA: number;
   goalsB: number;
-  basePoints: number;
-  bonuses: number;
+  timeScore: number;
+  appBonus: number;
+  goalBonus: number;
   comboMultiplier: number;
   finalPoints: number;
-  wasInvalid: boolean;
-  invalidReason: string;
-  wasSkip: boolean;
+  elapsed: number;
+  wasPass: boolean;
+  wasTimeout: boolean;
 }
 
 type GameState = "idle" | "playing" | "finished";
 
-// --- Name normalization (from TargetMan) ---
+// --- Name normalization ---
 
 function normalizeName(name: string): string {
   return name
@@ -91,7 +91,6 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
     if (!norm) return;
     const existing = lookup.get(norm);
     if (existing) {
-      // Don't add duplicates (same displayName)
       if (!existing.some((p) => p.displayName === player.displayName)) {
         existing.push(player);
       }
@@ -101,39 +100,25 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
   }
 
   for (const p of plPlayers as PLPlayer[]) {
-    // Official last name
     addToLookup(p.lastName, p);
-
-    // Common surname from display name
     const commonSurname = getCommonSurname(p);
-    if (commonSurname !== p.lastName) {
-      addToLookup(commonSurname, p);
-    }
-
-    // Full display name
+    if (commonSurname !== p.lastName) addToLookup(commonSurname, p);
     addToLookup(p.displayName, p);
-
-    // Parts of multi-word last names
     const lastNameParts = p.lastName.split(/\s+/);
     if (lastNameParts.length > 1) {
       for (const part of lastNameParts) {
-        if (part.length > 2) {
-          addToLookup(part, p);
-        }
+        if (part.length > 2) addToLookup(part, p);
       }
     }
   }
 
-  // Alternates
   const alternates: Record<string, string> = {
     vannistelrooij: "vannistelrooy",
     nistelrooij: "nistelrooy",
   };
   for (const [alt, official] of Object.entries(alternates)) {
     const target = lookup.get(official);
-    if (target && !lookup.has(alt)) {
-      lookup.set(alt, target);
-    }
+    if (target && !lookup.has(alt)) lookup.set(alt, target);
   }
 
   return lookup;
@@ -141,13 +126,7 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
 
 // --- DOB parsing & era weighting ---
 
-const MONTH_MAP: Record<string, number> = {
-  january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
-  july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
-};
-
 function parseBirthYear(dob: string): number | null {
-  // Format: "29 November 1973"
   const parts = dob.trim().split(/\s+/);
   if (parts.length >= 3) {
     const year = parseInt(parts[2]);
@@ -156,18 +135,32 @@ function parseBirthYear(dob: string): number | null {
   return null;
 }
 
+function playerAge(p: PLPlayer): number | null {
+  const year = parseBirthYear(p.dob);
+  if (!year) return null;
+  return 2026 - year; // approximate
+}
+
 function computeEraWeight(players: PLPlayer[]): number {
-  // Average birth year of players in this pair, mapped to 1-3 weight
-  // Youngest avg (~2000) = 3x, oldest avg (~1965) = 1x
-  const years = players.map((p) => parseBirthYear(p.dob)).filter((y): y is number => y !== null);
-  if (years.length === 0) return 2; // neutral default
-  const avgYear = years.reduce((a, b) => a + b, 0) / years.length;
-  // Linear scale: 1965 -> 1.0, 2000 -> 3.0
-  const t = Math.max(0, Math.min(1, (avgYear - 1965) / (2000 - 1965)));
-  return 1 + t * 2;
+  // Weight by player ages: <29 = 5x, 29-33 = 2x, 33-40 = 1x, 40+ = 0.5x
+  // Use the best (youngest) weight among players in the pair
+  let bestWeight = 0.5;
+  for (const p of players) {
+    const age = playerAge(p);
+    if (age === null) continue;
+    let w: number;
+    if (age < 29) w = 5;
+    else if (age < 33) w = 2;
+    else if (age <= 40) w = 1;
+    else w = 0.5;
+    if (w > bestWeight) bestWeight = w;
+  }
+  return bestWeight;
 }
 
 // --- Build club pairs ---
+
+const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Man City", "Man Utd", "Tottenham"]);
 
 function buildClubPairs(): ClubPair[] {
   const pairMap = new Map<string, PLPlayer[]>();
@@ -197,81 +190,49 @@ function buildClubPairs(): ClubPair[] {
 
 // --- Scoring ---
 
-function calculateBaseScore(minApps: number): number {
-  if (minApps >= 100) return 8;
-  if (minApps >= 50) return 12;
-  if (minApps >= 25) return 18;
-  if (minApps >= 10) return 26;
-  return 36;
+function getTimeScore(elapsed: number): number {
+  // 50 at 0s, linearly down to 25 at 30s
+  const t = Math.min(elapsed, QUESTION_TIME) / QUESTION_TIME;
+  return Math.round(50 - t * 25);
 }
 
-function calculateBonuses(
-  appsA: number,
-  appsB: number,
-  goalsA: number,
-  goalsB: number,
-  minApps: number
-): { total: number; labels: string[] } {
-  let total = 0;
-  const labels: string[] = [];
+function getAppBonus(minApps: number): { points: number; label: string } {
+  if (minApps <= 3) return { points: 10, label: "Low apps +10" };
+  if (minApps <= 9) return { points: 7, label: "Low apps +7" };
+  if (minApps <= 24) return { points: 4, label: "Low apps +4" };
+  if (minApps <= 49) return { points: 2, label: "Low apps +2" };
+  return { points: 0, label: "" };
+}
 
-  // Substantial overlap bonus
-  if (appsA >= 25 && appsB >= 25) {
-    total += 8;
-    labels.push("Overlap +8");
-  } else if (appsA >= 10 && appsB >= 10) {
-    total += 4;
-    labels.push("Overlap +4");
-  }
-
-  // Goal bonus
-  if (goalsA >= 1 && goalsB >= 1) {
-    total += 4;
-    labels.push("Goals +4");
-  }
-
-  // Micro-cameo bonus
-  if (minApps <= 3) {
-    total += 4;
-    labels.push("Cameo +4");
-  }
-
-  return { total, labels };
+function getGoalBonus(minGoals: number): { points: number; label: string } {
+  if (minGoals === 0) return { points: 10, label: "Low goals +10" };
+  if (minGoals <= 3) return { points: 7, label: "Low goals +7" };
+  if (minGoals <= 9) return { points: 4, label: "Low goals +4" };
+  if (minGoals <= 19) return { points: 2, label: "Low goals +2" };
+  return { points: 0, label: "" };
 }
 
 function getComboMultiplier(streak: number): number {
   if (streak <= 1) return 1.0;
-  if (streak === 2) return 1.2;
-  if (streak === 3) return 1.4;
-  if (streak === 4) return 1.7;
-  return 2.0;
+  return 1.0 + (streak - 1) * 0.2; // 1.2, 1.4, 1.6, 1.8, 2.0, 2.2...
 }
 
 function getComboLevel(streak: number): { label: string; color: string; bgClass: string } {
-  if (streak >= 5)
-    return { label: "MAX COMBO", color: "text-amber-400", bgClass: "bg-amber-500/10" };
+  if (streak >= 6)
+    return { label: "MEGA COMBO", color: "text-amber-400", bgClass: "bg-amber-500/10" };
   if (streak >= 4)
-    return { label: "MEGA COMBO", color: "text-orange-400", bgClass: "bg-orange-500/8" };
-  if (streak >= 3)
-    return { label: "COMBO x3", color: "text-yellow-400", bgClass: "bg-yellow-500/6" };
+    return { label: "COMBO", color: "text-orange-400", bgClass: "bg-orange-500/8" };
   if (streak >= 2)
-    return { label: "COMBO x2", color: "text-emerald-400", bgClass: "bg-emerald-500/5" };
+    return { label: "COMBO", color: "text-emerald-400", bgClass: "bg-emerald-500/5" };
   return { label: "", color: "", bgClass: "" };
 }
 
-// --- Big six & pair picking ---
-
-const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Man City", "Man Utd", "Tottenham"]);
-
-function isBigSixPair(pair: ClubPair): boolean {
-  return BIG_SIX.has(pair.clubA) || BIG_SIX.has(pair.clubB);
-}
+// --- Pair picking ---
 
 function weightedPickFromBucket(bucket: ClubPair[]): ClubPair {
-  // Weight = big six bonus (2x if big six) * era weight (1-3x, recent = higher)
-  const weighted: { pair: ClubPair; weight: number }[] = bucket.map((p) => ({
+  const weighted = bucket.map((p) => ({
     pair: p,
-    weight: (isBigSixPair(p) ? 2 : 1) * p.eraWeight,
+    weight: (BIG_SIX.has(p.clubA) || BIG_SIX.has(p.clubB) ? 2 : 1) * p.eraWeight,
   }));
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let r = Math.random() * totalWeight;
@@ -282,20 +243,13 @@ function weightedPickFromBucket(bucket: ClubPair[]): ClubPair {
   return weighted[weighted.length - 1].pair;
 }
 
-function pickPair(
-  pairs: ClubPair[],
-  usedPairKeys: Set<string>
-): ClubPair | null {
-  // Bucket by difficulty
+function pickPair(pairs: ClubPair[], usedPairKeys: Set<string>): ClubPair | null {
   const easy = pairs.filter((p) => p.difficulty === "easy" && !usedPairKeys.has(p.clubA + "|" + p.clubB));
   const medium = pairs.filter((p) => p.difficulty === "medium" && !usedPairKeys.has(p.clubA + "|" + p.clubB));
   const hard = pairs.filter((p) => p.difficulty === "hard" && !usedPairKeys.has(p.clubA + "|" + p.clubB));
 
-  // Distribution: 50% easy, 35% medium, 15% hard
   const roll = Math.random();
   let bucket = roll < 0.5 ? easy : roll < 0.85 ? medium : hard;
-
-  // Fallback if bucket empty
   if (bucket.length === 0) bucket = easy.length > 0 ? easy : medium.length > 0 ? medium : hard;
   if (bucket.length === 0) return null;
 
@@ -311,15 +265,14 @@ export default function Overlap() {
   const allPairs = useMemo(() => buildClubPairs(), []);
 
   const [gameState, setGameState] = useState<GameState>("idle");
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [questionNum, setQuestionNum] = useState(1);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(QUESTION_TIME);
   const [currentPair, setCurrentPair] = useState<ClubPair | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [usedPlayerKeys, setUsedPlayerKeys] = useState<Set<string>>(new Set());
   const [usedPairKeys, setUsedPairKeys] = useState<Set<string>>(new Set());
   const [totalScore, setTotalScore] = useState(0);
-  const [roundCount, setRoundCount] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
-  const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
   const [highScore, setHighScore] = useState(() => {
     try {
       return parseInt(sessionStorage.getItem("overlap-highscore") || "0");
@@ -328,78 +281,27 @@ export default function Overlap() {
     }
   });
 
-  // Round feedback
+  // Feedback state
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
+  const [showOneClub, setShowOneClub] = useState<{ player: PLPlayer; clubA: string; clubB: string; appsA: number; appsB: number } | null>(null);
   const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
 
-  // Combo timer
-  const [comboTimeLeft, setComboTimeLeft] = useState(COMBO_WINDOW);
-  const [comboActive, setComboActive] = useState(true);
-
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const roundStartRef = useRef<number>(Date.now());
+  const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const questionStartRef = useRef<number>(Date.now());
 
-  const pickNewPair = useCallback(() => {
-    const pair = pickPair(allPairs, usedPairKeys);
-    if (pair) {
-      setCurrentPair(pair);
-      setUsedPairKeys((prev) => new Set(prev).add(pair.clubA + "|" + pair.clubB));
+  const clearQuestionTimer = useCallback(() => {
+    if (questionTimerRef.current) {
+      clearInterval(questionTimerRef.current);
+      questionTimerRef.current = null;
     }
-    setComboTimeLeft(COMBO_WINDOW);
-    setComboActive(true);
-    roundStartRef.current = Date.now();
-  }, [allPairs, usedPairKeys]);
-
-  const startGame = useCallback(() => {
-    setGameState("playing");
-    setTimeLeft(GAME_DURATION);
-    setInputValue("");
-    setUsedPlayerKeys(new Set());
-    setUsedPairKeys(new Set());
-    setTotalScore(0);
-    setRoundCount(0);
-    setComboStreak(0);
-    setSkipsLeft(MAX_SKIPS);
-    setLastResult(null);
-    setShowCorrect(false);
-    setShowWrong(false);
-    setRoundResults([]);
-
-    // Pick first pair directly
-    const pair = pickPair(allPairs, new Set());
-    if (pair) {
-      setCurrentPair(pair);
-      setUsedPairKeys(new Set([pair.clubA + "|" + pair.clubB]));
-    }
-    setComboTimeLeft(COMBO_WINDOW);
-    setComboActive(true);
-    roundStartRef.current = Date.now();
-
-    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
-  }, [allPairs]);
-
-  const goHome = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (comboTimerRef.current) clearInterval(comboTimerRef.current);
-    timerRef.current = null;
-    comboTimerRef.current = null;
-    navigate("/");
-  }, [navigate]);
+  }, []);
 
   const endGame = useCallback(() => {
     setGameState("finished");
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (comboTimerRef.current) {
-      clearInterval(comboTimerRef.current);
-      comboTimerRef.current = null;
-    }
+    clearQuestionTimer();
     setTotalScore((prev) => {
       if (prev > highScore) {
         setHighScore(prev);
@@ -409,69 +311,119 @@ export default function Overlap() {
       }
       return prev;
     });
-  }, [highScore]);
+  }, [highScore, clearQuestionTimer]);
 
-  // Main game timer
+  const advanceQuestion = useCallback(() => {
+    if (questionNum >= TOTAL_QUESTIONS) {
+      endGame();
+      return;
+    }
+
+    const nextNum = questionNum + 1;
+    setQuestionNum(nextNum);
+    setQuestionTimeLeft(QUESTION_TIME);
+    setShowOneClub(null);
+
+    const pair = pickPair(allPairs, usedPairKeys);
+    if (pair) {
+      setCurrentPair(pair);
+      setUsedPairKeys((prev) => new Set(prev).add(pair.clubA + "|" + pair.clubB));
+    }
+    questionStartRef.current = Date.now();
+    setInputValue("");
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
+  }, [questionNum, allPairs, usedPairKeys, endGame]);
+
+  const startGame = useCallback(() => {
+    setGameState("playing");
+    setQuestionNum(1);
+    setQuestionTimeLeft(QUESTION_TIME);
+    setInputValue("");
+    setUsedPlayerKeys(new Set());
+    setUsedPairKeys(new Set());
+    setTotalScore(0);
+    setComboStreak(0);
+    setLastResult(null);
+    setShowCorrect(false);
+    setShowWrong(false);
+    setShowOneClub(null);
+    setRoundResults([]);
+
+    const pair = pickPair(allPairs, new Set());
+    if (pair) {
+      setCurrentPair(pair);
+      setUsedPairKeys(new Set([pair.clubA + "|" + pair.clubB]));
+    }
+    questionStartRef.current = Date.now();
+
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
+  }, [allPairs]);
+
+  const goHome = useCallback(() => {
+    clearQuestionTimer();
+    navigate("/");
+  }, [navigate, clearQuestionTimer]);
+
+  // Per-question timer
   useEffect(() => {
     if (gameState === "playing") {
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            endGame();
-            return 0;
-          }
-          if (prev <= 11) playTick();
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [gameState, endGame]);
-
-  // Combo countdown timer
-  useEffect(() => {
-    if (gameState === "playing" && comboActive) {
-      comboTimerRef.current = setInterval(() => {
-        setComboTimeLeft((prev) => {
+      questionTimerRef.current = setInterval(() => {
+        setQuestionTimeLeft((prev) => {
           if (prev <= 0.1) {
-            setComboActive(false);
+            // Timeout — wrong, advance
+            playWrong();
+            setComboStreak(0);
+            setShowWrong(true);
+            setTimeout(() => setShowWrong(false), 400);
+            const result: RoundResult = {
+              id: Date.now(),
+              questionNum,
+              clubA: currentPair?.clubA || "",
+              clubB: currentPair?.clubB || "",
+              player: null,
+              appsA: 0, appsB: 0, goalsA: 0, goalsB: 0,
+              timeScore: 0, appBonus: 0, goalBonus: 0,
+              comboMultiplier: 1, finalPoints: 0, elapsed: QUESTION_TIME,
+              wasPass: false, wasTimeout: true,
+            };
+            setLastResult(result);
+            setRoundResults((prev) => [...prev, result]);
+            setTimeout(() => advanceQuestion(), 600);
             return 0;
           }
+          if (prev <= 6 && prev > 5) playTick();
+          if (prev <= 4) playTick();
           return prev - 0.1;
         });
       }, 100);
     }
-    return () => {
-      if (comboTimerRef.current) clearInterval(comboTimerRef.current);
-    };
-  }, [gameState, comboActive, currentPair]);
+    return () => clearQuestionTimer();
+  }, [gameState, questionNum, currentPair, advanceQuestion, clearQuestionTimer]);
 
-  const handleSkip = useCallback(() => {
-    if (gameState !== "playing" || skipsLeft <= 0 || !currentPair) return;
-    setSkipsLeft((prev) => prev - 1);
+  const handlePass = useCallback(() => {
+    if (gameState !== "playing" || !currentPair) return;
+    clearQuestionTimer();
     setComboStreak(0);
-    setLastResult({
+    playNeutral();
+    setShowOneClub(null);
+
+    const result: RoundResult = {
       id: Date.now(),
+      questionNum,
       clubA: currentPair.clubA,
       clubB: currentPair.clubB,
       player: null,
-      appsA: 0,
-      appsB: 0,
-      goalsA: 0,
-      goalsB: 0,
-      basePoints: 0,
-      bonuses: 0,
-      comboMultiplier: 1,
-      finalPoints: 0,
-      wasInvalid: false,
-      invalidReason: "",
-      wasSkip: true,
-    });
+      appsA: 0, appsB: 0, goalsA: 0, goalsB: 0,
+      timeScore: 0, appBonus: 0, goalBonus: 0,
+      comboMultiplier: 1, finalPoints: 0,
+      elapsed: (Date.now() - questionStartRef.current) / 1000,
+      wasPass: true, wasTimeout: false,
+    };
+    setLastResult(result);
+    setRoundResults((prev) => [...prev, result]);
     setInputValue("");
-    pickNewPair();
-  }, [gameState, skipsLeft, currentPair, pickNewPair]);
+    advanceQuestion();
+  }, [gameState, currentPair, questionNum, advanceQuestion, clearQuestionTimer]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -483,52 +435,20 @@ export default function Overlap() {
 
       const guessNorm = normalizeName(guess);
       const candidates = playerLookup.get(guessNorm);
-      const wasWithinComboWindow = comboActive && comboTimeLeft > 0;
 
-      const makeInvalidResult = (
-        reason: string,
-        player: PLPlayer | null = null
-      ): RoundResult => ({
-        id: Date.now(),
-        clubA: currentPair.clubA,
-        clubB: currentPair.clubB,
-        player,
-        appsA: 0,
-        appsB: 0,
-        goalsA: 0,
-        goalsB: 0,
-        basePoints: 0,
-        bonuses: 0,
-        comboMultiplier: 1,
-        finalPoints: 0,
-        wasInvalid: true,
-        invalidReason: reason,
-        wasSkip: false,
-      });
-
-      // Not found in dataset at all — wrong, penalty, stay on same pair
+      // Not found in dataset
       if (!candidates || candidates.length === 0) {
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
-        setComboStreak(0);
-        setTimeLeft((prev) => {
-          const next = Math.max(0, prev - WRONG_PENALTY);
-          if (next <= 0) setTimeout(() => endGame(), 0);
-          return next;
-        });
-        const result = makeInvalidResult("Not found");
-        setLastResult(result);
-        setRoundResults((prev) => [...prev, result]);
         setInputValue("");
         return;
       }
 
-      // Find a candidate who played for both clubs and hasn't been used
+      // Find candidate who played for both clubs and not used
       let matchedPlayer: PLPlayer | null = null;
       for (const c of candidates) {
-        const playerKey = c.displayName.toLowerCase();
-        if (usedPlayerKeys.has(playerKey)) continue;
+        if (usedPlayerKeys.has(c.displayName.toLowerCase())) continue;
         if (c.clubs[currentPair.clubA] && c.clubs[currentPair.clubB]) {
           matchedPlayer = c;
           break;
@@ -536,37 +456,21 @@ export default function Overlap() {
       }
 
       if (!matchedPlayer) {
-        // Check specific failure reason
+        // Already used?
         const anyUsed = candidates.some((c) => usedPlayerKeys.has(c.displayName.toLowerCase()));
         const anyMatch = candidates.some(
           (c) => c.clubs[currentPair.clubA] && c.clubs[currentPair.clubB]
         );
 
         if (anyUsed && anyMatch) {
-          // Already used — wrong, penalty, stay on same pair
-          const shownPlayer = candidates.find(
-            (c) =>
-              usedPlayerKeys.has(c.displayName.toLowerCase()) &&
-              c.clubs[currentPair.clubA] &&
-              c.clubs[currentPair.clubB]
-          ) || candidates[0];
           setShowWrong(true);
           playWrong();
           setTimeout(() => setShowWrong(false), 400);
-          setComboStreak(0);
-          setTimeLeft((prev) => {
-            const next = Math.max(0, prev - WRONG_PENALTY);
-            if (next <= 0) setTimeout(() => endGame(), 0);
-            return next;
-          });
-          const result = makeInvalidResult("Already used", shownPlayer);
-          setLastResult(result);
-          setRoundResults((prev) => [...prev, result]);
           setInputValue("");
           return;
         }
 
-        // Check if player played for at least one of the two clubs
+        // One club only?
         const oneClubPlayer = candidates.find(
           (c) =>
             !usedPlayerKeys.has(c.displayName.toLowerCase()) &&
@@ -574,60 +478,35 @@ export default function Overlap() {
         );
 
         if (oneClubPlayer) {
-          // Played for only one club — 0 points, combo reset, advance to next pair
-          const playerKey = oneClubPlayer.displayName.toLowerCase();
-          setUsedPlayerKeys((prev) => new Set(prev).add(playerKey));
-          setComboStreak(0);
           playNeutral();
-
           const playedA = oneClubPlayer.clubs[currentPair.clubA];
           const playedB = oneClubPlayer.clubs[currentPair.clubB];
-          const result: RoundResult = {
-            id: Date.now(),
+          setShowOneClub({
+            player: oneClubPlayer,
             clubA: currentPair.clubA,
             clubB: currentPair.clubB,
-            player: oneClubPlayer,
             appsA: playedA ? playedA.appearances : 0,
             appsB: playedB ? playedB.appearances : 0,
-            goalsA: playedA ? playedA.goals : 0,
-            goalsB: playedB ? playedB.goals : 0,
-            basePoints: 0,
-            bonuses: 0,
-            comboMultiplier: 1,
-            finalPoints: 0,
-            wasInvalid: false,
-            invalidReason: "Only one club",
-            wasSkip: false,
-          };
-          setLastResult(result);
-          setRoundResults((prev) => [...prev, result]);
+          });
           setInputValue("");
-          pickNewPair();
           return;
         }
 
-        // Player exists but played for neither club — wrong, penalty, stay on same pair
+        // Neither club
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
-        setComboStreak(0);
-        setTimeLeft((prev) => {
-          const next = Math.max(0, prev - WRONG_PENALTY);
-          if (next <= 0) setTimeout(() => endGame(), 0);
-          return next;
-        });
-        const result = makeInvalidResult("Played for neither", candidates[0]);
-        setLastResult(result);
-        setRoundResults((prev) => [...prev, result]);
         setInputValue("");
         return;
       }
 
-      // Valid answer!
+      // Correct answer!
+      clearQuestionTimer();
+      setShowOneClub(null);
       const playerKey = matchedPlayer.displayName.toLowerCase();
       setUsedPlayerKeys((prev) => new Set(prev).add(playerKey));
-      setRoundCount((prev) => prev + 1);
 
+      const elapsed = (Date.now() - questionStartRef.current) / 1000;
       const clubDataA = matchedPlayer.clubs[currentPair.clubA];
       const clubDataB = matchedPlayer.clubs[currentPair.clubB];
       const appsA = clubDataA.appearances;
@@ -635,88 +514,66 @@ export default function Overlap() {
       const goalsA = clubDataA.goals;
       const goalsB = clubDataB.goals;
       const minApps = Math.min(appsA, appsB);
-      const totalApps = appsA + appsB;
+      const minGoals = Math.min(goalsA, goalsB);
 
-      const basePoints = calculateBaseScore(minApps);
-      const { total: bonusPoints } = calculateBonuses(appsA, appsB, goalsA, goalsB, minApps);
+      const timeScore = getTimeScore(elapsed);
+      const appBonusData = getAppBonus(minApps);
+      const goalBonusData = getGoalBonus(minGoals);
 
-      let preComboScore = basePoints + bonusPoints;
-
-      // Anti-cheese
-      if (totalApps < 15) {
-        preComboScore = Math.round(preComboScore * 0.8);
-      }
-
-      // Combo
-      let newComboStreak = wasWithinComboWindow ? comboStreak + 1 : 1;
+      const newComboStreak = comboStreak + 1;
       setComboStreak(newComboStreak);
-
       const comboMult = getComboMultiplier(newComboStreak);
-      const finalPoints = Math.round(preComboScore * comboMult);
 
-      // Sound
+      const preCombo = timeScore + appBonusData.points + goalBonusData.points;
+      const finalPoints = Math.round(preCombo * comboMult);
+
       playScoreSound({
         finalPoints,
-        basePoints: preComboScore,
-        isExact: preComboScore >= 40,
+        basePoints: preCombo,
+        isExact: preCombo >= 60,
         isBoostHit: false,
         comboStreak: newComboStreak,
       });
 
       setShowCorrect(true);
       setTimeout(() => setShowCorrect(false), 500);
-
       setTotalScore((prev) => prev + finalPoints);
 
       const result: RoundResult = {
         id: Date.now(),
+        questionNum,
         clubA: currentPair.clubA,
         clubB: currentPair.clubB,
         player: matchedPlayer,
-        appsA,
-        appsB,
-        goalsA,
-        goalsB,
-        basePoints: preComboScore,
-        bonuses: bonusPoints,
+        appsA, appsB, goalsA, goalsB,
+        timeScore,
+        appBonus: appBonusData.points,
+        goalBonus: goalBonusData.points,
         comboMultiplier: comboMult,
         finalPoints,
-        wasInvalid: false,
-        invalidReason: "",
-        wasSkip: false,
+        elapsed,
+        wasPass: false, wasTimeout: false,
       };
       setLastResult(result);
       setRoundResults((prev) => [...prev, result]);
 
       setInputValue("");
-      pickNewPair();
+      setTimeout(() => advanceQuestion(), 300);
     },
-    [
-      gameState,
-      inputValue,
-      currentPair,
-      usedPlayerKeys,
-      playerLookup,
-      comboActive,
-      comboTimeLeft,
-      comboStreak,
-      pickNewPair,
-      endGame,
-    ]
+    [gameState, inputValue, currentPair, usedPlayerKeys, playerLookup, comboStreak, questionNum, advanceQuestion, clearQuestionTimer]
   );
 
-  const timerPercent = (timeLeft / GAME_DURATION) * 100;
-  const isUrgent = timeLeft <= 10;
-  const isWarning = timeLeft <= 30;
-  const comboPercent = (comboTimeLeft / COMBO_WINDOW) * 100;
+  const timePercent = (questionTimeLeft / QUESTION_TIME) * 100;
+  const isUrgent = questionTimeLeft <= 5;
+  const isWarning = questionTimeLeft <= 10;
   const comboMult = getComboMultiplier(comboStreak);
   const comboLevel = getComboLevel(comboStreak);
 
   const comboTier =
-    comboStreak >= 5 ? 3 : comboStreak >= 4 ? 2 : comboStreak >= 3 ? 1 : 0;
+    comboStreak >= 6 ? 3 : comboStreak >= 4 ? 2 : comboStreak >= 2 ? 1 : 0;
   const floatingEmojis = useMemo(() => {
     if (comboStreak < 2) return [];
-    const emoji = comboStreak >= 5 ? "🔥" : comboStreak >= 3 ? "⚡" : "🔗";
+    const emoji = comboStreak >= 6 ? "🔥" : comboStreak >= 4 ? "⚡" : "🔗";
     const count = comboTier === 3 ? 10 : comboTier === 2 ? 7 : comboTier === 1 ? 4 : 2;
     return Array.from({ length: count }, (_, i) => ({
       id: i,
@@ -726,7 +583,7 @@ export default function Overlap() {
       duration: 3 + Math.random() * 4,
       size: 14 + Math.random() * 14,
     }));
-  }, [comboStreak >= 5 ? 5 : comboStreak >= 3 ? 3 : comboStreak >= 2 ? 2 : 0]);
+  }, [comboTier]);
 
   if (gameState === "idle") {
     return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
@@ -756,11 +613,6 @@ export default function Overlap() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className={`absolute inset-0 ${comboLevel.bgClass} transition-all duration-700`}
-            />
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className={`absolute top-0 left-0 w-full h-1/2 ${comboLevel.bgClass} blur-3xl`}
             />
           </>
         )}
@@ -796,21 +648,24 @@ export default function Overlap() {
             >
               <Home className="w-4 h-4" />
             </button>
-            <div
-              className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : theme.timerIcon}`}
-            >
-              <Timer
-                className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : theme.timerIconColor}`}
-              />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20">
+              <span className="text-sm font-bold text-blue-400 tabular-nums">Q{questionNum}</span>
+              <span className="text-xs text-muted-foreground/50">/</span>
+              <span className="text-xs text-muted-foreground/50">{TOTAL_QUESTIONS}</span>
             </div>
-            <span
-              className={`text-2xl font-mono font-bold tabular-nums ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-foreground"} ${isUrgent ? "animate-countdown-pulse" : ""}`}
-            >
-              {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
-            </span>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Timer */}
+            <div className="flex items-center gap-1.5">
+              <Timer className={`w-3.5 h-3.5 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : theme.timerIconColor}`} />
+              <span
+                className={`text-lg font-mono font-bold tabular-nums ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-foreground"} ${isUrgent ? "animate-countdown-pulse" : ""}`}
+              >
+                {Math.ceil(questionTimeLeft)}s
+              </span>
+            </div>
+
             {comboStreak >= 2 && (
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -818,7 +673,7 @@ export default function Overlap() {
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30"
               >
                 <Zap className="w-3 h-3 text-amber-400" />
-                <span className="text-xs font-bold text-amber-400 tabular-nums">{comboMult}x</span>
+                <span className="text-xs font-bold text-amber-400 tabular-nums">{comboMult.toFixed(1)}x</span>
               </motion.div>
             )}
 
@@ -828,22 +683,15 @@ export default function Overlap() {
                 <span className="text-sm font-medium text-amber-400/80">{highScore}</span>
               </div>
             )}
-            <button
-              onClick={endGame}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-muted-foreground/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            >
-              <Flag className="w-3.5 h-3.5" />
-              End
-            </button>
           </div>
         </div>
 
-        {/* Main timer bar */}
-        <div className="w-full h-1 rounded-full bg-muted/50 mb-3 sm:mb-4">
+        {/* Question timer bar */}
+        <div className="w-full h-1.5 rounded-full bg-muted/50 mb-3 sm:mb-4">
           <motion.div
-            className={`h-full rounded-full ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : theme.timerBar}`}
-            style={{ width: `${timerPercent}%` }}
-            transition={{ duration: 0.3 }}
+            className={`h-full rounded-full transition-colors duration-300 ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : theme.timerBar}`}
+            style={{ width: `${timePercent}%` }}
+            transition={{ duration: 0.1 }}
           />
         </div>
 
@@ -863,14 +711,6 @@ export default function Overlap() {
                 points
               </span>
             </motion.div>
-
-            {/* Skips remaining */}
-            <div className="flex items-center gap-1.5 sm:mt-2">
-              <SkipForward className="w-3.5 h-3.5 text-muted-foreground/50" />
-              <span className="text-xs text-muted-foreground/60 tabular-nums">
-                {skipsLeft} skip{skipsLeft !== 1 ? "s" : ""}
-              </span>
-            </div>
           </div>
 
           {/* Combo streak label */}
@@ -883,7 +723,7 @@ export default function Overlap() {
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full mb-2 text-xs font-bold uppercase tracking-wider ${comboLevel.color} bg-card border border-border`}
               >
                 <Zap className="w-3.5 h-3.5" />
-                {comboLevel.label} {comboMult}x
+                {comboLevel.label} {comboMult.toFixed(1)}x
               </motion.div>
             )}
           </AnimatePresence>
@@ -898,49 +738,22 @@ export default function Overlap() {
                 exit={{ opacity: 0, y: -8, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 className={`mb-3 sm:mb-4 px-4 py-2 rounded-md border w-full max-w-sm ${
-                  lastResult.wasSkip
+                  lastResult.wasPass
                     ? "bg-muted/30 border-border/40"
-                    : lastResult.wasInvalid
+                    : lastResult.wasTimeout
                       ? "bg-red-500/5 border-red-500/20"
-                      : lastResult.invalidReason === "Only one club"
-                        ? "bg-amber-500/5 border-amber-500/20"
-                        : lastResult.finalPoints >= 30
-                          ? "bg-blue-500/10 border-blue-500/30"
-                          : "bg-emerald-500/5 border-emerald-500/20"
+                      : lastResult.finalPoints >= 40
+                        ? "bg-blue-500/10 border-blue-500/30"
+                        : "bg-emerald-500/5 border-emerald-500/20"
                 }`}
               >
-                {lastResult.wasSkip ? (
+                {lastResult.wasPass ? (
                   <div className="text-center text-sm text-muted-foreground font-medium">
-                    Skipped
+                    Passed
                   </div>
-                ) : lastResult.wasInvalid ? (
+                ) : lastResult.wasTimeout ? (
                   <div className="text-center text-sm text-red-400 font-medium">
-                    {lastResult.invalidReason}
-                    {lastResult.player && (
-                      <span className="text-red-400/60"> &middot; {lastResult.player.displayName}</span>
-                    )}
-                    <span className="text-red-400/60"> &middot; -{WRONG_PENALTY}s</span>
-                  </div>
-                ) : lastResult.invalidReason === "Only one club" ? (
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <span className="font-bold text-foreground text-sm">
-                          {lastResult.player?.displayName}
-                        </span>
-                        <span className="text-amber-400/80 text-xs ml-1.5">only one club</span>
-                      </div>
-                      <span className="font-bold tabular-nums text-sm text-amber-400/60">0</span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span className={lastResult.appsA > 0 ? "" : "text-muted-foreground/30"}>
-                        {lastResult.clubA}: {lastResult.appsA > 0 ? `${lastResult.appsA} apps` : "—"}
-                      </span>
-                      <span className="text-muted-foreground/30">&middot;</span>
-                      <span className={lastResult.appsB > 0 ? "" : "text-muted-foreground/30"}>
-                        {lastResult.clubB}: {lastResult.appsB > 0 ? `${lastResult.appsB} apps` : "—"}
-                      </span>
-                    </div>
+                    Time's up!
                   </div>
                 ) : (
                   <div>
@@ -953,7 +766,7 @@ export default function Overlap() {
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {lastResult.comboMultiplier > 1 && (
                           <span className="text-[10px] text-amber-400 font-bold">
-                            {lastResult.comboMultiplier}x
+                            {lastResult.comboMultiplier.toFixed(1)}x
                           </span>
                         )}
                         <span className="font-bold tabular-nums text-sm text-emerald-400">
@@ -972,8 +785,49 @@ export default function Overlap() {
                         {lastResult.goalsB > 0 && `, ${lastResult.goalsB}g`}
                       </span>
                     </div>
+                    {/* Bonus badges */}
+                    {(lastResult.appBonus > 0 || lastResult.goalBonus > 0) && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {lastResult.appBonus > 0 && (
+                          <span className="text-[10px] font-bold text-cyan-400 px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                            Low apps +{lastResult.appBonus}
+                          </span>
+                        )}
+                        {lastResult.goalBonus > 0 && (
+                          <span className="text-[10px] font-bold text-violet-400 px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">
+                            Low goals +{lastResult.goalBonus}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* One-club feedback (persists until dismissed by new input) */}
+          <AnimatePresence>
+            {showOneClub && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-3 px-4 py-2 rounded-md border border-amber-500/20 bg-amber-500/5 w-full max-w-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-foreground text-sm">{showOneClub.player.displayName}</span>
+                  <span className="text-xs font-medium text-amber-400">Only one club</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                  <span className={showOneClub.appsA > 0 ? "" : "text-muted-foreground/30"}>
+                    {showOneClub.clubA}: {showOneClub.appsA > 0 ? `${showOneClub.appsA} apps` : "—"}
+                  </span>
+                  <span className="text-muted-foreground/30">&middot;</span>
+                  <span className={showOneClub.appsB > 0 ? "" : "text-muted-foreground/30"}>
+                    {showOneClub.clubB}: {showOneClub.appsB > 0 ? `${showOneClub.appsB} apps` : "—"}
+                  </span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1005,58 +859,14 @@ export default function Overlap() {
             </motion.div>
           )}
 
-          {/* Combo speed ring */}
-          <div className="relative w-12 h-12 mb-3 sm:mb-4 mt-2">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
-              <circle
-                cx="24"
-                cy="24"
-                r="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                className="text-muted/30"
-              />
-              <motion.circle
-                cx="24"
-                cy="24"
-                r="20"
-                fill="none"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 20}
-                strokeDashoffset={2 * Math.PI * 20 * (1 - comboPercent / 100)}
-                className={
-                  comboPercent > 50
-                    ? "stroke-blue-400"
-                    : comboPercent > 25
-                      ? "stroke-amber-400"
-                      : comboPercent > 0
-                        ? "stroke-red-400"
-                        : "stroke-muted/10"
-                }
-                transition={{ duration: 0.1 }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              {comboActive && comboTimeLeft > 0 ? (
-                <Zap
-                  className={`w-4 h-4 ${comboPercent > 50 ? "text-blue-400" : comboPercent > 25 ? "text-amber-400" : "text-red-400"}`}
-                />
-              ) : (
-                <span className="text-muted-foreground/30 text-[10px] font-bold">--</span>
-              )}
-            </div>
-          </div>
-
           {/* Input */}
-          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 sm:mt-auto">
+          <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 sm:mt-auto mt-4">
             <form onSubmit={handleSubmit} className="relative">
               <input
                 ref={inputRef}
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => { setInputValue(e.target.value); setShowOneClub(null); }}
                 placeholder="Name a player..."
                 autoComplete="off"
                 autoCorrect="off"
@@ -1072,16 +882,14 @@ export default function Overlap() {
                 }`}
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {skipsLeft > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleSkip}
-                    className="p-2 rounded-md text-muted-foreground/40 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
-                    title="Skip"
-                  >
-                    <SkipForward className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handlePass}
+                  className="p-2 rounded-md text-muted-foreground/40 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                  title="Pass"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
                 <button
                   type="submit"
                   className="p-2 rounded-md text-muted-foreground/50 transition-colors"
@@ -1091,7 +899,7 @@ export default function Overlap() {
               </div>
             </form>
             <p className="text-center text-[11px] text-muted-foreground/60 uppercase tracking-wider mt-2">
-              Enter to submit
+              Enter to submit &middot; pass to skip
             </p>
           </div>
         </div>
@@ -1099,7 +907,7 @@ export default function Overlap() {
 
       {/* Correct flash */}
       <AnimatePresence>
-        {showCorrect && lastResult && !lastResult.wasInvalid && (
+        {showCorrect && lastResult && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1109,9 +917,9 @@ export default function Overlap() {
           >
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: lastResult.basePoints >= 30 ? 0.1 : 0.04 }}
+              animate={{ opacity: (lastResult.appBonus + lastResult.goalBonus) > 10 ? 0.12 : 0.04 }}
               exit={{ opacity: 0 }}
-              className={`absolute inset-0 ${lastResult.basePoints >= 30 ? "bg-blue-500" : "bg-emerald-500"}`}
+              className={`absolute inset-0 ${(lastResult.appBonus + lastResult.goalBonus) > 10 ? "bg-blue-500" : "bg-emerald-500"}`}
             />
           </motion.div>
         )}
@@ -1202,15 +1010,23 @@ function StartScreen({
               <GitMerge className="w-3.5 h-3.5 text-blue-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Name a player who made <span className="font-semibold text-foreground">PL appearances for both clubs</span>
+              <span className="font-semibold text-foreground">{TOTAL_QUESTIONS} questions</span> &middot; name a player who appeared for <span className="font-semibold text-foreground">both clubs</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
             <div className="w-6 h-6 rounded-md bg-cyan-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Star className="w-3.5 h-3.5 text-cyan-400" />
+              <Timer className="w-3.5 h-3.5 text-cyan-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Obscure overlaps score <span className="font-semibold text-foreground">more points</span> than obvious ones
+              <span className="font-semibold text-foreground">{QUESTION_TIME}s per question</span> &middot; faster answers score more
+            </p>
+          </div>
+          <div className="flex items-start gap-3 text-left">
+            <div className="w-6 h-6 rounded-md bg-violet-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Star className="w-3.5 h-3.5 text-violet-400" />
+            </div>
+            <p className="text-sm text-muted-foreground leading-snug">
+              Bonus points for <span className="font-semibold text-foreground">low appearances</span> and <span className="font-semibold text-foreground">low goals</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1218,7 +1034,7 @@ function StartScreen({
               <Zap className="w-3.5 h-3.5 text-yellow-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Answer within <span className="font-semibold text-foreground">9 seconds</span> for combo multipliers
+              Consecutive correct answers build <span className="font-semibold text-foreground">combo multipliers</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1226,15 +1042,7 @@ function StartScreen({
               <SkipForward className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">1 skip</span> per run &middot; wrong answers cost <span className="font-semibold text-foreground">3 seconds</span>
-            </p>
-          </div>
-          <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Timer className="w-3.5 h-3.5 text-red-400" />
-            </div>
-            <p className="text-sm text-muted-foreground leading-snug">
-              You have <span className="font-semibold text-foreground">2 minutes</span>
+              <span className="font-semibold text-foreground">Pass</span> any question (0 points, resets combo)
             </p>
           </div>
         </motion.div>
@@ -1357,7 +1165,7 @@ function EndScreen({
             {totalScore}
           </div>
           <div className="text-muted-foreground text-xs uppercase tracking-widest mt-2">
-            points from {roundResults.filter((r) => !r.wasSkip).length} answers
+            points from {TOTAL_QUESTIONS} questions
           </div>
         </motion.div>
 
@@ -1373,10 +1181,10 @@ function EndScreen({
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">correct</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-400">
-              {roundResults.filter((r) => r.wasInvalid).length}
+            <div className="text-2xl font-bold text-muted-foreground">
+              {roundResults.filter((r) => r.wasPass).length}
             </div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">wrong</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">passed</div>
           </div>
           {bestRound && (
             <div className="text-center">
@@ -1397,7 +1205,7 @@ function EndScreen({
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
               Round History
             </h3>
-            <div className="space-y-1.5 max-w-sm mx-auto max-h-[300px] overflow-y-auto">
+            <div className="space-y-1.5 max-w-md mx-auto max-h-[400px] overflow-y-auto">
               {roundResults.map((r, i) => (
                 <motion.div
                   key={r.id}
@@ -1405,30 +1213,40 @@ function EndScreen({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.04 }}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs ${
-                    r.wasSkip
-                      ? "bg-card/30 border border-border/20 opacity-40"
+                    r.wasPass || r.wasTimeout
+                      ? "bg-card/30 border border-border/20 opacity-50"
                       : r.finalPoints > 0
                         ? "bg-card border border-border/30"
                         : "bg-card/50 border border-border/20 opacity-60"
                   }`}
                 >
-                  <span className="font-semibold text-blue-400 w-20 text-left truncate text-[11px]">
+                  <span className="font-mono text-blue-400 font-bold w-5 text-right tabular-nums text-[11px]">
+                    {r.questionNum}
+                  </span>
+                  <span className="text-muted-foreground/40 mx-0.5">.</span>
+                  <span className="font-semibold text-blue-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
                     {r.clubA}
                   </span>
-                  <span className="text-muted-foreground/30">&amp;</span>
-                  <span className="font-semibold text-cyan-400 w-20 text-left truncate text-[11px]">
+                  <span className="text-muted-foreground/30 text-[10px]">&</span>
+                  <span className="font-semibold text-cyan-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
                     {r.clubB}
                   </span>
                   <span className="text-muted-foreground/40 mx-0.5">&rarr;</span>
                   <span className="font-semibold text-foreground/80 flex-1 text-left truncate">
-                    {r.wasSkip ? "skip" : r.player ? r.player.displayName : "???"}
+                    {r.wasPass ? "pass" : r.wasTimeout ? "timeout" : r.player ? r.player.displayName : "???"}
                   </span>
+                  {r.finalPoints > 0 && (r.appBonus > 0 || r.goalBonus > 0) && (
+                    <div className="flex gap-0.5">
+                      {r.appBonus > 0 && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" title={`Low apps +${r.appBonus}`} />}
+                      {r.goalBonus > 0 && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" title={`Low goals +${r.goalBonus}`} />}
+                    </div>
+                  )}
                   <span
                     className={`font-bold tabular-nums w-10 text-right ${
-                      r.finalPoints > 0 ? "text-emerald-400" : "text-red-400/60"
+                      r.finalPoints > 0 ? "text-emerald-400" : "text-muted-foreground/40"
                     }`}
                   >
-                    {r.finalPoints > 0 ? `+${r.finalPoints}` : r.wasSkip ? "-" : "0"}
+                    {r.finalPoints > 0 ? `+${r.finalPoints}` : "—"}
                   </span>
                 </motion.div>
               ))}
