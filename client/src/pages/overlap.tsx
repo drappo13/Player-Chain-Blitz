@@ -230,7 +230,28 @@ function getComboLevel(streak: number): { label: string; color: string; bgClass:
   return { label: "", color: "", bgClass: "" };
 }
 
-// --- Pair picking ---
+// --- Big six & pair picking ---
+
+const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Man City", "Man Utd", "Tottenham"]);
+
+function isBigSixPair(pair: ClubPair): boolean {
+  return BIG_SIX.has(pair.clubA) || BIG_SIX.has(pair.clubB);
+}
+
+function weightedPickFromBucket(bucket: ClubPair[]): ClubPair {
+  // Big six pairs get 2x weight
+  const weighted: { pair: ClubPair; weight: number }[] = bucket.map((p) => ({
+    pair: p,
+    weight: isBigSixPair(p) ? 2 : 1,
+  }));
+  const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
+  let r = Math.random() * totalWeight;
+  for (const w of weighted) {
+    r -= w.weight;
+    if (r <= 0) return w.pair;
+  }
+  return weighted[weighted.length - 1].pair;
+}
 
 function pickPair(
   pairs: ClubPair[],
@@ -249,7 +270,7 @@ function pickPair(
   if (bucket.length === 0) bucket = easy.length > 0 ? easy : medium.length > 0 ? medium : hard;
   if (bucket.length === 0) return null;
 
-  return bucket[Math.floor(Math.random() * bucket.length)];
+  return weightedPickFromBucket(bucket);
 }
 
 // --- Component ---
@@ -456,7 +477,7 @@ export default function Overlap() {
         wasSkip: false,
       });
 
-      // Not found in dataset
+      // Not found in dataset at all — wrong, penalty, stay on same pair
       if (!candidates || candidates.length === 0) {
         setShowWrong(true);
         playWrong();
@@ -485,30 +506,80 @@ export default function Overlap() {
         }
       }
 
-      // Check if it's an "already used" situation
       if (!matchedPlayer) {
+        // Check specific failure reason
         const anyUsed = candidates.some((c) => usedPlayerKeys.has(c.displayName.toLowerCase()));
         const anyMatch = candidates.some(
           (c) => c.clubs[currentPair.clubA] && c.clubs[currentPair.clubB]
         );
 
-        let reason: string;
-        let shownPlayer: PLPlayer | null = null;
-
         if (anyUsed && anyMatch) {
-          reason = "Already used";
-          shownPlayer = candidates.find(
+          // Already used — wrong, penalty, stay on same pair
+          const shownPlayer = candidates.find(
             (c) =>
               usedPlayerKeys.has(c.displayName.toLowerCase()) &&
               c.clubs[currentPair.clubA] &&
               c.clubs[currentPair.clubB]
           ) || candidates[0];
-        } else {
-          // Player exists but didn't play for both clubs
-          reason = "Didn't play for both";
-          shownPlayer = candidates[0];
+          setShowWrong(true);
+          playWrong();
+          setTimeout(() => setShowWrong(false), 400);
+          setComboStreak(0);
+          setTimeLeft((prev) => {
+            const next = Math.max(0, prev - WRONG_PENALTY);
+            if (next <= 0) setTimeout(() => endGame(), 0);
+            return next;
+          });
+          const result = makeInvalidResult("Already used", shownPlayer);
+          setLastResult(result);
+          setRoundResults((prev) => [...prev, result]);
+          setInputValue("");
+          return;
         }
 
+        // Check if player played for at least one of the two clubs
+        const oneClubPlayer = candidates.find(
+          (c) =>
+            !usedPlayerKeys.has(c.displayName.toLowerCase()) &&
+            (c.clubs[currentPair.clubA] || c.clubs[currentPair.clubB])
+        );
+
+        if (oneClubPlayer) {
+          // Played for only one club — 0 points, combo reset, advance to next pair
+          const playerKey = oneClubPlayer.displayName.toLowerCase();
+          setUsedPlayerKeys((prev) => new Set(prev).add(playerKey));
+          setComboStreak(0);
+          playWrong();
+          setShowWrong(true);
+          setTimeout(() => setShowWrong(false), 400);
+
+          const playedA = oneClubPlayer.clubs[currentPair.clubA];
+          const playedB = oneClubPlayer.clubs[currentPair.clubB];
+          const result: RoundResult = {
+            id: Date.now(),
+            clubA: currentPair.clubA,
+            clubB: currentPair.clubB,
+            player: oneClubPlayer,
+            appsA: playedA ? playedA.appearances : 0,
+            appsB: playedB ? playedB.appearances : 0,
+            goalsA: playedA ? playedA.goals : 0,
+            goalsB: playedB ? playedB.goals : 0,
+            basePoints: 0,
+            bonuses: 0,
+            comboMultiplier: 1,
+            finalPoints: 0,
+            wasInvalid: false,
+            invalidReason: "Only one club",
+            wasSkip: false,
+          };
+          setLastResult(result);
+          setRoundResults((prev) => [...prev, result]);
+          setInputValue("");
+          pickNewPair();
+          return;
+        }
+
+        // Player exists but played for neither club — wrong, penalty, stay on same pair
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
@@ -518,7 +589,7 @@ export default function Overlap() {
           if (next <= 0) setTimeout(() => endGame(), 0);
           return next;
         });
-        const result = makeInvalidResult(reason, shownPlayer);
+        const result = makeInvalidResult("Played for neither", candidates[0]);
         setLastResult(result);
         setRoundResults((prev) => [...prev, result]);
         setInputValue("");
@@ -804,9 +875,11 @@ export default function Overlap() {
                     ? "bg-muted/30 border-border/40"
                     : lastResult.wasInvalid
                       ? "bg-red-500/5 border-red-500/20"
-                      : lastResult.finalPoints >= 30
-                        ? "bg-blue-500/10 border-blue-500/30"
-                        : "bg-emerald-500/5 border-emerald-500/20"
+                      : lastResult.invalidReason === "Only one club"
+                        ? "bg-amber-500/5 border-amber-500/20"
+                        : lastResult.finalPoints >= 30
+                          ? "bg-blue-500/10 border-blue-500/30"
+                          : "bg-emerald-500/5 border-emerald-500/20"
                 }`}
               >
                 {lastResult.wasSkip ? (
@@ -820,6 +893,27 @@ export default function Overlap() {
                       <span className="text-red-400/60"> &middot; {lastResult.player.displayName}</span>
                     )}
                     <span className="text-red-400/60"> &middot; -{WRONG_PENALTY}s</span>
+                  </div>
+                ) : lastResult.invalidReason === "Only one club" ? (
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="font-bold text-foreground text-sm">
+                          {lastResult.player?.displayName}
+                        </span>
+                        <span className="text-amber-400/80 text-xs ml-1.5">only one club</span>
+                      </div>
+                      <span className="font-bold tabular-nums text-sm text-amber-400/60">0</span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className={lastResult.appsA > 0 ? "" : "text-muted-foreground/30"}>
+                        {lastResult.clubA}: {lastResult.appsA > 0 ? `${lastResult.appsA} apps` : "—"}
+                      </span>
+                      <span className="text-muted-foreground/30">&middot;</span>
+                      <span className={lastResult.appsB > 0 ? "" : "text-muted-foreground/30"}>
+                        {lastResult.clubB}: {lastResult.appsB > 0 ? `${lastResult.appsB} apps` : "—"}
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <div>
