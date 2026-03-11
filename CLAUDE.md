@@ -25,9 +25,11 @@ client/src/
 │   ├── slam-chain.tsx   # Slam16 (Grand Slam tennis players)
 │   ├── target-man.tsx   # TargetMan (match target goal numbers)
 │   ├── grid-lock.tsx    # GridLock (F1 points scorers)
+│   ├── overlap.tsx      # Overlap (shared PL club appearances)
 │   └── not-found.tsx
 ├── data/
 │   ├── players.ts       # 2,859 PL goalscorers {lastName, firstName, displayName, goals}
+│   ├── pl-players.json  # 5,107 PL players: bio + per-club apps/goals/assists
 │   ├── slams.ts         # Grand Slam tournament data
 │   └── f1seasons.ts     # F1 season/driver data
 ├── lib/
@@ -40,6 +42,9 @@ client/src/
     ├── use-mobile.tsx
     └── use-toast.ts
 ```
+
+scripts/
+├── fetch-players.mjs      # Fetches all PL player data from official API
 
 Config files at repo root:
 - `vite.config.ts` — root is `client/`, output is `dist/`
@@ -56,6 +61,7 @@ Config files at repo root:
 | `/slamchain` | SlamChain | Name Grand Slam tennis players |
 | `/targetman` | TargetMan | Match target goal numbers with PL scorers |
 | `/gridlock` | GridLock | Name F1 drivers who scored points |
+| `/overlap` | Overlap | Name players who appeared for both shown PL clubs |
 
 ## Game Themes
 
@@ -63,6 +69,7 @@ Defined in `lib/game-themes.ts`. Each game uses a theme for consistent colors:
 - **emerald** — GoalChain, SlamChain (green/primary)
 - **warm** — TargetMan (orange/amber)
 - **racing** — GridLock (red/orange)
+- **overlap** — Overlap (blue/cyan)
 
 When adding UI to a game page, use its theme colors. Don't introduce unrelated colors (e.g., no violet in TargetMan's orange theme).
 
@@ -103,6 +110,33 @@ npm install    # install deps
 npm run dev    # start dev server
 npm run build  # production build
 npm run check  # TypeScript type checking
+```
+
+## Data Sources & Scripts
+
+### Premier League API (PulseVive)
+The official PL website uses a public, unauthenticated API at `footballapi.pulselive.com`. Used to fetch player data.
+
+**Endpoint pattern:**
+```
+https://footballapi.pulselive.com/football/stats/ranked/players/{STAT}?page={PAGE}&pageSize=100&comps=1&teams={TEAM_ID}&altIds=true
+```
+- Requires `Origin: https://www.premierleague.com` header
+- Paginated JSON (100/page). Stats used: `appearances`, `goals`, `goal_assist`
+- 51 PL teams (full ID list in `scripts/fetch-players.mjs`)
+- Many more stats available (tackles, passes, saves, etc.) — see script comments
+
+**`scripts/fetch-players.mjs`** — Fetches all 3 stats across 51 teams, merges by `playerId`, outputs `client/src/data/pl-players.json`. Run: `node scripts/fetch-players.mjs`
+
+**`pl-players.json` format** (5,107 players, sorted by totalAppearances desc):
+```json
+{
+  "displayName": "Ryan Giggs",
+  "firstName": "Ryan", "lastName": "Giggs",
+  "position": "Midfielder", "nationality": "Wales", "dob": "29 November 1973",
+  "clubs": { "Man Utd": { "appearances": 632, "goals": 109, "assists": 162 } },
+  "totalAppearances": 632, "totalGoals": 109, "totalAssists": 162
+}
 ```
 
 ## Conventions

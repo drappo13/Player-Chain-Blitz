@@ -8,6 +8,7 @@ import Game from "@/pages/game";
 import SlamChain from "@/pages/slam-chain";
 import GridLock from "@/pages/grid-lock";
 import TargetMan from "@/pages/target-man";
+import Overlap from "@/pages/overlap";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/slamchain" component={SlamChain} />
       <Route path="/gridlock" component={GridLock} />
       <Route path="/targetman" component={TargetMan} />
+      <Route path="/overlap" component={Overlap} />
       <Route component={NotFound} />
     </Switch>
   );

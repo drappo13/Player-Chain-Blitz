@@ -34,7 +34,7 @@ export default function Home() {
           Test your sports knowledge
         </motion.p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -136,6 +136,32 @@ export default function Home() {
                   Name F1 drivers who scored points each season. Score = championship points.
                 </p>
                 <div className="flex items-center gap-1 text-xs font-medium text-red-400">
+                  Play
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <Link href="/overlap" data-testid="link-overlap">
+              <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/20 flex items-center justify-center mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">🔗</span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
+                  Over
+                  <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    lap
+                  </span>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
+                  Name a player who appeared for both clubs. Obscure overlaps score big.
+                </p>
+                <div className="flex items-center gap-1 text-xs font-medium text-blue-400">
                   Play
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>

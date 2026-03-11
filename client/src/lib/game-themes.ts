@@ -68,4 +68,16 @@ export const gameThemes = {
     glowA: "bg-red-500/5",
     glowB: "bg-orange-500/5",
   },
+  /** Overlap: blue/cyan tones */
+  overlap: {
+    primaryBtn: "shadow-xl shadow-blue-500/20 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-blue-600 focus-visible:ring-blue-500",
+    outlineBtn: "font-bold border-border focus-visible:ring-blue-500",
+    inputFocus: "focus:border-blue-500/60 focus:shadow-lg focus:shadow-blue-500/10",
+    timerBar: "bg-blue-500",
+    timerIcon: "bg-blue-500/15",
+    timerIconColor: "text-blue-400",
+    accent: "text-blue-400",
+    glowA: "bg-blue-500/5",
+    glowB: "bg-cyan-500/5",
+  },
 } as const satisfies Record<string, GameTheme>;
