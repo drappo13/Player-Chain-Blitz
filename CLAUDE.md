@@ -112,6 +112,13 @@ npm run build  # production build
 npm run check  # TypeScript type checking
 ```
 
+### Local environment constraints
+- **Kandji (MDM) blocks `npm install`** and network access from Claude Code's sandbox — cannot install deps or run builds locally
+- `node_modules/` is not present in the sandbox; `tsc`, `vite`, etc. are unavailable
+- **Builds happen in GitHub Actions only** — commit + push to verify builds
+- Data fetch scripts (`scripts/*.mjs`) use only Node built-ins + `fetch` — no npm deps needed, can run locally
+- If a build fails after push, check the Actions log and fix forward
+
 ## Data Sources & Scripts
 
 ### Premier League API (PulseVive)
