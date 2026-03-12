@@ -104,12 +104,7 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
     const commonSurname = getCommonSurname(p);
     if (commonSurname !== p.lastName) addToLookup(commonSurname, p);
     addToLookup(p.displayName, p);
-    const lastNameParts = p.lastName.split(/\s+/);
-    if (lastNameParts.length > 1) {
-      for (const part of lastNameParts) {
-        if (part.length > 2) addToLookup(part, p);
-      }
-    }
+    addToLookup(p.firstName, p);
   }
 
   const alternates: Record<string, string> = {

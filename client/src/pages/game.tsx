@@ -21,7 +21,11 @@ function normalizeChar(c: string): string {
     .replace(/đ/g, "d");
 }
 
-interface GuessedPlayer extends Player {
+interface LookupPlayer extends Player {
+  originalLastName: string;
+}
+
+interface GuessedPlayer extends LookupPlayer {
   id: number;
 }
 
@@ -50,24 +54,25 @@ function getCommonSurname(p: Player): string {
 }
 
 function buildPlayerLookup() {
-  const lookup = new Map<string, Player>();
+  const lookup = new Map<string, LookupPlayer>();
   for (const p of players) {
+    const lp: LookupPlayer = { ...p, originalLastName: p.lastName };
     const officialKey = normalizeName(p.lastName);
     if (!lookup.has(officialKey)) {
-      lookup.set(officialKey, p);
+      lookup.set(officialKey, lp);
     }
 
     const commonSurname = getCommonSurname(p);
     const commonKey = normalizeName(commonSurname);
     if (commonKey !== officialKey && !lookup.has(commonKey)) {
-      lookup.set(commonKey, { ...p, lastName: commonSurname });
+      lookup.set(commonKey, { ...lp, lastName: commonSurname });
     }
 
     const displayParts = p.displayName.trim().split(/\s+/);
     const fullDisplayKey = normalizeName(p.displayName);
     if (!lookup.has(fullDisplayKey)) {
       const lastWord = displayParts[displayParts.length - 1] || p.lastName;
-      lookup.set(fullDisplayKey, { ...p, lastName: lastWord });
+      lookup.set(fullDisplayKey, { ...lp, lastName: lastWord });
     }
 
     const lastNameParts = p.lastName.split(/\s+/);
@@ -75,7 +80,7 @@ function buildPlayerLookup() {
       for (const part of lastNameParts) {
         const partKey = normalizeName(part);
         if (partKey.length > 2 && !lookup.has(partKey)) {
-          lookup.set(partKey, { ...p, lastName: part });
+          lookup.set(partKey, { ...lp, lastName: part });
         }
       }
     }
@@ -228,15 +233,17 @@ export default function Game() {
 
       const guessNorm = normalizeName(guess);
 
-      if (currentLetter && !guessNorm.startsWith(currentLetter)) {
+      const player = playerLookup.get(guessNorm);
+      if (!player) {
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
         return;
       }
 
-      const player = playerLookup.get(guessNorm);
-      if (!player) {
+      // Check starting letter against the player's actual surname, not the input
+      const playerSurnameStart = normalizeChar(player.originalLastName[0]);
+      if (currentLetter && playerSurnameStart !== currentLetter) {
         setShowWrong(true);
         playWrong();
         setTimeout(() => setShowWrong(false), 400);
