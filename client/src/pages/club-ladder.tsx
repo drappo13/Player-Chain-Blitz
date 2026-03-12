@@ -4,14 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Shield, SkipForward, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playWrong, playCorrect, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
+import { playTick, playGameEnd, playHighScore, playScoreSound, playShieldBlock } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 
 const theme = gameThemes.ladder;
 
 const TURN_TIME = 30;
 const MIN_VALID_CLUBS = 3;
-const MIN_PLAYERS_PER_CLUB = 2;
 
 // --- Types ---
 
@@ -156,19 +155,19 @@ function getBasePoints(elapsed: number): number {
   return Math.round(50 - t * 25);
 }
 
-function getEfficiencyBonus(jump: number): number {
-  if (jump <= 2) return 20;
-  if (jump <= 5) return 16;
-  if (jump <= 10) return 11;
-  if (jump <= 20) return 6;
-  return 0;
+function getEfficiencyBonus(jump: number): { points: number; label: string } {
+  if (jump <= 2) return { points: 20, label: "Tiny increment +20" };
+  if (jump <= 5) return { points: 16, label: "Small increment +16" };
+  if (jump <= 10) return { points: 11, label: "Modest increment +11" };
+  if (jump <= 20) return { points: 6, label: "Medium increment +6" };
+  return { points: 0, label: "" };
 }
 
-function computeScore(elapsed: number, jump: number, multiplier: number): { base: number; efficiency: number; final: number } {
+function computeScore(elapsed: number, jump: number, multiplier: number): { base: number; efficiency: number; effLabel: string; final: number } {
   const base = getBasePoints(elapsed);
-  const efficiency = getEfficiencyBonus(jump);
-  const final = Math.round((base + efficiency) * multiplier);
-  return { base, efficiency, final };
+  const eff = getEfficiencyBonus(jump);
+  const final = Math.round((base + eff.points) * multiplier);
+  return { base, efficiency: eff.points, effLabel: eff.label, final };
 }
 
 // --- Board generation ---
@@ -180,14 +179,11 @@ function getValidClubs(
 ): string[] {
   const valid: string[] = [];
   for (const [club, entries] of clubIndex) {
-    let count = 0;
+    // Just need 1 valid unused player above threshold
     for (const e of entries) {
       if (e.goals > threshold && !usedPlayerKeys.has(e.player.displayName.toLowerCase())) {
-        count++;
-        if (count >= MIN_PLAYERS_PER_CLUB) {
-          valid.push(club);
-          break;
-        }
+        valid.push(club);
+        break;
       }
     }
   }
@@ -206,11 +202,9 @@ function generateBoard(
   const shuffled = [...validClubs].sort(() => Math.random() - 0.5);
   const picked = shuffled.slice(0, 3);
 
-  // Assign shuffled multipliers
-  const multipliers = [1, 2, 3].sort(() => Math.random() - 0.5);
-
+  // Always assign in order: 1x, 2x, 3x
   return {
-    clubs: picked.map((club, i) => ({ club, multiplier: multipliers[i] })),
+    clubs: picked.map((club, i) => ({ club, multiplier: i + 1 })),
   };
 }
 
@@ -248,7 +242,7 @@ function validateAnswer(
   }
 
   // For each unused candidate, check if they have goals > threshold at any shown club
-  // Pick the one that produces the highest score (best club × multiplier)
+  // Pick the one that produces the highest score (best club x multiplier)
   let bestMatch: {
     player: PLPlayer;
     club: string;
@@ -262,7 +256,7 @@ function validateAnswer(
       const clubData = candidate.clubs[co.club];
       if (clubData && clubData.goals > threshold) {
         const jump = clubData.goals - threshold;
-        const score = (50 + getEfficiencyBonus(jump)) * co.multiplier; // approximate best-case
+        const score = (50 + getEfficiencyBonus(jump).points) * co.multiplier;
         if (!bestMatch || score > bestMatch.score) {
           bestMatch = {
             player: candidate,
@@ -277,7 +271,6 @@ function validateAnswer(
   }
 
   if (!bestMatch) {
-    // Check if they have goals at any club but below threshold
     const hasAnyClub = unusedCandidates.some((c) =>
       board.clubs.some((co) => c.clubs[co.club])
     );
@@ -327,6 +320,7 @@ export default function ClubLadder() {
   const [lastResult, setLastResult] = useState<TurnResult | null>(null);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
+  const [showShield, setShowShield] = useState(false);
   const [failFeedback, setFailFeedback] = useState<{ reason: FailReason; guess: string } | null>(null);
   const [turnResults, setTurnResults] = useState<TurnResult[]>([]);
   const [endReason, setEndReason] = useState<string>("");
@@ -384,8 +378,11 @@ export default function ClubLadder() {
     currentThreshold: number,
     currentUsedKeys: Set<string>,
   ) => {
-    // Shield consumed: generate a fresh board, same threshold, reset timer
     setHasShield(false);
+    setShowShield(true);
+    playShieldBlock();
+    setTimeout(() => setShowShield(false), 1500);
+
     const board = generateBoard(clubIndex, currentThreshold, currentUsedKeys);
     if (!board) {
       endGame("Reached the top! No more valid clubs.");
@@ -415,6 +412,7 @@ export default function ClubLadder() {
     setLastResult(null);
     setShowCorrect(false);
     setShowWrong(false);
+    setShowShield(false);
     setFailFeedback(null);
     setTurnResults([]);
     setEndReason("");
@@ -450,10 +448,7 @@ export default function ClubLadder() {
           turnResolvedRef.current = true;
           setTurnTimeLeft(0);
 
-          playWrong();
-
           if (hasShield) {
-            // Shield absorbs timeout
             setLastResult(null);
             shieldRecover(threshold, usedPlayerKeys);
           } else {
@@ -495,7 +490,6 @@ export default function ClubLadder() {
     setLastResult(result);
     setTurnResults((prev) => [...prev, result]);
 
-    // Redraw clubs with same threshold
     advanceTurn(threshold, usedPlayerKeys);
   }, [gameState, currentBoard, hasPass, turnNum, threshold, usedPlayerKeys, advanceTurn, clearTurnTimer]);
 
@@ -510,20 +504,16 @@ export default function ClubLadder() {
       const result = validateAnswer(guess, playerLookup, currentBoard, threshold, usedPlayerKeys);
 
       if (!result.valid) {
-        // Wrong answer
-        playWrong();
         setShowWrong(true);
         setTimeout(() => setShowWrong(false), 400);
         setFailFeedback({ reason: result.failReason!, guess });
         setInputValue("");
 
         if (hasShield) {
-          // Shield absorbs the wrong answer, new board
           clearTurnTimer();
           turnResolvedRef.current = true;
           shieldRecover(threshold, usedPlayerKeys);
         } else {
-          // Game over
           clearTurnTimer();
           turnResolvedRef.current = true;
           endGame("Wrong answer!");
@@ -631,11 +621,11 @@ export default function ClubLadder() {
             {/* Shield indicator */}
             <div className={`flex items-center gap-1 px-2 py-1 rounded-md border ${
               hasShield
-                ? "bg-amber-500/10 border-amber-500/20"
+                ? "bg-purple-500/10 border-purple-500/20"
                 : "bg-muted/30 border-border/30"
             }`}>
-              <Shield className={`w-3.5 h-3.5 ${hasShield ? "text-amber-400" : "text-muted-foreground/30"}`} />
-              {hasShield && <span className="text-xs font-bold text-amber-400">1</span>}
+              <Shield className={`w-3.5 h-3.5 ${hasShield ? "text-purple-400" : "text-muted-foreground/30"}`} />
+              {hasShield && <span className="text-xs font-bold text-purple-400">1</span>}
             </div>
           </div>
 
@@ -681,35 +671,26 @@ export default function ClubLadder() {
         </div>
 
         <div className="sm:flex-1 flex flex-col items-center min-h-0">
-          {/* Score display */}
-          <div className="flex items-center gap-4 sm:flex-col sm:gap-0 mb-2 sm:mb-2">
-            <motion.div
-              key={totalScore}
-              className="text-center"
-              animate={totalScore > 0 ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="text-4xl sm:text-5xl font-bold tabular-nums bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-transparent">
-                {totalScore}
-              </div>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                points
-              </span>
-            </motion.div>
-          </div>
-
-          {/* Threshold display */}
+          {/* Threshold — big and prominent */}
           <motion.div
             key={threshold}
-            initial={{ scale: 0.95, opacity: 0.7 }}
+            initial={{ scale: 0.9, opacity: 0.7 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="mb-3 flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20"
+            className="text-center mb-2"
           >
-            <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-            <span className="text-sm font-bold text-purple-400">
-              Goals &gt; {threshold}
+            <div className="text-5xl sm:text-6xl font-black tabular-nums bg-gradient-to-b from-purple-400 to-purple-600 bg-clip-text text-transparent">
+              {threshold}
+            </div>
+            <span className="text-[10px] text-purple-400/70 uppercase tracking-widest font-bold">
+              goal threshold
             </span>
           </motion.div>
+
+          {/* Score — secondary */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg font-bold tabular-nums text-foreground/70">{totalScore}</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">pts</span>
+          </div>
 
           {/* Last result feedback */}
           <AnimatePresence mode="wait">
@@ -727,27 +708,22 @@ export default function ClubLadder() {
                     <span className="font-bold text-foreground text-sm">
                       {lastResult.player.displayName}
                     </span>
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <span className="text-xs text-purple-400 font-bold ml-2">
                       {lastResult.club} ({lastResult.clubGoals}g)
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {lastResult.multiplier > 1 && (
-                      <span className="text-[10px] text-amber-400 font-bold">
-                        {lastResult.multiplier}x
-                      </span>
-                    )}
-                    <span className="font-bold tabular-nums text-sm text-emerald-400">
-                      +{lastResult.finalPoints}
-                    </span>
-                  </div>
+                  <span className="font-bold tabular-nums text-sm text-emerald-400 flex-shrink-0">
+                    +{lastResult.finalPoints}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  <span>Base {lastResult.basePoints}</span>
+                  <span>Speed {lastResult.basePoints}</span>
                   {lastResult.efficiencyBonus > 0 && (
                     <>
                       <span className="text-muted-foreground/30">&middot;</span>
-                      <span className="text-cyan-400">Eff +{lastResult.efficiencyBonus}</span>
+                      <span className="text-cyan-400">
+                        {lastResult.clubGoals - lastResult.threshold + (lastResult.clubGoals - (lastResult.threshold - lastResult.efficiencyBonus)) <= 2 ? "Tiny" : lastResult.clubGoals - lastResult.threshold <= 5 ? "Small" : lastResult.clubGoals - lastResult.threshold <= 10 ? "Modest" : "Medium"} increment +{lastResult.efficiencyBonus}
+                      </span>
                     </>
                   )}
                   <span className="text-muted-foreground/30">&middot;</span>
@@ -757,9 +733,35 @@ export default function ClubLadder() {
             )}
           </AnimatePresence>
 
+          {/* Shield popup */}
+          <AnimatePresence>
+            {showShield && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="mb-3 px-5 py-3 rounded-lg border-2 border-purple-500/40 bg-purple-500/15 w-full max-w-sm"
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <motion.div
+                    animate={{ rotate: [0, -15, 15, -10, 10, 0], scale: [1, 1.2, 1.1, 1.15, 1.05, 1] }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <Shield className="w-7 h-7 text-purple-400" />
+                  </motion.div>
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-purple-400">Shield Activated!</div>
+                    <div className="text-[10px] text-muted-foreground">Blocked &mdash; new clubs drawn</div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Fail feedback */}
           <AnimatePresence>
-            {failFeedback && (
+            {failFeedback && !showShield && (
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -772,19 +774,14 @@ export default function ClubLadder() {
                     {failFeedback.reason === "not_found" && "Player not found"}
                     {failFeedback.reason === "already_used" && "Already used"}
                     {failFeedback.reason === "no_club" && "Not at these clubs"}
-                    {failFeedback.reason === "below_threshold" && `Goals ≤ ${threshold}`}
+                    {failFeedback.reason === "below_threshold" && `Goals \u2264 ${threshold}`}
                   </span>
                 </div>
-                {hasShield && (
-                  <div className="mt-1 text-xs text-amber-400 font-medium flex items-center gap-1">
-                    <Shield className="w-3 h-3" /> Shield used — new clubs!
-                  </div>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Club tiles */}
+          {/* Club tiles — always sorted 1x 2x 3x */}
           {currentBoard && (
             <motion.div
               key={currentBoard.clubs.map(c => c.club).join("|")}
@@ -794,7 +791,7 @@ export default function ClubLadder() {
               className="w-full max-w-lg mb-4"
             >
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {currentBoard.clubs.map((co) => (
+                {[...currentBoard.clubs].sort((a, b) => a.multiplier - b.multiplier).map((co) => (
                   <div
                     key={co.club}
                     className="relative rounded-lg border border-border/60 bg-card p-3 sm:p-4 text-center"
@@ -804,9 +801,9 @@ export default function ClubLadder() {
                     </div>
                     <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
                       co.multiplier === 3
-                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-400"
+                        ? "bg-purple-500/15 border border-purple-500/30 text-purple-400"
                         : co.multiplier === 2
-                          ? "bg-purple-500/15 border border-purple-500/30 text-purple-400"
+                          ? "bg-indigo-500/15 border border-indigo-500/30 text-indigo-400"
                           : "bg-muted/50 border border-border/40 text-muted-foreground"
                     }`}>
                       {co.multiplier}x
@@ -860,7 +857,7 @@ export default function ClubLadder() {
             </form>
             <p className="text-center text-[11px] text-muted-foreground/60 uppercase tracking-wider mt-2">
               Enter to submit
-              {hasPass && " · pass to redraw"}
+              {hasPass && " \u00b7 pass to redraw"}
             </p>
           </div>
         </div>
@@ -905,6 +902,26 @@ export default function ClubLadder() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Shield flash */}
+      <AnimatePresence>
+        {showShield && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 pointer-events-none z-50"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.1, 0.05, 0.08, 0] }}
+              transition={{ duration: 0.8 }}
+              className="absolute inset-0 bg-purple-500"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -943,7 +960,7 @@ function StartScreen({
           initial={{ scale: 0, rotate: -20 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", delay: 0.1, stiffness: 200 }}
-          className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-8 rounded-2xl bg-gradient-to-br from-purple-500/20 to-amber-500/5 border border-purple-500/20 flex items-center justify-center shadow-xl shadow-purple-500/10"
+          className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-8 rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-500/5 border border-purple-500/20 flex items-center justify-center shadow-xl shadow-purple-500/10"
         >
           <TrendingUp className="w-8 h-8 sm:w-12 sm:h-12 text-purple-400" />
         </motion.div>
@@ -955,7 +972,7 @@ function StartScreen({
           className="text-3xl sm:text-5xl font-black text-foreground mb-4 sm:mb-8 tracking-tight"
         >
           Club
-          <span className="bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
             Ladder
           </span>
         </motion.h1>
@@ -975,11 +992,11 @@ function StartScreen({
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Star className="w-3.5 h-3.5 text-amber-400" />
+            <div className="w-6 h-6 rounded-md bg-indigo-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Star className="w-3.5 h-3.5 text-indigo-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Name a goalscorer with <span className="font-semibold text-foreground">more goals</span> than the current threshold at one of the clubs
+              Name a goalscorer with <span className="font-semibold text-foreground">more goals</span> than the threshold at one of the clubs
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -991,8 +1008,8 @@ function StartScreen({
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
+            <div className="w-6 h-6 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Shield className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
               <span className="font-semibold text-foreground">1 shield</span> absorbs a wrong answer or timeout &middot; <span className="font-semibold text-foreground">1 pass</span> redraws clubs
@@ -1070,7 +1087,7 @@ function EndScreen({
         {isNewHighScore && (
           <>
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-pulse-glow" />
-            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/8 rounded-full blur-3xl animate-pulse-glow" />
+            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-500/8 rounded-full blur-3xl animate-pulse-glow" />
           </>
         )}
       </div>
@@ -1106,23 +1123,37 @@ function EndScreen({
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/15 to-amber-600/10 border border-purple-500/20 text-purple-400 font-bold text-sm shadow-lg shadow-purple-500/10"
+            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/15 to-indigo-600/10 border border-purple-500/20 text-purple-400 font-bold text-sm shadow-lg shadow-purple-500/10"
           >
             <Star className="w-4 h-4 fill-current" />
             New High Score!
           </motion.div>
         )}
 
+        {/* Peak threshold — big and prominent */}
         <motion.div
           initial={{ scale: 0.5 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
-          className="mb-3"
+          className="mb-2"
         >
-          <div className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
-            {totalScore}
+          <div className="text-7xl sm:text-8xl font-black tabular-nums bg-gradient-to-b from-purple-400 via-purple-500 to-purple-700 bg-clip-text text-transparent">
+            {peakThreshold}
           </div>
-          <div className="text-muted-foreground text-xs uppercase tracking-widest mt-2">
+          <div className="text-purple-400/70 text-xs uppercase tracking-widest mt-1 font-bold">
+            peak goal threshold
+          </div>
+        </motion.div>
+
+        {/* Score — secondary */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mb-4"
+        >
+          <div className="text-2xl font-bold tabular-nums text-foreground/70">{totalScore} pts</div>
+          <div className="text-muted-foreground text-[10px] uppercase tracking-widest mt-0.5">
             {endReason}
           </div>
         </motion.div>
@@ -1138,10 +1169,6 @@ function EndScreen({
             <div className="text-2xl font-bold text-foreground">{scoringRounds.length}</div>
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">turns</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{peakThreshold}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">peak goals</div>
-          </div>
           {bestRound && (
             <div className="text-center">
               <div className="text-2xl font-bold text-emerald-400">+{bestRound.finalPoints}</div>
@@ -1150,7 +1177,7 @@ function EndScreen({
           )}
         </motion.div>
 
-        {/* Turn history */}
+        {/* Turn history — goals prominent, turn number greyed */}
         {turnResults.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1159,16 +1186,16 @@ function EndScreen({
             className="mt-4 mb-8"
           >
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
-              Turn History
+              Climb History
             </h3>
-            <div className="space-y-2 max-w-md mx-auto max-h-[500px] overflow-y-auto">
+            <div className="space-y-1.5 max-w-md mx-auto max-h-[500px] overflow-y-auto">
               {turnResults.map((r, i) => (
                 <motion.div
                   key={r.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.04 }}
-                  className={`px-3 py-2 rounded-md text-xs ${
+                  className={`px-3 py-1.5 rounded-md text-xs ${
                     r.wasPass
                       ? "bg-card/30 border border-border/20"
                       : r.finalPoints > 0
@@ -1177,34 +1204,32 @@ function EndScreen({
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-purple-400 font-bold w-5 text-right tabular-nums text-[11px]">
+                    <span className="text-muted-foreground/30 font-mono w-4 text-right tabular-nums text-[10px]">
                       {r.turnNum}
                     </span>
-                    <span className="text-muted-foreground/40 mx-0.5">.</span>
-                    <span className="font-semibold text-foreground/80 flex-1 text-left truncate">
-                      {r.wasPass ? "pass" : r.player ? r.player.displayName : "—"}
-                    </span>
-                    {r.player && (
+                    {r.player ? (
                       <>
-                        <span className="text-muted-foreground/40 text-[10px]">&rarr;</span>
-                        <span className="text-purple-400/80 text-[11px] font-semibold truncate" style={{ maxWidth: "5rem" }}>
+                        <span className="text-2xl font-black text-purple-400 tabular-nums w-10 text-right leading-none">
+                          {r.clubGoals}
+                        </span>
+                        <span className="text-muted-foreground/30 text-[10px]">g</span>
+                        <span className="font-semibold text-foreground/80 flex-1 text-left truncate text-[11px]">
+                          {r.player.displayName}
+                        </span>
+                        <span className="text-muted-foreground/40 text-[10px] truncate" style={{ maxWidth: "4.5rem" }}>
                           {r.club}
                         </span>
-                        <span className="text-muted-foreground/50 tabular-nums text-[10px]">
-                          {r.clubGoals}g
-                        </span>
-                        <span className="text-amber-400/70 text-[10px] font-bold">
-                          {r.multiplier}x
+                        <span
+                          className={`font-bold tabular-nums w-10 text-right text-emerald-400`}
+                        >
+                          +{r.finalPoints}
                         </span>
                       </>
+                    ) : (
+                      <span className="text-muted-foreground/40 flex-1 text-left">
+                        {r.wasPass ? "pass" : "—"}
+                      </span>
                     )}
-                    <span
-                      className={`font-bold tabular-nums w-10 text-right ${
-                        r.finalPoints > 0 ? "text-emerald-400" : "text-muted-foreground/40"
-                      }`}
-                    >
-                      {r.finalPoints > 0 ? `+${r.finalPoints}` : "—"}
-                    </span>
                   </div>
                 </motion.div>
               ))}

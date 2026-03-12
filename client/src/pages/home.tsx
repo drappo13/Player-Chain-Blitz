@@ -55,7 +55,7 @@ const footballGames: GameCard[] = [
     iconGradient: "from-purple-500/20 to-purple-500/5",
     iconBorder: "border-purple-500/20",
     title: ["Club", "Ladder"],
-    titleGradient: "from-purple-400 to-amber-400",
+    titleGradient: "from-purple-400 to-indigo-400",
     description: "Climb the goal threshold. 3 clubs, multipliers, 1 shield. How high can you go?",
     playColor: "text-purple-400",
   },
