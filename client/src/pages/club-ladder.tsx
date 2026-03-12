@@ -621,11 +621,11 @@ export default function ClubLadder() {
             {/* Shield indicator */}
             <div className={`flex items-center gap-1 px-2 py-1 rounded-md border ${
               hasShield
-                ? "bg-purple-500/10 border-purple-500/20"
+                ? "bg-emerald-500/10 border-emerald-500/20"
                 : "bg-muted/30 border-border/30"
             }`}>
-              <Shield className={`w-3.5 h-3.5 ${hasShield ? "text-purple-400" : "text-muted-foreground/30"}`} />
-              {hasShield && <span className="text-xs font-bold text-purple-400">1</span>}
+              <Shield className={`w-3.5 h-3.5 ${hasShield ? "text-emerald-400" : "text-muted-foreground/30"}`} />
+              {hasShield && <span className="text-xs font-bold text-emerald-400">1</span>}
             </div>
           </div>
 
@@ -741,17 +741,17 @@ export default function ClubLadder() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8, y: -20 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="mb-3 px-5 py-3 rounded-lg border-2 border-purple-500/40 bg-purple-500/15 w-full max-w-sm"
+                className="mb-3 px-5 py-3 rounded-lg border-2 border-emerald-500/40 bg-emerald-500/10 w-full max-w-sm"
               >
                 <div className="flex items-center justify-center gap-3">
                   <motion.div
                     animate={{ rotate: [0, -15, 15, -10, 10, 0], scale: [1, 1.2, 1.1, 1.15, 1.05, 1] }}
                     transition={{ duration: 0.6 }}
                   >
-                    <Shield className="w-7 h-7 text-purple-400" />
+                    <Shield className="w-7 h-7 text-emerald-400" />
                   </motion.div>
                   <div className="text-center">
-                    <div className="text-sm font-bold text-purple-400">Shield Activated!</div>
+                    <div className="text-sm font-bold text-emerald-400">Shield Activated!</div>
                     <div className="text-[10px] text-muted-foreground">Blocked &mdash; new clubs drawn</div>
                   </div>
                 </div>
@@ -917,7 +917,7 @@ export default function ClubLadder() {
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 0.1, 0.05, 0.08, 0] }}
               transition={{ duration: 0.8 }}
-              className="absolute inset-0 bg-purple-500"
+              className="absolute inset-0 bg-emerald-500"
             />
           </motion.div>
         )}
@@ -1008,8 +1008,8 @@ function StartScreen({
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
-            <div className="w-6 h-6 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Shield className="w-3.5 h-3.5 text-purple-400" />
+            <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
               <span className="font-semibold text-foreground">1 shield</span> absorbs a wrong answer or timeout &middot; <span className="font-semibold text-foreground">1 pass</span> redraws clubs

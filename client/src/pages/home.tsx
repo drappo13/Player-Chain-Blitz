@@ -16,17 +16,6 @@ interface GameCard {
 
 const footballGames: GameCard[] = [
   {
-    href: "/goalchain",
-    testId: "link-goalchain",
-    emoji: "⚽",
-    iconGradient: "from-primary/20 to-primary/5",
-    iconBorder: "border-primary/20",
-    title: ["Goal", "Chain"],
-    titleGradient: "from-primary to-emerald-400",
-    description: "Chain PL scorers by the last letter of their surname. Score = total goals.",
-    playColor: "text-primary",
-  },
-  {
     href: "/targetman",
     testId: "link-targetman",
     emoji: "🎯",
@@ -58,6 +47,17 @@ const footballGames: GameCard[] = [
     titleGradient: "from-purple-400 to-indigo-400",
     description: "Climb the goal threshold. 3 clubs, multipliers, 1 shield. How high can you go?",
     playColor: "text-purple-400",
+  },
+  {
+    href: "/goalchain",
+    testId: "link-goalchain",
+    emoji: "⚽",
+    iconGradient: "from-primary/20 to-primary/5",
+    iconBorder: "border-primary/20",
+    title: ["Goal", "Chain"],
+    titleGradient: "from-primary to-emerald-400",
+    description: "Chain PL scorers by the last letter of their surname. Score = total goals.",
+    playColor: "text-primary",
   },
 ];
 
@@ -156,7 +156,7 @@ function GameSection({
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background flex items-start pt-12 sm:items-center sm:pt-0 justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex items-start pt-12 sm:pt-16 justify-center p-4 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
