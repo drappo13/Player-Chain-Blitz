@@ -172,35 +172,63 @@ function computeScore(elapsed: number, jump: number, multiplier: number): { base
 
 // --- Board generation ---
 
-function getValidClubs(
+/** Count valid (unused, above threshold) players per club. */
+function getClubWeights(
   clubIndex: Map<string, ClubPlayerEntry[]>,
   threshold: number,
   usedPlayerKeys: Set<string>,
-): string[] {
-  const valid: string[] = [];
+): Map<string, number> {
+  const weights = new Map<string, number>();
   for (const [club, entries] of clubIndex) {
-    // Just need 1 valid unused player above threshold
+    let count = 0;
     for (const e of entries) {
       if (e.goals > threshold && !usedPlayerKeys.has(e.player.displayName.toLowerCase())) {
-        valid.push(club);
-        break;
+        count++;
       }
     }
+    if (count > 0) weights.set(club, count);
   }
-  return valid;
+  return weights;
+}
+
+/** Weighted random pick from a weights map, excluding certain clubs. Returns null if empty. */
+function weightedPick(weights: Map<string, number>, exclude: Set<string>): string | null {
+  let total = 0;
+  for (const [club, w] of weights) {
+    if (!exclude.has(club)) total += w;
+  }
+  if (total === 0) return null;
+  let r = Math.random() * total;
+  for (const [club, w] of weights) {
+    if (exclude.has(club)) continue;
+    r -= w;
+    if (r <= 0) return club;
+  }
+  return null;
 }
 
 function generateBoard(
   clubIndex: Map<string, ClubPlayerEntry[]>,
   threshold: number,
   usedPlayerKeys: Set<string>,
+  lastAnswerClub?: string,
 ): Board | null {
-  const validClubs = getValidClubs(clubIndex, threshold, usedPlayerKeys);
-  if (validClubs.length < MIN_VALID_CLUBS) return null;
+  const weights = getClubWeights(clubIndex, threshold, usedPlayerKeys);
+  if (weights.size < MIN_VALID_CLUBS) return null;
 
-  // Pick 3 random clubs
-  const shuffled = [...validClubs].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, 3);
+  // Pick 3 clubs via weighted sampling. Exclude last-answered club from first pick.
+  const picked: string[] = [];
+  const excluded = new Set<string>();
+  if (lastAnswerClub && weights.has(lastAnswerClub) && weights.size > MIN_VALID_CLUBS) {
+    excluded.add(lastAnswerClub);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const club = weightedPick(weights, excluded);
+    if (!club) return null;
+    picked.push(club);
+    excluded.add(club); // don't pick the same club twice in one board
+  }
 
   // Always assign in order: 1x, 2x, 3x
   return {
@@ -330,6 +358,7 @@ export default function ClubLadder() {
   const turnStartRef = useRef<number>(Date.now());
   const turnResolvedRef = useRef(false);
   const turnTimeRef = useRef(TURN_TIME);
+  const lastAnswerClubRef = useRef<string | undefined>(undefined);
 
   const clearTurnTimer = useCallback(() => {
     if (turnTimerRef.current) {
@@ -356,8 +385,10 @@ export default function ClubLadder() {
   const advanceTurn = useCallback((
     newThreshold: number,
     newUsedKeys: Set<string>,
+    answeredClub?: string,
   ) => {
-    const board = generateBoard(clubIndex, newThreshold, newUsedKeys);
+    if (answeredClub) lastAnswerClubRef.current = answeredClub;
+    const board = generateBoard(clubIndex, newThreshold, newUsedKeys, lastAnswerClubRef.current);
     if (!board) {
       endGame("Reached the top! No more valid clubs.");
       return;
@@ -383,7 +414,7 @@ export default function ClubLadder() {
     playShieldBlock();
     setTimeout(() => setShowShield(false), 1500);
 
-    const board = generateBoard(clubIndex, currentThreshold, currentUsedKeys);
+    const board = generateBoard(clubIndex, currentThreshold, currentUsedKeys, lastAnswerClubRef.current);
     if (!board) {
       endGame("Reached the top! No more valid clubs.");
       return;
@@ -416,6 +447,7 @@ export default function ClubLadder() {
     setFailFeedback(null);
     setTurnResults([]);
     setEndReason("");
+    lastAnswerClubRef.current = undefined;
 
     const board = generateBoard(clubIndex, 0, new Set());
     if (board) {
@@ -569,7 +601,7 @@ export default function ClubLadder() {
       setTurnResults((prev) => [...prev, turnResult]);
 
       setInputValue("");
-      setTimeout(() => advanceTurn(newThreshold, newUsedKeys), 400);
+      setTimeout(() => advanceTurn(newThreshold, newUsedKeys, result.club), 400);
     },
     [gameState, inputValue, currentBoard, threshold, usedPlayerKeys, playerLookup, turnNum, hasShield, advanceTurn, clearTurnTimer, endGame, shieldRecover]
   );
