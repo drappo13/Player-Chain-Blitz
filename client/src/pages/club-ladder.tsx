@@ -1130,30 +1130,28 @@ function EndScreen({
           </motion.div>
         )}
 
-        {/* Peak threshold — big and prominent */}
+        {/* Score — headline */}
         <motion.div
           initial={{ scale: 0.5 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-2"
         >
-          <div className="text-7xl sm:text-8xl font-black tabular-nums bg-gradient-to-b from-purple-400 via-purple-500 to-purple-700 bg-clip-text text-transparent">
-            {peakThreshold}
+          <div className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
+            {totalScore}
           </div>
-          <div className="text-purple-400/70 text-xs uppercase tracking-widest mt-1 font-bold">
-            peak goal threshold
+          <div className="text-muted-foreground text-xs uppercase tracking-widest mt-1">
+            points
           </div>
         </motion.div>
 
-        {/* Score — secondary */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           className="mb-4"
         >
-          <div className="text-2xl font-bold tabular-nums text-foreground/70">{totalScore} pts</div>
-          <div className="text-muted-foreground text-[10px] uppercase tracking-widest mt-0.5">
+          <div className="text-muted-foreground text-[10px] uppercase tracking-widest">
             {endReason}
           </div>
         </motion.div>
@@ -1168,6 +1166,10 @@ function EndScreen({
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">{scoringRounds.length}</div>
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">turns</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-400">{peakThreshold}</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">peak goals</div>
           </div>
           {bestRound && (
             <div className="text-center">
@@ -1209,7 +1211,7 @@ function EndScreen({
                     </span>
                     {r.player ? (
                       <>
-                        <span className="text-2xl font-black text-purple-400 tabular-nums w-10 text-right leading-none">
+                        <span className="text-base font-black text-purple-400 tabular-nums w-8 text-right leading-none">
                           {r.clubGoals}
                         </span>
                         <span className="text-muted-foreground/30 text-[10px]">g</span>
