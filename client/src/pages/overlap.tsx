@@ -106,7 +106,16 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
     const commonSurname = getCommonSurname(p);
     if (commonSurname !== p.lastName) addToLookup(commonSurname, p);
     addToLookup(p.displayName, p);
-    addToLookup(p.firstName, p);
+  }
+
+  // Mononym / nickname lookups — players commonly known by first name or single name
+  // Maps normalized alias → normalized displayName key
+  const mononyms: Record<string, string> = {
+    gabriel: "gabrielmagalhaes",
+  };
+  for (const [mono, targetKey] of Object.entries(mononyms)) {
+    const players = lookup.get(targetKey);
+    if (players && !lookup.has(mono)) lookup.set(mono, players);
   }
 
   const alternates: Record<string, string> = {
@@ -490,6 +499,7 @@ export default function Overlap() {
       if (!candidates || candidates.length === 0) {
         setShowWrong(true);
         playWrong();
+        setComboStreak(0);
         questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
         setShowPenalty(true);
         setTimeout(() => setShowPenalty(false), 800);
@@ -518,9 +528,10 @@ export default function Overlap() {
         if (anyUsed && anyMatch) {
           setShowWrong(true);
           playWrong();
+          setComboStreak(0);
           questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
-        setShowPenalty(true);
-        setTimeout(() => setShowPenalty(false), 800);
+          setShowPenalty(true);
+          setTimeout(() => setShowPenalty(false), 800);
           setTimeout(() => setShowWrong(false), 400);
           setInputValue("");
           return;
@@ -535,9 +546,10 @@ export default function Overlap() {
 
         if (oneClubPlayer) {
           playWrong();
+          setComboStreak(0);
           questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
-        setShowPenalty(true);
-        setTimeout(() => setShowPenalty(false), 800);
+          setShowPenalty(true);
+          setTimeout(() => setShowPenalty(false), 800);
           setShowWrong(true);
           setTimeout(() => setShowWrong(false), 400);
           const playedA = oneClubPlayer.clubs[currentPair.clubA];
@@ -556,6 +568,7 @@ export default function Overlap() {
         // Neither club
         setShowWrong(true);
         playWrong();
+        setComboStreak(0);
         questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
         setShowPenalty(true);
         setTimeout(() => setShowPenalty(false), 800);
@@ -906,11 +919,14 @@ export default function Overlap() {
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mb-3 px-4 py-2 rounded-md border border-amber-500/20 bg-amber-500/5 w-full max-w-sm"
+                className="mb-3 px-4 py-2 rounded-md border border-red-500/20 bg-red-500/5 w-full max-w-sm"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-foreground text-sm">{showOneClub.player.displayName}</span>
-                  <span className="text-xs font-medium text-amber-400">Only one club</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-amber-400">Only one club</span>
+                    <span className="text-[10px] font-bold text-red-400">-{WRONG_GUESS_PENALTY}s</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className={showOneClub.appsA > 0 ? "" : "text-muted-foreground/30"}>
@@ -946,9 +962,10 @@ export default function Overlap() {
                   {currentPair.clubB}
                 </div>
               </div>
-              <span className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">
-                {currentPair.players.length} possible answers
-              </span>
+              <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/15">
+                <span className="text-xs font-bold text-blue-400 tabular-nums">{currentPair.players.length}</span>
+                <span className="text-[10px] text-blue-400/60 uppercase tracking-wider">possible answers</span>
+              </div>
             </motion.div>
           )}
 
