@@ -238,10 +238,19 @@ function getTopPlayersForPair(pair: ClubPair, limit = 3): { displayName: string;
 
 // --- Pair picking ---
 
+function getAnswerCountWeight(count: number): number {
+  // Heavily favor pairs with more answers: 20+ = 5x, 12+ = 3x, 8+ = 2x, 6+ = 1.5x, else 1x
+  if (count >= 20) return 5;
+  if (count >= 12) return 3;
+  if (count >= 8) return 2;
+  if (count >= 6) return 1.5;
+  return 1;
+}
+
 function weightedPickFromBucket(bucket: ClubPair[]): ClubPair {
   const weighted = bucket.map((p) => ({
     pair: p,
-    weight: (BIG_SIX.has(p.clubA) || BIG_SIX.has(p.clubB) ? 2 : 1) * p.eraWeight,
+    weight: (BIG_SIX.has(p.clubA) || BIG_SIX.has(p.clubB) ? 2 : 1) * p.eraWeight * getAnswerCountWeight(p.players.length),
   }));
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
   let r = Math.random() * totalWeight;
@@ -297,6 +306,8 @@ export default function Overlap() {
   const [showOneClub, setShowOneClub] = useState<{ player: PLPlayer; clubA: string; clubB: string; appsA: number; appsB: number } | null>(null);
   const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
   const [showTimeoutReveal, setShowTimeoutReveal] = useState<{ displayName: string; combinedApps: number }[] | null>(null);
+  const [showPenalty, setShowPenalty] = useState(false);
+  const timeoutAdvanceRef = useRef<NodeJS.Timeout | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -325,6 +336,10 @@ export default function Overlap() {
   }, [highScore, clearQuestionTimer]);
 
   const advanceQuestion = useCallback(() => {
+    if (timeoutAdvanceRef.current) {
+      clearTimeout(timeoutAdvanceRef.current);
+      timeoutAdvanceRef.current = null;
+    }
     if (questionNum >= TOTAL_QUESTIONS) {
       endGame();
       return;
@@ -401,8 +416,6 @@ export default function Overlap() {
 
           playWrong();
           setComboStreak(0);
-          setShowWrong(true);
-          setTimeout(() => setShowWrong(false), 400);
           const topPlayers = currentPair ? getTopPlayersForPair(currentPair, 5) : [];
           const result: RoundResult = {
             id: Date.now(),
@@ -420,7 +433,7 @@ export default function Overlap() {
           setLastResult(result);
           setRoundResults((prev) => [...prev, result]);
           setShowTimeoutReveal(topPlayers);
-          setTimeout(() => advanceQuestion(), 2500);
+          timeoutAdvanceRef.current = setTimeout(() => advanceQuestion(), 10000);
           return;
         }
 
@@ -478,6 +491,8 @@ export default function Overlap() {
         setShowWrong(true);
         playWrong();
         questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
+        setShowPenalty(true);
+        setTimeout(() => setShowPenalty(false), 800);
         setTimeout(() => setShowWrong(false), 400);
         setInputValue("");
         return;
@@ -504,6 +519,8 @@ export default function Overlap() {
           setShowWrong(true);
           playWrong();
           questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
+        setShowPenalty(true);
+        setTimeout(() => setShowPenalty(false), 800);
           setTimeout(() => setShowWrong(false), 400);
           setInputValue("");
           return;
@@ -517,7 +534,12 @@ export default function Overlap() {
         );
 
         if (oneClubPlayer) {
-          playNeutral();
+          playWrong();
+          questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
+        setShowPenalty(true);
+        setTimeout(() => setShowPenalty(false), 800);
+          setShowWrong(true);
+          setTimeout(() => setShowWrong(false), 400);
           const playedA = oneClubPlayer.clubs[currentPair.clubA];
           const playedB = oneClubPlayer.clubs[currentPair.clubB];
           setShowOneClub({
@@ -535,6 +557,8 @@ export default function Overlap() {
         setShowWrong(true);
         playWrong();
         questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
+        setShowPenalty(true);
+        setTimeout(() => setShowPenalty(false), 800);
         setTimeout(() => setShowWrong(false), 400);
         setInputValue("");
         return;
@@ -709,6 +733,18 @@ export default function Overlap() {
               >
                 {Math.ceil(questionTimeLeft)}s
               </span>
+              <AnimatePresence>
+                {showPenalty && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -5, scale: 0.8 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="text-xs font-bold text-red-400"
+                  >
+                    -{WRONG_GUESS_PENALTY}s
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
 
             {comboStreak >= 2 && (
@@ -742,10 +778,10 @@ export default function Overlap() {
           </div>
           {!questionResolvedRef.current && questionTimeLeft > 0 && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ left: `${Math.max(timePercent - 1, 0)}%` }}
+              className="absolute top-1/2 -translate-y-1/2 pointer-events-none flex items-center"
+              style={{ left: `${timePercent}%` }}
             >
-              <span className={`text-[10px] font-bold tabular-nums ml-1 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-blue-400"}`}>
+              <span className={`text-[10px] font-bold tabular-nums ml-2 leading-none ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-blue-400"}`}>
                 {liveTimeScore}pts
               </span>
             </div>
@@ -798,7 +834,7 @@ export default function Overlap() {
                   lastResult.wasPass
                     ? "bg-muted/30 border-border/40"
                     : lastResult.wasTimeout
-                      ? "bg-red-500/5 border-red-500/20"
+                      ? "bg-muted/30 border-border/40"
                       : lastResult.finalPoints >= 40
                         ? "bg-blue-500/10 border-blue-500/30"
                         : "bg-emerald-500/5 border-emerald-500/20"
@@ -809,8 +845,8 @@ export default function Overlap() {
                     Passed
                   </div>
                 ) : lastResult.wasTimeout ? (
-                  <div className="text-center text-sm text-red-400 font-medium">
-                    Time's up! <span className="text-muted-foreground/60 text-xs font-normal">-7s penalty per wrong guess</span>
+                  <div className="text-center text-sm text-muted-foreground font-medium">
+                    Time's up
                   </div>
                 ) : (
                   <div>
@@ -936,6 +972,12 @@ export default function Overlap() {
                     </div>
                   ))}
                 </div>
+                <button
+                  onClick={() => advanceQuestion()}
+                  className="mt-2 w-full text-xs font-semibold text-blue-400 hover:text-blue-300 py-1.5 rounded-md border border-blue-500/20 hover:bg-blue-500/10 transition-colors"
+                >
+                  Next Question <ChevronRight className="w-3 h-3 inline" />
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
