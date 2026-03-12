@@ -53,6 +53,8 @@ interface RoundResult {
   elapsed: number;
   wasPass: boolean;
   wasTimeout: boolean;
+  topPlayers: { displayName: string; combinedApps: number }[];
+  totalAvailable: number;
 }
 
 type GameState = "idle" | "playing" | "finished";
@@ -173,7 +175,7 @@ function buildClubPairs(): ClubPair[] {
 
   const pairs: ClubPair[] = [];
   for (const [key, players] of pairMap) {
-    if (players.length < 2) continue;
+    if (players.length < 4) continue;
     const [clubA, clubB] = key.split("|");
     const difficulty =
       players.length >= 8 ? "easy" : players.length >= 4 ? "medium" : "hard";
@@ -220,6 +222,18 @@ function getComboLevel(streak: number): { label: string; color: string; bgClass:
   if (streak >= 2)
     return { label: "COMBO", color: "text-emerald-400", bgClass: "bg-emerald-500/5" };
   return { label: "", color: "", bgClass: "" };
+}
+
+const WRONG_GUESS_PENALTY = 7;
+
+function getTopPlayersForPair(pair: ClubPair, limit = 3): { displayName: string; combinedApps: number }[] {
+  return pair.players
+    .map((p) => ({
+      displayName: p.displayName,
+      combinedApps: (p.clubs[pair.clubA]?.appearances || 0) + (p.clubs[pair.clubB]?.appearances || 0),
+    }))
+    .sort((a, b) => b.combinedApps - a.combinedApps)
+    .slice(0, limit);
 }
 
 // --- Pair picking ---
@@ -282,6 +296,7 @@ export default function Overlap() {
   const [showWrong, setShowWrong] = useState(false);
   const [showOneClub, setShowOneClub] = useState<{ player: PLPlayer; clubA: string; clubB: string; appsA: number; appsB: number } | null>(null);
   const [roundResults, setRoundResults] = useState<RoundResult[]>([]);
+  const [showTimeoutReveal, setShowTimeoutReveal] = useState<{ displayName: string; combinedApps: number }[] | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -319,6 +334,8 @@ export default function Overlap() {
     setQuestionNum(nextNum);
     setQuestionTimeLeft(QUESTION_TIME);
     setShowOneClub(null);
+    setLastResult(null);
+    setShowTimeoutReveal(null);
     questionResolvedRef.current = false;
 
     const pair = pickPair(allPairs, usedPairKeys);
@@ -345,6 +362,7 @@ export default function Overlap() {
     setShowWrong(false);
     setShowOneClub(null);
     setRoundResults([]);
+    setShowTimeoutReveal(null);
 
     const pair = pickPair(allPairs, new Set());
     if (pair) {
@@ -385,6 +403,7 @@ export default function Overlap() {
           setComboStreak(0);
           setShowWrong(true);
           setTimeout(() => setShowWrong(false), 400);
+          const topPlayers = currentPair ? getTopPlayersForPair(currentPair, 5) : [];
           const result: RoundResult = {
             id: Date.now(),
             questionNum,
@@ -395,10 +414,13 @@ export default function Overlap() {
             timeScore: 0, appBonus: 0, goalBonus: 0,
             comboMultiplier: 1, finalPoints: 0, elapsed: QUESTION_TIME,
             wasPass: false, wasTimeout: true,
+            topPlayers,
+            totalAvailable: currentPair?.players.length || 0,
           };
           setLastResult(result);
           setRoundResults((prev) => [...prev, result]);
-          setTimeout(() => advanceQuestion(), 600);
+          setShowTimeoutReveal(topPlayers);
+          setTimeout(() => advanceQuestion(), 2500);
           return;
         }
 
@@ -419,6 +441,7 @@ export default function Overlap() {
     playNeutral();
     setShowOneClub(null);
 
+    const topPlayers = getTopPlayersForPair(currentPair, 5);
     const result: RoundResult = {
       id: Date.now(),
       questionNum,
@@ -430,6 +453,8 @@ export default function Overlap() {
       comboMultiplier: 1, finalPoints: 0,
       elapsed: (Date.now() - questionStartRef.current) / 1000,
       wasPass: true, wasTimeout: false,
+      topPlayers,
+      totalAvailable: currentPair.players.length,
     };
     setLastResult(result);
     setRoundResults((prev) => [...prev, result]);
@@ -452,6 +477,7 @@ export default function Overlap() {
       if (!candidates || candidates.length === 0) {
         setShowWrong(true);
         playWrong();
+        questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
         setTimeout(() => setShowWrong(false), 400);
         setInputValue("");
         return;
@@ -477,6 +503,7 @@ export default function Overlap() {
         if (anyUsed && anyMatch) {
           setShowWrong(true);
           playWrong();
+          questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
           setTimeout(() => setShowWrong(false), 400);
           setInputValue("");
           return;
@@ -507,6 +534,7 @@ export default function Overlap() {
         // Neither club
         setShowWrong(true);
         playWrong();
+        questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
         setTimeout(() => setShowWrong(false), 400);
         setInputValue("");
         return;
@@ -566,6 +594,8 @@ export default function Overlap() {
         finalPoints,
         elapsed,
         wasPass: false, wasTimeout: false,
+        topPlayers: getTopPlayersForPair(currentPair, 5),
+        totalAvailable: currentPair.players.length,
       };
       setLastResult(result);
       setRoundResults((prev) => [...prev, result]);
@@ -581,6 +611,8 @@ export default function Overlap() {
   const isWarning = questionTimeLeft <= 10;
   const comboMult = getComboMultiplier(comboStreak);
   const comboLevel = getComboLevel(comboStreak);
+  const liveElapsed = (QUESTION_TIME - questionTimeLeft);
+  const liveTimeScore = getTimeScore(liveElapsed);
 
   const comboTier =
     comboStreak >= 6 ? 3 : comboStreak >= 4 ? 2 : comboStreak >= 2 ? 1 : 0;
@@ -699,13 +731,25 @@ export default function Overlap() {
           </div>
         </div>
 
-        {/* Question timer bar */}
-        <div className="w-full h-1.5 rounded-full bg-muted/50 mb-3 sm:mb-4">
-          <motion.div
-            className={`h-full rounded-full transition-colors duration-300 ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : theme.timerBar}`}
-            style={{ width: `${timePercent}%` }}
-            transition={{ duration: 0.1 }}
-          />
+        {/* Question timer bar with live points */}
+        <div className="relative w-full mb-3 sm:mb-4">
+          <div className="w-full h-2.5 rounded-full bg-muted/50">
+            <motion.div
+              className={`h-full rounded-full transition-colors duration-300 ${isUrgent ? "bg-red-500" : isWarning ? "bg-amber-500" : theme.timerBar}`}
+              style={{ width: `${timePercent}%` }}
+              transition={{ duration: 0.1 }}
+            />
+          </div>
+          {!questionResolvedRef.current && questionTimeLeft > 0 && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ left: `${Math.max(timePercent - 1, 0)}%` }}
+            >
+              <span className={`text-[10px] font-bold tabular-nums ml-1 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-blue-400"}`}>
+                {liveTimeScore}pts
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="sm:flex-1 flex flex-col items-center min-h-0">
@@ -766,7 +810,7 @@ export default function Overlap() {
                   </div>
                 ) : lastResult.wasTimeout ? (
                   <div className="text-center text-sm text-red-400 font-medium">
-                    Time's up!
+                    Time's up! <span className="text-muted-foreground/60 text-xs font-normal">-7s penalty per wrong guess</span>
                   </div>
                 ) : (
                   <div>
@@ -867,10 +911,34 @@ export default function Overlap() {
                 </div>
               </div>
               <span className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">
-                {currentPair.difficulty}
+                {currentPair.players.length} possible answers
               </span>
             </motion.div>
           )}
+
+          {/* Timeout reveal — top players */}
+          <AnimatePresence>
+            {showTimeoutReveal && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mb-3 px-4 py-2.5 rounded-md border border-red-500/20 bg-red-500/5 w-full max-w-sm"
+              >
+                <div className="text-[10px] text-red-400/80 font-bold uppercase tracking-wider mb-1.5">
+                  Top answers
+                </div>
+                <div className="space-y-0.5">
+                  {showTimeoutReveal.map((p, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="text-foreground/80 font-medium">{p.displayName}</span>
+                      <span className="text-muted-foreground tabular-nums">{p.combinedApps} apps</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Input */}
           <div className="w-full max-w-md mx-auto mb-2 sm:mb-4 sm:mt-auto mt-4">
@@ -1031,7 +1099,7 @@ function StartScreen({
               <Timer className="w-3.5 h-3.5 text-cyan-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">{QUESTION_TIME}s per question</span> &middot; faster answers score more
+              <span className="font-semibold text-foreground">{QUESTION_TIME}s per question</span> &middot; faster = more points &middot; wrong guess = <span className="font-semibold text-foreground">-{WRONG_GUESS_PENALTY}s</span>
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1207,7 +1275,7 @@ function EndScreen({
           )}
         </motion.div>
 
-        {/* Round history */}
+        {/* Round history with top answers */}
         {roundResults.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1218,49 +1286,65 @@ function EndScreen({
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
               Round History
             </h3>
-            <div className="space-y-1.5 max-w-md mx-auto max-h-[400px] overflow-y-auto">
+            <div className="space-y-2 max-w-md mx-auto max-h-[500px] overflow-y-auto">
               {roundResults.map((r, i) => (
                 <motion.div
                   key={r.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.04 }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs ${
+                  className={`px-3 py-2 rounded-md text-xs ${
                     r.wasPass || r.wasTimeout
-                      ? "bg-card/30 border border-border/20 opacity-50"
+                      ? "bg-card/30 border border-border/20"
                       : r.finalPoints > 0
                         ? "bg-card border border-border/30"
-                        : "bg-card/50 border border-border/20 opacity-60"
+                        : "bg-card/50 border border-border/20"
                   }`}
                 >
-                  <span className="font-mono text-blue-400 font-bold w-5 text-right tabular-nums text-[11px]">
-                    {r.questionNum}
-                  </span>
-                  <span className="text-muted-foreground/40 mx-0.5">.</span>
-                  <span className="font-semibold text-blue-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
-                    {r.clubA}
-                  </span>
-                  <span className="text-muted-foreground/30 text-[10px]">&</span>
-                  <span className="font-semibold text-cyan-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
-                    {r.clubB}
-                  </span>
-                  <span className="text-muted-foreground/40 mx-0.5">&rarr;</span>
-                  <span className="font-semibold text-foreground/80 flex-1 text-left truncate">
-                    {r.wasPass ? "pass" : r.wasTimeout ? "timeout" : r.player ? r.player.displayName : "???"}
-                  </span>
-                  {r.finalPoints > 0 && (r.appBonus > 0 || r.goalBonus > 0) && (
-                    <div className="flex gap-0.5">
-                      {r.appBonus > 0 && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" title={`Low apps +${r.appBonus}`} />}
-                      {r.goalBonus > 0 && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" title={`Low goals +${r.goalBonus}`} />}
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-blue-400 font-bold w-5 text-right tabular-nums text-[11px]">
+                      {r.questionNum}
+                    </span>
+                    <span className="text-muted-foreground/40 mx-0.5">.</span>
+                    <span className="font-semibold text-blue-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
+                      {r.clubA}
+                    </span>
+                    <span className="text-muted-foreground/30 text-[10px]">&</span>
+                    <span className="font-semibold text-cyan-400/80 truncate text-[11px]" style={{ maxWidth: "5rem" }}>
+                      {r.clubB}
+                    </span>
+                    <span className="text-muted-foreground/40 mx-0.5">&rarr;</span>
+                    <span className="font-semibold text-foreground/80 flex-1 text-left truncate">
+                      {r.wasPass ? "pass" : r.wasTimeout ? "timeout" : r.player ? r.player.displayName : "???"}
+                    </span>
+                    <span className="text-muted-foreground/40 tabular-nums text-[10px]">
+                      {r.totalAvailable}
+                    </span>
+                    <span
+                      className={`font-bold tabular-nums w-10 text-right ${
+                        r.finalPoints > 0 ? "text-emerald-400" : "text-muted-foreground/40"
+                      }`}
+                    >
+                      {r.finalPoints > 0 ? `+${r.finalPoints}` : "—"}
+                    </span>
+                  </div>
+                  {/* Top players for this round */}
+                  {r.topPlayers.length > 0 && (
+                    <div className="mt-1.5 pl-8 flex flex-wrap gap-x-3 gap-y-0.5">
+                      {r.topPlayers.map((tp, j) => (
+                        <span
+                          key={j}
+                          className={`text-[10px] ${
+                            r.player && tp.displayName === r.player.displayName
+                              ? "text-emerald-400 font-semibold"
+                              : "text-muted-foreground/50"
+                          }`}
+                        >
+                          {tp.displayName} <span className="tabular-nums">({tp.combinedApps})</span>
+                        </span>
+                      ))}
                     </div>
                   )}
-                  <span
-                    className={`font-bold tabular-nums w-10 text-right ${
-                      r.finalPoints > 0 ? "text-emerald-400" : "text-muted-foreground/40"
-                    }`}
-                  >
-                    {r.finalPoints > 0 ? `+${r.finalPoints}` : "—"}
-                  </span>
                 </motion.div>
               ))}
             </div>
