@@ -80,4 +80,16 @@ export const gameThemes = {
     glowA: "bg-blue-500/5",
     glowB: "bg-cyan-500/5",
   },
+  /** ClubLadder: purple/gold tones */
+  ladder: {
+    primaryBtn: "shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-500 to-amber-500 hover:from-purple-600 hover:to-amber-600 text-white border-purple-600 focus-visible:ring-purple-500",
+    outlineBtn: "font-bold border-border focus-visible:ring-purple-500",
+    inputFocus: "focus:border-purple-500/60 focus:shadow-lg focus:shadow-purple-500/10",
+    timerBar: "bg-purple-500",
+    timerIcon: "bg-purple-500/15",
+    timerIconColor: "text-purple-400",
+    accent: "text-purple-400",
+    glowA: "bg-purple-500/5",
+    glowB: "bg-amber-500/5",
+  },
 } as const satisfies Record<string, GameTheme>;

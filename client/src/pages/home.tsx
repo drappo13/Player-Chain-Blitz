@@ -48,6 +48,17 @@ const footballGames: GameCard[] = [
     description: "Name a player who appeared for both clubs. Obscure overlaps score big.",
     playColor: "text-blue-400",
   },
+  {
+    href: "/clubladder",
+    testId: "link-clubladder",
+    emoji: "📈",
+    iconGradient: "from-purple-500/20 to-purple-500/5",
+    iconBorder: "border-purple-500/20",
+    title: ["Club", "Ladder"],
+    titleGradient: "from-purple-400 to-amber-400",
+    description: "Climb the goal threshold. 3 clubs, multipliers, 1 shield. How high can you go?",
+    playColor: "text-purple-400",
+  },
 ];
 
 const tennisGames: GameCard[] = [
