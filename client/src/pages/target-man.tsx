@@ -1136,6 +1136,7 @@ function EndScreen({
     } else {
       playGameEnd();
     }
+    try { (window as any).goatcounter?.count({ path: "game-played-targetman", title: `TargetMan: ${totalScore}pts`, event: true }); } catch {}
   }, []);
 
   return (

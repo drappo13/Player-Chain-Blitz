@@ -802,6 +802,7 @@ function SlamEndScreen({
     } else {
       playGameEnd();
     }
+    try { (window as any).goatcounter?.count({ path: "game-played-slam16", title: `Slam16: ${score}pts`, event: true }); } catch {}
   }, []);
 
   const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];

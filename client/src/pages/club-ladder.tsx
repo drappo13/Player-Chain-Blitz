@@ -1203,6 +1203,7 @@ function EndScreen({
     } else {
       playGameEnd();
     }
+    try { (window as any).goatcounter?.count({ path: "game-played-ladderup", title: `LadderUp: ${totalScore}pts`, event: true }); } catch {}
   }, []);
 
   return (
