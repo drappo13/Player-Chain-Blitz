@@ -278,8 +278,18 @@ function validateAnswer(
   }
 
   if (!bestMatch) {
-    // Build detail: show the player's goals at each shown club
-    const bestCandidate = unusedCandidates[0];
+    // Pick the most relevant candidate: highest goals at any shown club
+    let bestCandidate = unusedCandidates[0];
+    let bestGoals = 0;
+    for (const c of unusedCandidates) {
+      for (const co of board.clubs) {
+        const g = c.clubs[co.club]?.goals ?? 0;
+        if (g > bestGoals) {
+          bestGoals = g;
+          bestCandidate = c;
+        }
+      }
+    }
     const clubGoals = board.clubs.map((co) => ({
       club: co.club,
       goals: bestCandidate.clubs[co.club]?.goals ?? 0,
