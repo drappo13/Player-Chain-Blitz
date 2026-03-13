@@ -252,6 +252,9 @@ function validateAnswer(
   multiplier?: number;
   jump?: number;
   failReason?: FailReason;
+  /** For failed lookups: the matched player's name + their goals at each shown club */
+  failPlayer?: string;
+  failClubGoals?: { club: string; goals: number }[];
 } {
   const norm = normalizeName(guess);
   const candidates = playerLookup.get(norm);
@@ -266,7 +269,9 @@ function validateAnswer(
   );
 
   if (unusedCandidates.length === 0) {
-    return { valid: false, failReason: "already_used" };
+    // Return info about the used player
+    const used = candidates.find((c) => usedPlayerKeys.has(c.displayName.toLowerCase()));
+    return { valid: false, failReason: "already_used", failPlayer: used?.displayName };
   }
 
   // For each unused candidate, check if they have goals > threshold at any shown club
@@ -299,13 +304,20 @@ function validateAnswer(
   }
 
   if (!bestMatch) {
-    const hasAnyClub = unusedCandidates.some((c) =>
-      board.clubs.some((co) => c.clubs[co.club])
-    );
-    if (hasAnyClub) {
-      return { valid: false, failReason: "below_threshold" };
-    }
-    return { valid: false, failReason: "no_club" };
+    // Build detail: show the player's goals at each shown club
+    const bestCandidate = unusedCandidates[0];
+    const clubGoals = board.clubs.map((co) => ({
+      club: co.club,
+      goals: bestCandidate.clubs[co.club]?.goals ?? 0,
+    }));
+    const hasAnyClub = clubGoals.some((cg) => cg.goals > 0);
+
+    return {
+      valid: false,
+      failReason: hasAnyClub ? "below_threshold" : "no_club",
+      failPlayer: bestCandidate.displayName,
+      failClubGoals: clubGoals,
+    };
   }
 
   return {
@@ -349,7 +361,12 @@ export default function ClubLadder() {
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [showShield, setShowShield] = useState(false);
-  const [failFeedback, setFailFeedback] = useState<{ reason: FailReason; guess: string } | null>(null);
+  const [failFeedback, setFailFeedback] = useState<{
+    reason: FailReason;
+    guess: string;
+    playerName?: string;
+    clubGoals?: { club: string; goals: number }[];
+  } | null>(null);
   const [turnResults, setTurnResults] = useState<TurnResult[]>([]);
   const [endReason, setEndReason] = useState<string>("");
 
@@ -538,7 +555,12 @@ export default function ClubLadder() {
       if (!result.valid) {
         setShowWrong(true);
         setTimeout(() => setShowWrong(false), 400);
-        setFailFeedback({ reason: result.failReason!, guess });
+        setFailFeedback({
+          reason: result.failReason!,
+          guess,
+          playerName: result.failPlayer,
+          clubGoals: result.failClubGoals,
+        });
         setInputValue("");
 
         if (hasShield) {
@@ -714,7 +736,7 @@ export default function ClubLadder() {
               {threshold}
             </div>
             <span className="text-[10px] text-purple-400/70 uppercase tracking-widest font-bold">
-              goal threshold
+              goals to beat
             </span>
           </motion.div>
 
@@ -765,7 +787,7 @@ export default function ClubLadder() {
             )}
           </AnimatePresence>
 
-          {/* Shield popup */}
+          {/* Shield popup — includes fail reason inline */}
           <AnimatePresence>
             {showShield && (
               <motion.div
@@ -775,7 +797,7 @@ export default function ClubLadder() {
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="mb-3 px-5 py-3 rounded-lg border-2 border-emerald-500/40 bg-emerald-500/10 w-full max-w-sm"
               >
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3 mb-1">
                   <motion.div
                     animate={{ rotate: [0, -15, 15, -10, 10, 0], scale: [1, 1.2, 1.1, 1.15, 1.05, 1] }}
                     transition={{ duration: 0.6 }}
@@ -784,14 +806,17 @@ export default function ClubLadder() {
                   </motion.div>
                   <div className="text-center">
                     <div className="text-sm font-bold text-emerald-400">Shield Activated!</div>
-                    <div className="text-[10px] text-muted-foreground">Blocked &mdash; new clubs drawn</div>
+                    <div className="text-[10px] text-muted-foreground">New clubs drawn</div>
                   </div>
                 </div>
+                {failFeedback && (
+                  <FailDetail feedback={failFeedback} threshold={threshold} muted />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Fail feedback */}
+          {/* Fail feedback — shown standalone when no shield (game over state) */}
           <AnimatePresence>
             {failFeedback && !showShield && (
               <motion.div
@@ -800,15 +825,7 @@ export default function ClubLadder() {
                 exit={{ opacity: 0 }}
                 className="mb-3 px-4 py-2 rounded-md border border-red-500/20 bg-red-500/5 w-full max-w-sm"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-foreground text-sm">{failFeedback.guess}</span>
-                  <span className="text-xs font-medium text-red-400">
-                    {failFeedback.reason === "not_found" && "Player not found"}
-                    {failFeedback.reason === "already_used" && "Already used"}
-                    {failFeedback.reason === "no_club" && "Not at these clubs"}
-                    {failFeedback.reason === "below_threshold" && `Goals \u2264 ${threshold}`}
-                  </span>
-                </div>
+                <FailDetail feedback={failFeedback} threshold={threshold} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -958,6 +975,52 @@ export default function ClubLadder() {
   );
 }
 
+// --- Fail Detail ---
+
+function FailDetail({
+  feedback,
+  threshold,
+  muted,
+}: {
+  feedback: {
+    reason: FailReason;
+    guess: string;
+    playerName?: string;
+    clubGoals?: { club: string; goals: number }[];
+  };
+  threshold: number;
+  muted?: boolean;
+}) {
+  const nameColor = muted ? "text-foreground/70" : "text-foreground";
+  const reasonColor = muted ? "text-red-400/70" : "text-red-400";
+  const detailColor = muted ? "text-muted-foreground/50" : "text-muted-foreground";
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <span className={`font-bold text-sm ${nameColor}`}>
+          {feedback.playerName || feedback.guess}
+        </span>
+        <span className={`text-xs font-medium ${reasonColor}`}>
+          {feedback.reason === "not_found" && "Not found in PL data"}
+          {feedback.reason === "already_used" && "Already used"}
+          {feedback.reason === "no_club" && "Didn't play for these clubs"}
+          {feedback.reason === "below_threshold" && `Needed > ${threshold} goals`}
+        </span>
+      </div>
+      {feedback.clubGoals && feedback.clubGoals.some((cg) => cg.goals > 0) && (
+        <div className={`flex items-center gap-3 mt-1 text-xs ${detailColor}`}>
+          {feedback.clubGoals.map((cg) => (
+            <span key={cg.club} className={cg.goals > 0 ? "" : "opacity-30"}>
+              {cg.club}: {cg.goals > 0 ? `${cg.goals}g` : "\u2014"}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Start Screen ---
 
 function StartScreen({
@@ -1020,7 +1083,7 @@ function StartScreen({
               <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">3 clubs</span> shown each turn with <span className="font-semibold text-foreground">1x, 2x, 3x</span> multipliers
+              Each turn shows <span className="font-semibold text-foreground">3 PL clubs</span> with <span className="font-semibold text-foreground">1x, 2x, 3x</span> point multipliers
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1028,7 +1091,7 @@ function StartScreen({
               <Star className="w-3.5 h-3.5 text-indigo-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              Name a goalscorer with <span className="font-semibold text-foreground">more goals</span> than the threshold at one of the clubs
+              Name a goalscorer at one of those clubs &mdash; each guess must beat the <span className="font-semibold text-foreground">previous player's goal tally</span>. Only their <span className="font-semibold text-foreground">goals at that single club</span> count
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1036,7 +1099,7 @@ function StartScreen({
               <Timer className="w-3.5 h-3.5 text-cyan-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">{TURN_TIME}s per turn</span> &middot; threshold rises to their goal total &middot; climb until you can't
+              <span className="font-semibold text-foreground">{TURN_TIME}s per turn</span> &middot; keep climbing until you run out of players who can beat the total
             </p>
           </div>
           <div className="flex items-start gap-3 text-left">
@@ -1044,7 +1107,7 @@ function StartScreen({
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <p className="text-sm text-muted-foreground leading-snug">
-              <span className="font-semibold text-foreground">1 shield</span> absorbs a wrong answer or timeout &middot; <span className="font-semibold text-foreground">1 pass</span> redraws clubs
+              <span className="font-semibold text-foreground">1 shield</span> saves you from a wrong answer or timeout &middot; <span className="font-semibold text-foreground">1 pass</span> redraws the clubs
             </p>
           </div>
         </motion.div>
@@ -1201,7 +1264,7 @@ function EndScreen({
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-400">{peakThreshold}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">peak goals</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">highest climb</div>
           </div>
           {bestRound && (
             <div className="text-center">
