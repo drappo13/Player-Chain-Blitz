@@ -1,30 +1,25 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { tournaments, type Tournament, type SlamPlayer } from "@/data/slams";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Share2, Ticket } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { playCorrect, playWrong, playTick } from "@/lib/sounds";
 import { useUser } from "@/lib/user-context";
-import { saveScore } from "@/lib/save-score";
-import { useGameStats } from "@/lib/use-user-stats";
+import { normalizeName } from "@/lib/normalize";
+import { shuffleArray, toSentenceCase } from "@/lib/utils";
+import type { GameState } from "@/lib/game-types";
+import { useHighScore } from "@/hooks/use-high-score";
+import { useShare } from "@/hooks/use-share";
+import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { ScreenFlash } from "@/components/screen-flash";
+import { FloatingEmojis } from "@/components/floating-emojis";
+import { EndScreenActions } from "@/components/end-screen-actions";
+import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
 
-function normalizeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/ø/g, "o")
-    .replace(/æ/g, "ae")
-    .replace(/ð/g, "d")
-    .replace(/þ/g, "th")
-    .replace(/đ/g, "d")
-    .replace(/['\-\s]/g, "");
-}
 
 function getStreakLevel(count: number): { label: string; color: string; emoji: string } {
   if (count >= 15) return { label: "LEGENDARY", color: "text-amber-400", emoji: "🔥" };
@@ -39,7 +34,6 @@ interface AnsweredTournament {
   id: number;
 }
 
-type GameState = "idle" | "playing" | "finished";
 
 interface SurfaceTheme {
   bg: string;
@@ -134,18 +128,6 @@ function buildGlobalNameLookup(): Map<string, string> {
   return lookup;
 }
 
-function toSentenceCase(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
 
 const validTournaments = tournaments.filter((t) => t.players.length > 0);
 
@@ -163,16 +145,8 @@ export default function SlamChain() {
   const [answeredTournaments, setAnsweredTournaments] = useState<AnsweredTournament[]>([]);
   const [score, setScore] = useState(0);
   const [skipsLeft, setSkipsLeft] = useState(MAX_SKIPS);
-  const [highScore, setHighScore] = useState(() => {
-    try {
-      return parseInt(sessionStorage.getItem("slamchain-highscore") || "0");
-    } catch {
-      return 0;
-    }
-  });
   const { user } = useUser();
-  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "slamchain");
-  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
+  const { effectiveHighScore, totalPlays, checkAndUpdate } = useHighScore("slamchain-highscore", "slamchain", user?.username);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [failReason, setFailReason] = useState("");
@@ -189,18 +163,6 @@ export default function SlamChain() {
   );
   const streakTier = score >= 15 ? 3 : score >= 10 ? 2 : score >= 5 ? 1 : 0;
 
-  const floatingEmojis = useMemo(() => {
-    if (!streak.emoji) return [];
-    const count = streakTier === 3 ? 10 : streakTier === 2 ? 6 : 3;
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      emoji: streak.emoji,
-      left: `${5 + Math.random() * 90}%`,
-      delay: Math.random() * 3,
-      duration: 3 + Math.random() * 4,
-      size: 14 + Math.random() * 14,
-    }));
-  }, [streak.emoji, streakTier]);
 
   const goHome = useCallback(() => {
     if (timerRef.current) {
@@ -219,17 +181,11 @@ export default function SlamChain() {
       setFailReason(reason);
       setGameState("finished");
       setScore((prev) => {
-        if (prev > highScore) {
-          setHighScore(prev);
-          try {
-            sessionStorage.setItem("slamchain-highscore", prev.toString());
-          } catch {}
-        }
-        refreshStats();
+        checkAndUpdate(prev);
         return prev;
       });
     },
-    [highScore, refreshStats]
+    [checkAndUpdate]
   );
 
   const startGame = useCallback(() => {
@@ -359,7 +315,7 @@ export default function SlamChain() {
   }
 
   return (
-    <div className="bg-background relative transition-colors duration-700 overflow-x-hidden sm:min-h-screen">
+    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-700">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <motion.div
           key={currentTournament?.tournament}
@@ -382,21 +338,7 @@ export default function SlamChain() {
           transition={{ duration: 0.7 }}
           className={`absolute bottom-0 right-1/4 w-80 h-80 ${theme.glow2} rounded-full blur-3xl`}
         />
-        <AnimatePresence>
-          {floatingEmojis.map((em) => (
-            <motion.span
-              key={`${em.id}-${streak.emoji}`}
-              initial={{ opacity: 0, y: "100vh" }}
-              animate={{ opacity: [0, 0.5, 0.5, 0], y: "-20vh" }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: em.duration, delay: em.delay, repeat: Infinity, ease: "linear" }}
-              className="absolute select-none"
-              style={{ left: em.left, fontSize: em.size }}
-            >
-              {em.emoji}
-            </motion.span>
-          ))}
-        </AnimatePresence>
+        <FloatingEmojis emoji={streak.emoji} tier={streakTier} counts={[0, 3, 6, 10]} />
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
@@ -588,45 +530,8 @@ export default function SlamChain() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showCorrect && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.08 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-emerald-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showWrong && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.06 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-red-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash show={showCorrect} color="bg-emerald-500" />
+      <ScreenFlash show={showWrong} color="bg-red-500" opacity={0.06} duration={0.2} />
     </div>
   );
 }
@@ -793,29 +698,17 @@ function SlamEndScreen({
   onHome: () => void;
 }) {
   const isNewHighScore = score >= highScore && score > 0;
-  const [copied, setCopied] = useState(false);
+  const { share, copied } = useShare();
   const { user } = useUser();
 
-  const handleShare = async () => {
-    const text = `I scored ${score.toLocaleString()} on Slam16 \u{1F3BE} Can you beat me?\nhttps://drapk.in/slamchain`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  const handleShare = () => share(`I scored ${score.toLocaleString()} on Slam16 \u{1F3BE} Can you beat me?\nhttps://drapk.in/slamchain`);
 
-  useEffect(() => {
-    if (isNewHighScore) {
-      playHighScore();
-    } else {
-      playGameEnd();
-    }
-    try { (window as any).goatcounter?.count({ path: `game-played-slam16?${Date.now()}`, title: `Slam16: ${score}pts`, event: true }); } catch {}
-    saveScore(user?.username, "slamchain", score);
-  }, []);
+  useEndScreenEffects({
+    isNewHighScore,
+    gameSlug: "slamchain",
+    score,
+    username: user?.username,
+  });
 
   const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];
   const chronologicalAnswers = [...answeredTournaments].sort((a, b) => {
@@ -846,71 +739,18 @@ function SlamEndScreen({
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
-            <Button
-              onClick={onHome}
-              variant="outline"
-              size="lg"
-              className="font-bold flex-1"
-              data-testid="button-home-end"
-            >
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
-          <div className="flex justify-center sm:hidden">
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white w-full"
-              data-testid="button-restart"
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-          </div>
-          <div className="hidden sm:flex items-center justify-center gap-3">
-            <Button
-              onClick={onHome}
-              variant="outline"
-              size="lg"
-              className="font-bold"
-              data-testid="button-home-end"
-            >
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-              data-testid="button-restart"
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
+          <EndScreenActions
+            onHome={onHome}
+            onRestart={onRestart}
+            onShare={handleShare}
+            copied={copied}
+            primaryBtnClass="shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+            outlineBtnClass="font-bold"
+            shareBtnClass="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+          />
         </motion.div>
 
-        {isNewHighScore && (
-          <motion.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20 text-amber-400 font-bold text-sm shadow-lg shadow-amber-500/10"
-          >
-            <Star className="w-4 h-4 fill-current" />
-            New High Score!
-          </motion.div>
-        )}
+        <NewHighScoreBadge show={isNewHighScore} />
 
         <motion.div
           initial={{ scale: 0.5 }}

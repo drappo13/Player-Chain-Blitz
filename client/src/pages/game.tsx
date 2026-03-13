@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home, Share2, Ticket } from "lucide-react";
+import { Timer, Trophy, Zap, Target, ChevronRight, Flame, Flag, Home, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { playCorrect, playWrong, playTick } from "@/lib/sounds";
 import { useUser } from "@/lib/user-context";
-import { saveScore } from "@/lib/save-score";
-import { useGameStats } from "@/lib/use-user-stats";
+import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES } from "@/lib/normalize";
+import type { GameState } from "@/lib/game-types";
+import { useHighScore } from "@/hooks/use-high-score";
+import { useShare } from "@/hooks/use-share";
+import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { ScreenFlash } from "@/components/screen-flash";
+import { FloatingEmojis } from "@/components/floating-emojis";
+import { EndScreenActions } from "@/components/end-screen-actions";
+import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 
 const GAME_DURATION = 90;
 
@@ -32,29 +39,6 @@ interface GuessedPlayer extends LookupPlayer {
   id: number;
 }
 
-type GameState = "idle" | "playing" | "finished";
-
-function normalizeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/ø/g, "o")
-    .replace(/æ/g, "ae")
-    .replace(/ð/g, "d")
-    .replace(/þ/g, "th")
-    .replace(/đ/g, "d")
-    .replace(/['\-\s]/g, "");
-}
-
-function getCommonSurname(p: Player): string {
-  const displayParts = p.displayName.trim().split(/\s+/);
-  if (displayParts.length > 1) {
-    return displayParts[displayParts.length - 1];
-  }
-  return p.lastName;
-}
 
 function buildPlayerLookup() {
   const lookup = new Map<string, LookupPlayer>();
@@ -75,7 +59,13 @@ function buildPlayerLookup() {
     const fullDisplayKey = normalizeName(p.displayName);
     if (!lookup.has(fullDisplayKey)) {
       const lastWord = displayParts[displayParts.length - 1] || p.lastName;
-      lookup.set(fullDisplayKey, { ...lp, lastName: lastWord });
+      // Mononym players (e.g. "Yakubu", "Emerson") — use their known name for chain letters
+      const isMononym = displayParts.length === 1 && normalizeName(lastWord) !== officialKey;
+      lookup.set(fullDisplayKey, {
+        ...lp,
+        lastName: lastWord,
+        ...(isMononym && { originalLastName: lastWord }),
+      });
     }
 
     const lastNameParts = p.lastName.split(/\s+/);
@@ -90,20 +80,13 @@ function buildPlayerLookup() {
   }
 
   // Mononym / nickname lookups — override existing entry with the more notable player
-  const mononyms: Record<string, string> = {
-    "gilberto": "gilbertosilva",
-  };
-  for (const [mono, targetKey] of Object.entries(mononyms)) {
+  for (const [mono, targetKey] of Object.entries(PL_MONONYMS)) {
     const target = lookup.get(targetKey);
     if (target) lookup.set(mono, target);
   }
 
   // Alternate spellings
-  const alternates: Record<string, string> = {
-    "vannistelrooij": "vannistelrooy",
-    "nistelrooij": "nistelrooy",
-  };
-  for (const [alt, official] of Object.entries(alternates)) {
+  for (const [alt, official] of Object.entries(PL_ALTERNATES)) {
     const target = lookup.get(official);
     if (target && !lookup.has(alt)) {
       lookup.set(alt, target);
@@ -134,7 +117,7 @@ export default function Game() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "goalchain");
+  const { effectiveHighScore, totalPlays, checkAndUpdate, refreshStats } = useHighScore("chaingoal-highscore", "goalchain", user?.username);
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
@@ -144,14 +127,6 @@ export default function Game() {
   const [usedNames, setUsedNames] = useState<Set<string>>(new Set());
   const [totalGoals, setTotalGoals] = useState(0);
   const [guessCount, setGuessCount] = useState(0);
-  const [highScore, setHighScore] = useState(() => {
-    try {
-      return parseInt(sessionStorage.getItem("chaingoal-highscore") || "0");
-    } catch {
-      return 0;
-    }
-  });
-  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [lastAddedGoals, setLastAddedGoals] = useState(0);
@@ -199,16 +174,10 @@ export default function Game() {
       timerRef.current = null;
     }
     setTotalGoals((prev) => {
-      if (prev > highScore) {
-        setHighScore(prev);
-        try {
-          sessionStorage.setItem("chaingoal-highscore", prev.toString());
-        } catch {}
-      }
-      refreshStats();
+      checkAndUpdate(prev);
       return prev;
     });
-  }, [highScore, refreshStats]);
+  }, [checkAndUpdate]);
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -308,18 +277,6 @@ export default function Game() {
   const streak = getStreakLevel(guessCount);
 
   const streakTier = guessCount >= 15 ? 3 : guessCount >= 10 ? 2 : guessCount >= 5 ? 1 : 0;
-  const floatingEmojis = useMemo(() => {
-    if (!streak.emoji) return [];
-    const count = streakTier === 3 ? 12 : streakTier === 2 ? 8 : 4;
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      emoji: streak.emoji,
-      left: `${5 + Math.random() * 90}%`,
-      delay: Math.random() * 3,
-      duration: 3 + Math.random() * 4,
-      size: 16 + Math.random() * 16,
-    }));
-  }, [streak.emoji, streakTier]);
 
   if (gameState === "idle") {
     return <StartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />;
@@ -339,7 +296,7 @@ export default function Game() {
   }
 
   return (
-    <div className="bg-background relative transition-colors duration-1000 overflow-x-hidden sm:min-h-screen">
+    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-1000">
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-chart-2/5 rounded-full blur-3xl" />
@@ -362,26 +319,7 @@ export default function Game() {
             />
           </>
         )}
-        <AnimatePresence>
-          {floatingEmojis.map((e) => (
-            <motion.span
-              key={`${e.id}-${streak.emoji}`}
-              initial={{ opacity: 0, y: "100vh" }}
-              animate={{ opacity: [0, 0.6, 0.6, 0], y: "-20vh" }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: e.duration,
-                delay: e.delay,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-              className="absolute select-none"
-              style={{ left: e.left, fontSize: e.size }}
-            >
-              {e.emoji}
-            </motion.span>
-          ))}
-        </AnimatePresence>
+        <FloatingEmojis emoji={streak.emoji} tier={streakTier} counts={[0, 4, 8, 12]} sizeMin={16} sizeRange={16} opacityPeak={0.6} />
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-2 sm:py-4 flex flex-col sm:min-h-screen">
@@ -604,45 +542,8 @@ export default function Game() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showCorrect && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.08 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-emerald-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showWrong && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.06 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-red-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash show={showCorrect} color="bg-emerald-500" />
+      <ScreenFlash show={showWrong} color="bg-red-500" opacity={0.06} duration={0.2} />
     </div>
   );
 }
@@ -791,30 +692,18 @@ function EndScreen({
   onRestart: () => void;
   onHome: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { share, copied } = useShare();
   const { user } = useUser();
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
-  const handleShare = async () => {
-    const text = `I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\nhttps://drapk.in/goalchain`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  const handleShare = () => share(`I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\nhttps://drapk.in/goalchain`);
 
-  useEffect(() => {
-    if (isNewHighScore) {
-      playHighScore();
-    } else {
-      playGameEnd();
-    }
-    try { (window as any).goatcounter?.count({ path: `game-played-goalchain?${Date.now()}`, title: `GoalChain: ${totalGoals}pts`, event: true }); } catch {}
-    saveScore(user?.username, "goalchain", totalGoals);
-  }, []);
+  useEndScreenEffects({
+    isNewHighScore,
+    gameSlug: "goalchain",
+    score: totalGoals,
+    username: user?.username,
+  });
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
   const maxGoals = sortedByGoals.length > 0 ? sortedByGoals[0].goals : 1;
@@ -843,71 +732,18 @@ function EndScreen({
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
-            <Button
-              onClick={onHome}
-              variant="outline"
-              size="lg"
-              className="font-bold flex-1"
-              data-testid="button-home-end"
-            >
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-primary/40 text-primary hover:bg-primary/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
-          <div className="flex justify-center sm:hidden">
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className="text-lg px-10 font-bold shadow-xl shadow-primary/20 w-full"
-              data-testid="button-restart"
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-          </div>
-          <div className="hidden sm:flex items-center justify-center gap-3">
-            <Button
-              onClick={onHome}
-              variant="outline"
-              size="lg"
-              className="font-bold"
-              data-testid="button-home-end"
-            >
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className="text-lg px-10 font-bold shadow-xl shadow-primary/20"
-              data-testid="button-restart"
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-primary/40 text-primary hover:bg-primary/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
+          <EndScreenActions
+            onHome={onHome}
+            onRestart={onRestart}
+            onShare={handleShare}
+            copied={copied}
+            primaryBtnClass="shadow-xl shadow-primary/20"
+            outlineBtnClass="font-bold"
+            shareBtnClass="border-primary/40 text-primary hover:bg-primary/10"
+          />
         </motion.div>
 
-        {isNewHighScore && (
-          <motion.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20 text-amber-400 font-bold text-sm shadow-lg shadow-amber-500/10"
-          >
-            <Star className="w-4 h-4 fill-current" />
-            New High Score!
-          </motion.div>
-        )}
+        <NewHighScoreBadge show={isNewHighScore} />
 
         <motion.div
           initial={{ scale: 0.5 }}

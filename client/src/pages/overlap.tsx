@@ -1,14 +1,21 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Zap, SkipForward, GitMerge, Share2, Ticket } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Home, Zap, SkipForward, GitMerge, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playWrong, playNeutral, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
+import { playWrong, playNeutral, playTick, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
-import { saveScore } from "@/lib/save-score";
-import { useGameStats } from "@/lib/use-user-stats";
+import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES } from "@/lib/normalize";
+import type { PLPlayer } from "@/data/pl-player-types";
+import type { GameState } from "@/lib/game-types";
+import { useHighScore } from "@/hooks/use-high-score";
+import { useShare } from "@/hooks/use-share";
+import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { ScreenFlash } from "@/components/screen-flash";
+import { EndScreenActions } from "@/components/end-screen-actions";
+import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 
 const theme = gameThemes.overlap;
 
@@ -16,19 +23,6 @@ const TOTAL_QUESTIONS = 10;
 const QUESTION_TIME = 30;
 
 // --- Types ---
-
-interface PLPlayer {
-  displayName: string;
-  firstName: string;
-  lastName: string;
-  position: string;
-  nationality: string;
-  dob: string;
-  clubs: Record<string, { appearances: number; goals: number; assists: number }>;
-  totalAppearances: number;
-  totalGoals: number;
-  totalAssists: number;
-}
 
 interface ClubPair {
   clubA: string;
@@ -60,31 +54,6 @@ interface RoundResult {
   totalAvailable: number;
 }
 
-type GameState = "idle" | "playing" | "finished";
-
-// --- Name normalization ---
-
-function normalizeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/ø/g, "o")
-    .replace(/æ/g, "ae")
-    .replace(/ð/g, "d")
-    .replace(/þ/g, "th")
-    .replace(/đ/g, "d")
-    .replace(/['\-\s]/g, "");
-}
-
-function getCommonSurname(p: PLPlayer): string {
-  const displayParts = p.displayName.trim().split(/\s+/);
-  if (displayParts.length > 1) {
-    return displayParts[displayParts.length - 1];
-  }
-  return p.lastName;
-}
 
 // --- Build lookup: normalized name -> PLPlayer[] ---
 
@@ -112,12 +81,7 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
   }
 
   // Mononym / nickname lookups — players commonly known by first name or single name
-  // Maps normalized alias → normalized displayName key
-  const mononyms: Record<string, string> = {
-    gabriel: "gabrielmagalhaes",
-    gilberto: "gilbertosilva",
-  };
-  for (const [mono, targetKey] of Object.entries(mononyms)) {
+  for (const [mono, targetKey] of Object.entries(PL_MONONYMS)) {
     const target = lookup.get(targetKey);
     if (!target) continue;
     const existing = lookup.get(mono);
@@ -130,11 +94,8 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
     }
   }
 
-  const alternates: Record<string, string> = {
-    vannistelrooij: "vannistelrooy",
-    nistelrooij: "nistelrooy",
-  };
-  for (const [alt, official] of Object.entries(alternates)) {
+  // Alternate spellings
+  for (const [alt, official] of Object.entries(PL_ALTERNATES)) {
     const target = lookup.get(official);
     if (target && !lookup.has(alt)) lookup.set(alt, target);
   }
@@ -313,15 +274,7 @@ export default function Overlap() {
   const [usedPairKeys, setUsedPairKeys] = useState<Set<string>>(new Set());
   const [totalScore, setTotalScore] = useState(0);
   const [comboStreak, setComboStreak] = useState(0);
-  const [highScore, setHighScore] = useState(() => {
-    try {
-      return parseInt(sessionStorage.getItem("overlap-highscore") || "0");
-    } catch {
-      return 0;
-    }
-  });
-  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "overlap");
-  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
+  const { effectiveHighScore, totalPlays, checkAndUpdate } = useHighScore("overlap-highscore", "overlap", user?.username);
 
   // Feedback state
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
@@ -349,16 +302,10 @@ export default function Overlap() {
     setGameState("finished");
     clearQuestionTimer();
     setTotalScore((prev) => {
-      if (prev > highScore) {
-        setHighScore(prev);
-        try {
-          sessionStorage.setItem("overlap-highscore", prev.toString());
-        } catch {}
-      }
+      checkAndUpdate(prev);
       return prev;
     });
-    refreshStats();
-  }, [highScore, clearQuestionTimer, refreshStats]);
+  }, [clearQuestionTimer, checkAndUpdate]);
 
   const advanceQuestion = useCallback(() => {
     if (timeoutAdvanceRef.current) {
@@ -701,7 +648,7 @@ export default function Overlap() {
   }
 
   return (
-    <div className="bg-background relative transition-colors duration-1000 overflow-x-hidden sm:min-h-screen">
+    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-1000">
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className={`absolute top-0 left-1/4 w-96 h-96 ${theme.glowA} rounded-full blur-3xl`} />
@@ -1063,44 +1010,14 @@ export default function Overlap() {
       </div>
 
       {/* Correct flash */}
-      <AnimatePresence>
-        {showCorrect && lastResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: (lastResult.appBonus + lastResult.goalBonus) > 10 ? 0.12 : 0.04 }}
-              exit={{ opacity: 0 }}
-              className={`absolute inset-0 ${(lastResult.appBonus + lastResult.goalBonus) > 10 ? "bg-blue-500" : "bg-emerald-500"}`}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash
+        show={showCorrect && !!lastResult}
+        color={(lastResult && (lastResult.appBonus + lastResult.goalBonus) > 10) ? "bg-blue-500" : "bg-emerald-500"}
+        opacity={(lastResult && (lastResult.appBonus + lastResult.goalBonus) > 10) ? 0.12 : 0.04}
+      />
 
       {/* Wrong flash */}
-      <AnimatePresence>
-        {showWrong && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.06 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-red-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash show={showWrong} color="bg-red-500" opacity={0.06} />
     </div>
   );
 }
@@ -1251,7 +1168,7 @@ function EndScreen({
   onRestart: () => void;
   onHome: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { share, copied } = useShare();
   const { user } = useUser();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
@@ -1259,26 +1176,14 @@ function EndScreen({
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
 
-  const handleShare = async () => {
-    const text = `I scored ${totalScore.toLocaleString()} on Overlap ⚽ Can you beat me?\nhttps://drapk.in/overlap`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\nhttps://drapk.in/overlap`);
 
-  useEffect(() => {
-    if (isNewHighScore) {
-      playHighScore();
-    } else {
-      playGameEnd();
-    }
-    try { (window as any).goatcounter?.count({ path: `game-played-overlap?${Date.now()}`, title: `Overlap: ${totalScore}pts`, event: true }); } catch {}
-    saveScore(user?.username, "overlap", totalScore);
-  }, []);
+  useEndScreenEffects({
+    isNewHighScore,
+    gameSlug: "overlap",
+    score: totalScore,
+    username: user?.username,
+  });
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
@@ -1303,57 +1208,18 @@ function EndScreen({
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
-            <Button onClick={onHome} variant="outline" size="lg" className={`${theme.outlineBtn} flex-1`}>
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-blue-500/40 text-blue-400 hover:bg-blue-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
-          <div className="flex justify-center sm:hidden">
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className={`text-lg px-10 font-bold w-full ${theme.primaryBtn}`}
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-          </div>
-          <div className="hidden sm:flex items-center justify-center gap-3">
-            <Button onClick={onHome} variant="outline" size="lg" className={theme.outlineBtn}>
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className={`text-lg px-10 font-bold ${theme.primaryBtn}`}
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-blue-500/40 text-blue-400 hover:bg-blue-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
+          <EndScreenActions
+            onHome={onHome}
+            onRestart={onRestart}
+            onShare={handleShare}
+            copied={copied}
+            primaryBtnClass={theme.primaryBtn}
+            outlineBtnClass={theme.outlineBtn}
+            shareBtnClass="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+          />
         </motion.div>
 
-        {isNewHighScore && (
-          <motion.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/15 to-cyan-600/10 border border-blue-500/20 text-blue-400 font-bold text-sm shadow-lg shadow-blue-500/10"
-          >
-            <Star className="w-4 h-4 fill-current" />
-            New High Score!
-          </motion.div>
-        )}
+        <NewHighScoreBadge show={isNewHighScore} gradientClass="from-blue-500/15 to-cyan-600/10 border-blue-500/20 text-blue-400 shadow-blue-500/10" />
 
         <motion.div
           initial={{ scale: 0.5 }}

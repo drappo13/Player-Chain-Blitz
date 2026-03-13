@@ -1,43 +1,26 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap, Share2, Ticket } from "lucide-react";
+import { Timer, Trophy, Target, ChevronRight, Home, Flag, Crosshair, Zap, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
+import { playWrong, playTick, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
-import { useGameStats } from "@/lib/use-user-stats";
-import { saveScore } from "@/lib/save-score";
+import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES } from "@/lib/normalize";
+import type { GameState } from "@/lib/game-types";
+import { useHighScore } from "@/hooks/use-high-score";
+import { useShare } from "@/hooks/use-share";
+import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { ScreenFlash } from "@/components/screen-flash";
+import { EndScreenActions } from "@/components/end-screen-actions";
+import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 
 const theme = gameThemes.warm;
 
 const GAME_DURATION = 90;
 const COMBO_WINDOW = 8;
 
-// --- Reused from GoalChain ---
-
-function normalizeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/ø/g, "o")
-    .replace(/æ/g, "ae")
-    .replace(/ð/g, "d")
-    .replace(/þ/g, "th")
-    .replace(/đ/g, "d")
-    .replace(/['\-\s]/g, "");
-}
-
-function getCommonSurname(p: Player): string {
-  const displayParts = p.displayName.trim().split(/\s+/);
-  if (displayParts.length > 1) {
-    return displayParts[displayParts.length - 1];
-  }
-  return p.lastName;
-}
 
 function buildPlayerLookup() {
   const lookup = new Map<string, Player>();
@@ -72,19 +55,13 @@ function buildPlayerLookup() {
   }
 
   // Mononym / nickname lookups — override existing entry with the more notable player
-  const mononyms: Record<string, string> = {
-    "gilberto": "gilbertosilva",
-  };
-  for (const [mono, targetKey] of Object.entries(mononyms)) {
+  for (const [mono, targetKey] of Object.entries(PL_MONONYMS)) {
     const target = lookup.get(targetKey);
     if (target) lookup.set(mono, target);
   }
 
-  const alternates: Record<string, string> = {
-    "vannistelrooij": "vannistelrooy",
-    "nistelrooij": "nistelrooy",
-  };
-  for (const [alt, official] of Object.entries(alternates)) {
+  // Alternate spellings
+  for (const [alt, official] of Object.entries(PL_ALTERNATES)) {
     const target = lookup.get(official);
     if (target && !lookup.has(alt)) {
       lookup.set(alt, target);
@@ -95,8 +72,6 @@ function buildPlayerLookup() {
 }
 
 // --- Target Man specific ---
-
-type GameState = "idle" | "playing" | "finished";
 
 interface RoundResult {
   id: number;
@@ -197,16 +172,8 @@ export default function TargetMan() {
   const [scoringCount, setScoringCount] = useState(0);
   const [boostLetter, setBoostLetter] = useState("");
   const [boostMultiplier, setBoostMultiplier] = useState(1);
-  const [highScore, setHighScore] = useState(() => {
-    try {
-      return parseInt(sessionStorage.getItem("targetman-highscore") || "0");
-    } catch {
-      return 0;
-    }
-  });
   const { user } = useUser();
-  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "targetman");
-  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
+  const { effectiveHighScore, totalPlays, checkAndUpdate, refreshStats } = useHighScore("targetman-highscore", "targetman", user?.username);
 
   // Round feedback
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
@@ -272,16 +239,10 @@ export default function TargetMan() {
       comboTimerRef.current = null;
     }
     setTotalScore((prev) => {
-      if (prev > highScore) {
-        setHighScore(prev);
-        try {
-          sessionStorage.setItem("targetman-highscore", prev.toString());
-        } catch {}
-      }
+      checkAndUpdate(prev);
       return prev;
     });
-    refreshStats();
-  }, [highScore, refreshStats]);
+  }, [checkAndUpdate]);
 
   // Main game timer
   useEffect(() => {
@@ -553,7 +514,7 @@ export default function TargetMan() {
   }
 
   return (
-    <div className="bg-background relative transition-colors duration-1000 overflow-x-hidden sm:min-h-screen">
+    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-1000">
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none transition-opacity duration-1000">
         <div className={`absolute top-0 left-1/4 w-96 h-96 ${theme.glowA} rounded-full blur-3xl`} />
@@ -913,44 +874,14 @@ export default function TargetMan() {
       </AnimatePresence>
 
       {/* Correct flash — intensity varies by score band */}
-      <AnimatePresence>
-        {showCorrect && !showExactMatch && lastResult && lastResult.basePoints > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: lastResult.basePoints >= 16 ? 0.1 : 0.04 }}
-              exit={{ opacity: 0 }}
-              className={`absolute inset-0 ${lastResult.basePoints >= 16 ? "bg-emerald-500" : "bg-blue-500"}`}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash
+        show={showCorrect && !showExactMatch && !!lastResult && lastResult.basePoints > 0}
+        color={lastResult && lastResult.basePoints >= 16 ? "bg-emerald-500" : "bg-blue-500"}
+        opacity={lastResult && lastResult.basePoints >= 16 ? 0.1 : 0.04}
+      />
 
       {/* Wrong flash */}
-      <AnimatePresence>
-        {showWrong && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 pointer-events-none z-50"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.06 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-red-500"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ScreenFlash show={showWrong} color="bg-red-500" opacity={0.06} />
 
       {/* Boost letter hit flash — violet/amber pulse */}
       <AnimatePresence>
@@ -1121,7 +1052,7 @@ function EndScreen({
   onRestart: () => void;
   onHome: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { share, copied } = useShare();
   const { user } = useUser();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
@@ -1130,26 +1061,14 @@ function EndScreen({
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
 
-  const handleShare = async () => {
-    const text = `I scored ${totalScore.toLocaleString()} on TargetMan ⚽ Can you beat me?\nhttps://drapk.in/targetman`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on TargetMan \u26bd Can you beat me?\nhttps://drapk.in/targetman`);
 
-  useEffect(() => {
-    if (isNewHighScore) {
-      playHighScore();
-    } else {
-      playGameEnd();
-    }
-    try { (window as any).goatcounter?.count({ path: `game-played-targetman?${Date.now()}`, title: `TargetMan: ${totalScore}pts`, event: true }); } catch {}
-    saveScore(user?.username, "targetman", totalScore);
-  }, []);
+  useEndScreenEffects({
+    isNewHighScore,
+    gameSlug: "targetman",
+    score: totalScore,
+    username: user?.username,
+  });
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12 relative overflow-x-hidden">
@@ -1174,57 +1093,18 @@ function EndScreen({
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
-            <Button onClick={onHome} variant="outline" size="lg" className={`${theme.outlineBtn} flex-1`}>
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-orange-500/40 text-orange-400 hover:bg-orange-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
-          <div className="flex justify-center sm:hidden">
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className={`text-lg px-10 font-bold w-full ${theme.primaryBtn}`}
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-          </div>
-          <div className="hidden sm:flex items-center justify-center gap-3">
-            <Button onClick={onHome} variant="outline" size="lg" className={theme.outlineBtn}>
-              <Home className="w-5 h-5 mr-2" />
-              Home
-            </Button>
-            <Button
-              onClick={onRestart}
-              size="lg"
-              className={`text-lg px-10 font-bold ${theme.primaryBtn}`}
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Play Again
-            </Button>
-            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-orange-500/40 text-orange-400 hover:bg-orange-500/10">
-              <Share2 className="w-5 h-5 mr-2" />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
+          <EndScreenActions
+            onHome={onHome}
+            onRestart={onRestart}
+            onShare={handleShare}
+            copied={copied}
+            primaryBtnClass={theme.primaryBtn}
+            outlineBtnClass={theme.outlineBtn}
+            shareBtnClass="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+          />
         </motion.div>
 
-        {isNewHighScore && (
-          <motion.div
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-            className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-600/10 border border-amber-500/20 text-amber-400 font-bold text-sm shadow-lg shadow-amber-500/10"
-          >
-            <Star className="w-4 h-4 fill-current" />
-            New High Score!
-          </motion.div>
-        )}
+        <NewHighScoreBadge show={isNewHighScore} />
 
         <motion.div
           initial={{ scale: 0.5 }}

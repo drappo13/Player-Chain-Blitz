@@ -27,6 +27,8 @@ export interface GameTheme {
   /** Background glow blobs */
   glowA: string;
   glowB: string;
+  /** Share button styling on end screen */
+  shareBtn: string;
 }
 
 export const gameThemes = {
@@ -41,6 +43,7 @@ export const gameThemes = {
     accent: "text-primary",
     glowA: "bg-primary/5",
     glowB: "bg-chart-2/5",
+    shareBtn: "border-primary/40 text-primary hover:bg-primary/10",
   },
 
   /** GridLock + TargetMan: orange/amber warm tones */
@@ -54,6 +57,7 @@ export const gameThemes = {
     accent: "text-orange-400",
     glowA: "bg-orange-500/5",
     glowB: "bg-amber-500/5",
+    shareBtn: "border-orange-500/40 text-orange-400 hover:bg-orange-500/10",
   },
 
   /** GridLock specific: red/orange racing tones */
@@ -67,6 +71,7 @@ export const gameThemes = {
     accent: "text-red-400",
     glowA: "bg-red-500/5",
     glowB: "bg-orange-500/5",
+    shareBtn: "border-red-500/40 text-red-400 hover:bg-red-500/10",
   },
   /** Overlap: blue/cyan tones */
   overlap: {
@@ -79,6 +84,7 @@ export const gameThemes = {
     accent: "text-blue-400",
     glowA: "bg-blue-500/5",
     glowB: "bg-cyan-500/5",
+    shareBtn: "border-blue-500/40 text-blue-400 hover:bg-blue-500/10",
   },
   /** LadderUp: purple/indigo tones */
   ladder: {
@@ -91,5 +97,6 @@ export const gameThemes = {
     accent: "text-purple-400",
     glowA: "bg-purple-500/5",
     glowB: "bg-indigo-500/5",
+    shareBtn: "border-purple-500/40 text-purple-400 hover:bg-purple-500/10",
   },
 } as const satisfies Record<string, GameTheme>;
