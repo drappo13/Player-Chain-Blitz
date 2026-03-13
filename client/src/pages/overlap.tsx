@@ -13,6 +13,7 @@ import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
 import { useShare } from "@/hooks/use-share";
 import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
@@ -287,6 +288,7 @@ export default function Overlap() {
   const timeoutAdvanceRef = useRef<NodeJS.Timeout | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  useLockScroll(inputRef);
   const questionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const questionStartRef = useRef<number>(Date.now());
   const questionResolvedRef = useRef(false);

@@ -11,6 +11,7 @@ import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
 import { useShare } from "@/hooks/use-share";
 import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { FloatingEmojis } from "@/components/floating-emojis";
 import { EndScreenActions } from "@/components/end-screen-actions";
@@ -134,6 +135,7 @@ export default function Game() {
   const [passUsed, setPassUsed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  useLockScroll(inputRef);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const answersEndRef = useRef<HTMLDivElement>(null);
 

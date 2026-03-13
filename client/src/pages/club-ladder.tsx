@@ -13,6 +13,7 @@ import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
 import { useShare } from "@/hooks/use-share";
 import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
+import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
@@ -339,6 +340,7 @@ export default function ClubLadder() {
   const [endReason, setEndReason] = useState<string>("");
 
   const inputRef = useRef<HTMLInputElement>(null);
+  useLockScroll(inputRef);
   const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const turnStartRef = useRef<number>(Date.now());
   const turnResolvedRef = useRef(false);
