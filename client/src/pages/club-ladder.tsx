@@ -429,7 +429,10 @@ export default function ClubLadder() {
     setHasShield(false);
     setShowShield(true);
     playShieldBlock();
-    setTimeout(() => setShowShield(false), 1500);
+    setTimeout(() => {
+      setShowShield(false);
+      setFailFeedback(null);
+    }, 1500);
 
     const board = generateBoard(clubIndex, currentThreshold, currentUsedKeys, lastAnswerClubRef.current);
     if (!board) {
@@ -440,7 +443,6 @@ export default function ClubLadder() {
     setTurnTimeLeft(TURN_TIME);
     turnTimeRef.current = TURN_TIME;
     setInputValue("");
-    setFailFeedback(null);
     turnResolvedRef.current = false;
     turnStartRef.current = Date.now();
     setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
@@ -645,6 +647,8 @@ export default function ClubLadder() {
         totalScore={totalScore}
         highScore={highScore}
         endReason={endReason}
+        failFeedback={failFeedback}
+        threshold={threshold}
         onRestart={startGame}
         onHome={goHome}
       />
@@ -1149,6 +1153,8 @@ function EndScreen({
   totalScore,
   highScore,
   endReason,
+  failFeedback,
+  threshold,
   onRestart,
   onHome,
 }: {
@@ -1156,6 +1162,13 @@ function EndScreen({
   totalScore: number;
   highScore: number;
   endReason: string;
+  failFeedback: {
+    reason: FailReason;
+    guess: string;
+    playerName?: string;
+    clubGoals?: { club: string; goals: number }[];
+  } | null;
+  threshold: number;
   onRestart: () => void;
   onHome: () => void;
 }) {
@@ -1246,9 +1259,14 @@ function EndScreen({
           transition={{ delay: 0.3 }}
           className="mb-4"
         >
-          <div className="text-muted-foreground text-[10px] uppercase tracking-widest">
+          <div className="text-muted-foreground text-[10px] uppercase tracking-widest mb-2">
             {endReason}
           </div>
+          {failFeedback && (
+            <div className="inline-block px-4 py-2 rounded-md border border-red-500/20 bg-red-500/5 text-left max-w-sm">
+              <FailDetail feedback={failFeedback} threshold={threshold} />
+            </div>
+          )}
         </motion.div>
 
         {/* Stats row */}
