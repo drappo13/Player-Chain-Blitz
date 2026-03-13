@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { seasons, getTeamColor, type F1Driver, type F1Season } from "@/data/f1seasons";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Flag, Share2 } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Flag, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
+import { useGameStats } from "@/lib/use-user-stats";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -110,6 +111,9 @@ export default function GridLock() {
       return 0;
     }
   });
+  const { user } = useUser();
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "gridlock");
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [failReason, setFailReason] = useState("");
@@ -161,11 +165,12 @@ export default function GridLock() {
           try {
             sessionStorage.setItem("gridlock-highscore", prev.toString());
           } catch {}
+          refreshStats();
         }
         return prev;
       });
     },
-    [highScore]
+    [highScore, refreshStats]
   );
 
   const startGame = useCallback(() => {
@@ -286,7 +291,7 @@ export default function GridLock() {
 
   if (gameState === "idle") {
     return (
-      <GridLockStartScreen highScore={highScore} onStart={startGame} onHome={goHome} />
+      <GridLockStartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />
     );
   }
 
@@ -295,7 +300,8 @@ export default function GridLock() {
       <GridLockEndScreen
         answeredDrivers={answeredDrivers}
         score={score}
-        highScore={highScore}
+        highScore={effectiveHighScore}
+        totalPlays={totalPlays}
         failReason={failReason}
         onRestart={startGame}
         onHome={goHome}
@@ -375,11 +381,11 @@ export default function GridLock() {
                 />
               ))}
             </div>
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-sm font-medium text-amber-400/80" data-testid="text-high-score">
-                  {highScore}
+                  {effectiveHighScore}
                 </span>
               </div>
             )}
@@ -718,6 +724,7 @@ function GridLockEndScreen({
   answeredDrivers,
   score,
   highScore,
+  totalPlays,
   failReason,
   onRestart,
   onHome,
@@ -725,6 +732,7 @@ function GridLockEndScreen({
   answeredDrivers: AnsweredDriver[];
   score: number;
   highScore: number;
+  totalPlays: number;
   failReason: string;
   onRestart: () => void;
   onHome: () => void;
@@ -852,6 +860,10 @@ function GridLockEndScreen({
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-3"
         >
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
+          </div>
           <div
             className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent"
             data-testid="text-final-score"

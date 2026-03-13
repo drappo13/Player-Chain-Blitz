@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { tournaments, type Tournament, type SlamPlayer } from "@/data/slams";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Share2 } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
+import { useGameStats } from "@/lib/use-user-stats";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -169,6 +170,9 @@ export default function SlamChain() {
       return 0;
     }
   });
+  const { user } = useUser();
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "slamchain");
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [failReason, setFailReason] = useState("");
@@ -221,10 +225,11 @@ export default function SlamChain() {
             sessionStorage.setItem("slamchain-highscore", prev.toString());
           } catch {}
         }
+        refreshStats();
         return prev;
       });
     },
-    [highScore]
+    [highScore, refreshStats]
   );
 
   const startGame = useCallback(() => {
@@ -335,7 +340,7 @@ export default function SlamChain() {
 
   if (gameState === "idle") {
     return (
-      <SlamStartScreen highScore={highScore} onStart={startGame} onHome={goHome} />
+      <SlamStartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />
     );
   }
 
@@ -344,7 +349,8 @@ export default function SlamChain() {
       <SlamEndScreen
         answeredTournaments={answeredTournaments}
         score={score}
-        highScore={highScore}
+        highScore={effectiveHighScore}
+        totalPlays={totalPlays}
         failReason={failReason}
         onRestart={startGame}
         onHome={goHome}
@@ -429,11 +435,11 @@ export default function SlamChain() {
                 />
               ))}
             </div>
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-sm font-medium text-amber-400/80" data-testid="text-high-score">
-                  {highScore}
+                  {effectiveHighScore}
                 </span>
               </div>
             )}
@@ -773,6 +779,7 @@ function SlamEndScreen({
   answeredTournaments,
   score,
   highScore,
+  totalPlays,
   failReason,
   onRestart,
   onHome,
@@ -780,6 +787,7 @@ function SlamEndScreen({
   answeredTournaments: AnsweredTournament[];
   score: number;
   highScore: number;
+  totalPlays: number;
   failReason: string;
   onRestart: () => void;
   onHome: () => void;
@@ -910,6 +918,10 @@ function SlamEndScreen({
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-3"
         >
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
+          </div>
           <div
             className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent"
             data-testid="text-final-score"

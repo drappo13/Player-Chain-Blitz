@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Zap, SkipForward, GitMerge, Share2 } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Zap, SkipForward, GitMerge, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playNeutral, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
+import { useGameStats } from "@/lib/use-user-stats";
 
 const theme = gameThemes.overlap;
 
@@ -298,6 +299,7 @@ function pickPair(pairs: ClubPair[], usedPairKeys: Set<string>): ClubPair | null
 
 export default function Overlap() {
   const [, navigate] = useLocation();
+  const { user } = useUser();
 
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const allPairs = useMemo(() => buildClubPairs(), []);
@@ -318,6 +320,8 @@ export default function Overlap() {
       return 0;
     }
   });
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "overlap");
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
 
   // Feedback state
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
@@ -353,7 +357,8 @@ export default function Overlap() {
       }
       return prev;
     });
-  }, [highScore, clearQuestionTimer]);
+    refreshStats();
+  }, [highScore, clearQuestionTimer, refreshStats]);
 
   const advanceQuestion = useCallback(() => {
     if (timeoutAdvanceRef.current) {
@@ -679,7 +684,7 @@ export default function Overlap() {
   }, [comboTier]);
 
   if (gameState === "idle") {
-    return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
+    return <StartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />;
   }
 
   if (gameState === "finished") {
@@ -687,7 +692,8 @@ export default function Overlap() {
       <EndScreen
         roundResults={roundResults}
         totalScore={totalScore}
-        highScore={highScore}
+        highScore={effectiveHighScore}
+        totalPlays={totalPlays}
         onRestart={startGame}
         onHome={goHome}
       />
@@ -782,10 +788,10 @@ export default function Overlap() {
               </motion.div>
             )}
 
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-sm font-medium text-amber-400/80">{highScore}</span>
+                <span className="text-sm font-medium text-amber-400/80">{effectiveHighScore}</span>
               </div>
             )}
           </div>
@@ -1234,12 +1240,14 @@ function EndScreen({
   roundResults,
   totalScore,
   highScore,
+  totalPlays,
   onRestart,
   onHome,
 }: {
   roundResults: RoundResult[];
   totalScore: number;
   highScore: number;
+  totalPlays: number;
   onRestart: () => void;
   onHome: () => void;
 }) {
@@ -1353,6 +1361,10 @@ function EndScreen({
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-3"
         >
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
+          </div>
           <div className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
             {totalScore}
           </div>

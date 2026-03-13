@@ -1,9 +1,13 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Trophy, Ticket } from "lucide-react";
+import { useUser } from "@/lib/user-context";
+import { useUserStats, type GameStats } from "@/lib/use-user-stats";
+import type { GameSlug } from "@/lib/save-score";
 
 interface GameCard {
   href: string;
+  slug: GameSlug;
   testId: string;
   emoji: string;
   iconGradient: string;
@@ -17,8 +21,9 @@ interface GameCard {
 const footballGames: GameCard[] = [
   {
     href: "/targetman",
+    slug: "targetman",
     testId: "link-targetman",
-    emoji: "🎯",
+    emoji: "\uD83C\uDFAF",
     iconGradient: "from-orange-500/20 to-orange-500/5",
     iconBorder: "border-orange-500/20",
     title: ["Target", "Man"],
@@ -28,8 +33,9 @@ const footballGames: GameCard[] = [
   },
   {
     href: "/overlap",
+    slug: "overlap",
     testId: "link-overlap",
-    emoji: "🔗",
+    emoji: "\uD83D\uDD17",
     iconGradient: "from-blue-500/20 to-blue-500/5",
     iconBorder: "border-blue-500/20",
     title: ["Over", "lap"],
@@ -39,8 +45,9 @@ const footballGames: GameCard[] = [
   },
   {
     href: "/clubladder",
+    slug: "clubladder",
     testId: "link-clubladder",
-    emoji: "📈",
+    emoji: "\uD83D\uDCC8",
     iconGradient: "from-purple-500/20 to-purple-500/5",
     iconBorder: "border-purple-500/20",
     title: ["Ladder", "Up"],
@@ -50,8 +57,9 @@ const footballGames: GameCard[] = [
   },
   {
     href: "/goalchain",
+    slug: "goalchain",
     testId: "link-goalchain",
-    emoji: "⚽",
+    emoji: "\u26BD",
     iconGradient: "from-primary/20 to-primary/5",
     iconBorder: "border-primary/20",
     title: ["Goal", "Chain"],
@@ -64,8 +72,9 @@ const footballGames: GameCard[] = [
 const tennisGames: GameCard[] = [
   {
     href: "/slamchain",
+    slug: "slamchain",
     testId: "link-slamchain",
-    emoji: "🎾",
+    emoji: "\uD83C\uDFBE",
     iconGradient: "from-emerald-500/20 to-emerald-500/5",
     iconBorder: "border-emerald-500/20",
     title: ["Slam", "16"],
@@ -78,8 +87,9 @@ const tennisGames: GameCard[] = [
 const f1Games: GameCard[] = [
   {
     href: "/gridlock",
+    slug: "gridlock",
     testId: "link-gridlock",
-    emoji: "🏎️",
+    emoji: "\uD83C\uDFCE\uFE0F",
     iconGradient: "from-red-500/20 to-red-500/5",
     iconBorder: "border-red-500/20",
     title: ["Grid", "Lock"],
@@ -89,7 +99,7 @@ const f1Games: GameCard[] = [
   },
 ];
 
-function GameCardComponent({ game, delay }: { game: GameCard; delay: number }) {
+function GameCardComponent({ game, delay, gameStats }: { game: GameCard; delay: number; gameStats: GameStats }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -99,8 +109,26 @@ function GameCardComponent({ game, delay }: { game: GameCard; delay: number }) {
     >
       <Link href={game.href} data-testid={game.testId}>
         <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200 h-full flex flex-col">
-          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br ${game.iconGradient} border ${game.iconBorder} flex items-center justify-center mb-3 sm:mb-4`}>
-            <span className="text-xl sm:text-2xl">{game.emoji}</span>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br ${game.iconGradient} border ${game.iconBorder} flex items-center justify-center`}>
+              <span className="text-xl sm:text-2xl">{game.emoji}</span>
+            </div>
+            {gameStats.plays > 0 ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Ticket className="w-3 h-3" />
+                  <span className="text-[10px] font-medium">{gameStats.plays}</span>
+                </div>
+                <div className="flex items-center gap-1 text-amber-400">
+                  <Trophy className="w-3 h-3" />
+                  <span className="text-[10px] font-bold">{gameStats.highScore.toLocaleString()}</span>
+                </div>
+              </div>
+            ) : (
+              <span className="text-[10px] font-medium text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/60">
+                New
+              </span>
+            )}
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
             {game.title[0]}
@@ -126,11 +154,13 @@ function GameSection({
   emoji,
   games,
   baseDelay,
+  allStats,
 }: {
   label: string;
   emoji: string;
   games: GameCard[];
   baseDelay: number;
+  allStats: Record<GameSlug, GameStats>;
 }) {
   return (
     <div>
@@ -147,7 +177,7 @@ function GameSection({
       </motion.div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {games.map((game, i) => (
-          <GameCardComponent key={game.href} game={game} delay={baseDelay + i * 0.08} />
+          <GameCardComponent key={game.href} game={game} delay={baseDelay + i * 0.08} gameStats={allStats[game.slug]} />
         ))}
       </div>
     </div>
@@ -155,6 +185,9 @@ function GameSection({
 }
 
 export default function Home() {
+  const { user } = useUser();
+  const { stats } = useUserStats(user?.username);
+
   return (
     <div className="min-h-screen bg-background flex items-start pt-12 sm:pt-16 justify-center p-4 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -187,9 +220,9 @@ export default function Home() {
         </motion.p>
 
         <div className="space-y-6 sm:space-y-8 text-left">
-          <GameSection label="Football" emoji="⚽" games={footballGames} baseDelay={0.3} />
-          <GameSection label="Tennis" emoji="🎾" games={tennisGames} baseDelay={0.55} />
-          <GameSection label="Formula 1" emoji="🏎️" games={f1Games} baseDelay={0.65} />
+          <GameSection label="Football" emoji="\u26BD" games={footballGames} baseDelay={0.3} allStats={stats} />
+          <GameSection label="Tennis" emoji="\uD83C\uDFBE" games={tennisGames} baseDelay={0.55} allStats={stats} />
+          <GameSection label="Formula 1" emoji="\uD83C\uDFCE\uFE0F" games={f1Games} baseDelay={0.65} allStats={stats} />
         </div>
       </motion.div>
     </div>

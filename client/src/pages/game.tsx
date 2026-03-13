@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home, Share2 } from "lucide-react";
+import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag, Home, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
+import { useGameStats } from "@/lib/use-user-stats";
 
 const GAME_DURATION = 90;
 
@@ -132,6 +133,8 @@ function getBarColor(goals: number): string {
 export default function Game() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const [, navigate] = useLocation();
+  const { user } = useUser();
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "goalchain");
 
   const [gameState, setGameState] = useState<GameState>("idle");
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
@@ -148,6 +151,7 @@ export default function Game() {
       return 0;
     }
   });
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [lastAddedGoals, setLastAddedGoals] = useState(0);
@@ -201,9 +205,10 @@ export default function Game() {
           sessionStorage.setItem("chaingoal-highscore", prev.toString());
         } catch {}
       }
+      refreshStats();
       return prev;
     });
-  }, [highScore]);
+  }, [highScore, refreshStats]);
 
   useEffect(() => {
     if (gameState === "playing") {
@@ -317,7 +322,7 @@ export default function Game() {
   }, [streak.emoji, streakTier]);
 
   if (gameState === "idle") {
-    return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
+    return <StartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />;
   }
 
   if (gameState === "finished") {
@@ -325,7 +330,8 @@ export default function Game() {
       <EndScreen
         guessedPlayers={guessedPlayers}
         totalGoals={totalGoals}
-        highScore={highScore}
+        highScore={effectiveHighScore}
+        totalPlays={totalPlays}
         onRestart={startGame}
         onHome={goHome}
       />
@@ -406,11 +412,11 @@ export default function Game() {
                 {guessCount}
               </span>
             </div>
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-sm font-medium text-amber-400/80" data-testid="text-high-score">
-                  {highScore}
+                  {effectiveHighScore}
                 </span>
               </div>
             )}
@@ -774,12 +780,14 @@ function EndScreen({
   guessedPlayers,
   totalGoals,
   highScore,
+  totalPlays,
   onRestart,
   onHome,
 }: {
   guessedPlayers: GuessedPlayer[];
   totalGoals: number;
   highScore: number;
+  totalPlays: number;
   onRestart: () => void;
   onHome: () => void;
 }) {
@@ -915,6 +923,10 @@ function EndScreen({
           </div>
           <div className="text-muted-foreground text-xs uppercase tracking-widest mt-2">
             total goals from {guessedPlayers.length} players
+          </div>
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
           </div>
         </motion.div>
 

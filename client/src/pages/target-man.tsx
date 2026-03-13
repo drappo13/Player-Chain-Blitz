@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap, Share2 } from "lucide-react";
+import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
+import { useGameStats } from "@/lib/use-user-stats";
 import { saveScore } from "@/lib/save-score";
 
 const theme = gameThemes.warm;
@@ -203,6 +204,9 @@ export default function TargetMan() {
       return 0;
     }
   });
+  const { user } = useUser();
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "targetman");
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
 
   // Round feedback
   const [lastResult, setLastResult] = useState<RoundResult | null>(null);
@@ -276,7 +280,8 @@ export default function TargetMan() {
       }
       return prev;
     });
-  }, [highScore]);
+    refreshStats();
+  }, [highScore, refreshStats]);
 
   // Main game timer
   useEffect(() => {
@@ -531,7 +536,7 @@ export default function TargetMan() {
   }, [comboStreak >= 5 ? 5 : comboStreak >= 3 ? 3 : comboStreak >= 2 ? 2 : 0]);
 
   if (gameState === "idle") {
-    return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
+    return <StartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />;
   }
 
   if (gameState === "finished") {
@@ -539,7 +544,8 @@ export default function TargetMan() {
       <EndScreen
         roundResults={roundResults}
         totalScore={totalScore}
-        highScore={highScore}
+        highScore={effectiveHighScore}
+        totalPlays={totalPlays}
         onRestart={startGame}
         onHome={goHome}
       />
@@ -621,10 +627,10 @@ export default function TargetMan() {
               </motion.div>
             )}
 
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-sm font-medium text-amber-400/80">{highScore}</span>
+                <span className="text-sm font-medium text-amber-400/80">{effectiveHighScore}</span>
               </div>
             )}
             <button
@@ -1104,12 +1110,14 @@ function EndScreen({
   roundResults,
   totalScore,
   highScore,
+  totalPlays,
   onRestart,
   onHome,
 }: {
   roundResults: RoundResult[];
   totalScore: number;
   highScore: number;
+  totalPlays: number;
   onRestart: () => void;
   onHome: () => void;
 }) {
@@ -1224,6 +1232,10 @@ function EndScreen({
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-3"
         >
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
+          </div>
           <div className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
             {totalScore}
           </div>

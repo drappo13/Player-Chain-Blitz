@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Shield, SkipForward, TrendingUp, Share2 } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Shield, SkipForward, TrendingUp, Share2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playTick, playGameEnd, playHighScore, playScoreSound, playShieldBlock } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
+import { useGameStats } from "@/lib/use-user-stats";
 
 const theme = gameThemes.ladder;
 
@@ -345,6 +346,7 @@ function validateAnswer(
 
 export default function ClubLadder() {
   const [, navigate] = useLocation();
+  const { user } = useUser();
 
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const clubIndex = useMemo(() => buildClubGoalsIndex(), []);
@@ -366,6 +368,8 @@ export default function ClubLadder() {
       return 0;
     }
   });
+  const { highScore: firebaseHighScore, plays: totalPlays, refresh: refreshStats } = useGameStats(user?.username, "clubladder");
+  const effectiveHighScore = Math.max(highScore, firebaseHighScore);
 
   // Feedback state
   const [lastResult, setLastResult] = useState<TurnResult | null>(null);
@@ -406,9 +410,10 @@ export default function ClubLadder() {
           sessionStorage.setItem("clubladder-highscore", prev.toString());
         } catch {}
       }
+      refreshStats();
       return prev;
     });
-  }, [highScore, clearTurnTimer]);
+  }, [highScore, clearTurnTimer, refreshStats]);
 
   const advanceTurn = useCallback((
     newThreshold: number,
@@ -648,7 +653,7 @@ export default function ClubLadder() {
   const liveBase = getBasePoints(liveElapsed);
 
   if (gameState === "idle") {
-    return <StartScreen highScore={highScore} onStart={startGame} onHome={goHome} />;
+    return <StartScreen highScore={effectiveHighScore} onStart={startGame} onHome={goHome} />;
   }
 
   if (gameState === "finished") {
@@ -656,10 +661,11 @@ export default function ClubLadder() {
       <EndScreen
         turnResults={turnResults}
         totalScore={totalScore}
-        highScore={highScore}
+        highScore={effectiveHighScore}
         endReason={endReason}
         failFeedback={failFeedback}
         threshold={threshold}
+        totalPlays={totalPlays}
         onRestart={startGame}
         onHome={goHome}
       />
@@ -709,10 +715,10 @@ export default function ClubLadder() {
               </span>
             </div>
 
-            {highScore > 0 && (
+            {effectiveHighScore > 0 && (
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-sm font-medium text-amber-400/80">{highScore}</span>
+                <span className="text-sm font-medium text-amber-400/80">{effectiveHighScore}</span>
               </div>
             )}
           </div>
@@ -1169,6 +1175,7 @@ function EndScreen({
   endReason,
   failFeedback,
   threshold,
+  totalPlays,
   onRestart,
   onHome,
 }: {
@@ -1183,6 +1190,7 @@ function EndScreen({
     clubGoals?: { club: string; goals: number }[];
   } | null;
   threshold: number;
+  totalPlays: number;
   onRestart: () => void;
   onHome: () => void;
 }) {
@@ -1300,6 +1308,10 @@ function EndScreen({
           transition={{ type: "spring", delay: 0.2 }}
           className="mb-2"
         >
+          <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
+            <Ticket className="w-3.5 h-3.5" />
+            <span className="text-xs">Game #{totalPlays + 1}</span>
+          </div>
           <div className="text-8xl font-black tabular-nums bg-gradient-to-b from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
             {totalScore}
           </div>
