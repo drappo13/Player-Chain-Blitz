@@ -1066,9 +1066,9 @@ function StartScreen({
           transition={{ delay: 0.2 }}
           className="text-3xl sm:text-5xl font-black text-foreground mb-4 sm:mb-8 tracking-tight"
         >
-          Club
+          Ladder
           <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-            Ladder
+            Up
           </span>
         </motion.h1>
 

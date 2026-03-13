@@ -80,7 +80,7 @@ export const gameThemes = {
     glowA: "bg-blue-500/5",
     glowB: "bg-cyan-500/5",
   },
-  /** ClubLadder: purple/indigo tones */
+  /** LadderUp: purple/indigo tones */
   ladder: {
     primaryBtn: "shadow-xl shadow-purple-500/20 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-purple-600 focus-visible:ring-purple-500",
     outlineBtn: "font-bold border-border focus-visible:ring-purple-500",
