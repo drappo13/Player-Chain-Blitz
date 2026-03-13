@@ -1257,7 +1257,7 @@ function EndScreen({
     } else {
       playGameEnd();
     }
-    try { (window as any).goatcounter?.count({ path: "game-played-overlap", title: `Overlap: ${totalScore}pts`, event: true }); } catch {}
+    try { (window as any).goatcounter?.count({ path: `game-played-overlap?${Date.now()}`, title: `Overlap: ${totalScore}pts`, event: true }); } catch {}
   }, []);
 
   return (

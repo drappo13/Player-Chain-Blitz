@@ -747,7 +747,7 @@ function GridLockEndScreen({
     } else {
       playGameEnd();
     }
-    try { (window as any).goatcounter?.count({ path: "game-played-gridlock", title: `GridLock: ${score}pts`, event: true }); } catch {}
+    try { (window as any).goatcounter?.count({ path: `game-played-gridlock?${Date.now()}`, title: `GridLock: ${score}pts`, event: true }); } catch {}
   }, []);
 
   const sortedByPoints = [...answeredDrivers].sort((a, b) => a.season.year - b.season.year);

@@ -801,7 +801,7 @@ function EndScreen({
     } else {
       playGameEnd();
     }
-    try { (window as any).goatcounter?.count({ path: "game-played-goalchain", title: `GoalChain: ${totalGoals}pts`, event: true }); } catch {}
+    try { (window as any).goatcounter?.count({ path: `game-played-goalchain?${Date.now()}`, title: `GoalChain: ${totalGoals}pts`, event: true }); } catch {}
   }, []);
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
