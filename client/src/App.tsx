@@ -3,6 +3,9 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Switch, Route } from "wouter";
+import { UserProvider, useUser } from "@/lib/user-context";
+import { UsernamePicker } from "@/components/username-picker";
+import { UserBadge } from "@/components/user-badge";
 import Home from "@/pages/home";
 import Game from "@/pages/game";
 import SlamChain from "@/pages/slam-chain";
@@ -27,12 +30,28 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { user, loading } = useUser();
+
+  if (loading) return null;
+
+  return (
+    <>
+      {!user && <UsernamePicker />}
+      <UserBadge />
+      <Router />
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <UserProvider>
+          <Toaster />
+          <AppContent />
+        </UserProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

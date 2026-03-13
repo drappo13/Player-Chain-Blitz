@@ -5,6 +5,8 @@ import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward,
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -784,6 +786,7 @@ function SlamEndScreen({
 }) {
   const isNewHighScore = score >= highScore && score > 0;
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
 
   const handleShare = async () => {
     const text = `I scored ${score.toLocaleString()} on Slam16 \u{1F3BE} Can you beat me?\nhttps://drapk.in/slamchain`;
@@ -803,6 +806,7 @@ function SlamEndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-slam16?${Date.now()}`, title: `Slam16: ${score}pts`, event: true }); } catch {}
+    saveScore(user?.username, "slamchain", score);
   }, []);
 
   const tournamentOrder = ["Australian Open", "Roland Garros", "Wimbledon", "US Open"];

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playNeutral, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const theme = gameThemes.overlap;
 
@@ -1242,6 +1244,7 @@ function EndScreen({
   onHome: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0
@@ -1266,6 +1269,7 @@ function EndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-overlap?${Date.now()}`, title: `Overlap: ${totalScore}pts`, event: true }); } catch {}
+    saveScore(user?.username, "overlap", totalScore);
   }, []);
 
   return (

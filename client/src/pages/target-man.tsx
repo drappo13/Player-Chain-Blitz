@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const theme = gameThemes.warm;
 
@@ -1112,6 +1114,7 @@ function EndScreen({
   onHome: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
   const exactMatches = roundResults.filter((r) => r.basePoints === 50).length;
@@ -1137,6 +1140,7 @@ function EndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-targetman?${Date.now()}`, title: `TargetMan: ${totalScore}pts`, event: true }); } catch {}
+    saveScore(user?.username, "targetman", totalScore);
   }, []);
 
   return (

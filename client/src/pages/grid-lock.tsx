@@ -5,6 +5,8 @@ import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward,
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -729,6 +731,7 @@ function GridLockEndScreen({
 }) {
   const isNewHighScore = score >= highScore && score > 0;
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
 
   const handleShare = async () => {
     const text = `I scored ${score.toLocaleString()} on GridLock 🏎️ Can you beat me?\nhttps://drapk.in/gridlock`;
@@ -748,6 +751,7 @@ function GridLockEndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-gridlock?${Date.now()}`, title: `GridLock: ${score}pts`, event: true }); } catch {}
+    saveScore(user?.username, "gridlock", score);
   }, []);
 
   const sortedByPoints = [...answeredDrivers].sort((a, b) => a.season.year - b.season.year);

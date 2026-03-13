@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playTick, playGameEnd, playHighScore, playScoreSound, playShieldBlock } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const theme = gameThemes.ladder;
 
@@ -1185,6 +1187,7 @@ function EndScreen({
   onHome: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = turnResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0
@@ -1212,6 +1215,7 @@ function EndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-ladderup?${Date.now()}`, title: `LadderUp: ${totalScore}pts`, event: true }); } catch {}
+    saveScore(user?.username, "clubladder", totalScore);
   }, []);
 
   return (

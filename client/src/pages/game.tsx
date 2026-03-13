@@ -5,6 +5,8 @@ import { Timer, Trophy, Zap, Target, ChevronRight, RotateCcw, Star, Flame, Flag,
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
 
 const GAME_DURATION = 90;
 
@@ -782,6 +784,7 @@ function EndScreen({
   onHome: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const { user } = useUser();
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
   const handleShare = async () => {
@@ -802,6 +805,7 @@ function EndScreen({
       playGameEnd();
     }
     try { (window as any).goatcounter?.count({ path: `game-played-goalchain?${Date.now()}`, title: `GoalChain: ${totalGoals}pts`, event: true }); } catch {}
+    saveScore(user?.username, "goalchain", totalGoals);
   }, []);
 
   const sortedByGoals = [...guessedPlayers].sort((a, b) => b.goals - a.goals);
