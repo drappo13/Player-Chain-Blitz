@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import type { GameSlug } from "./save-score";
@@ -70,7 +70,7 @@ export function useUserStats(username: string | undefined): {
     return () => { cancelled = true; };
   }, [username, refreshKey]);
 
-  const refresh = () => setRefreshKey((k) => k + 1);
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   return { stats, loading, refresh };
 }

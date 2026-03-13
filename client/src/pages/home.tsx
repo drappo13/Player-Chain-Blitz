@@ -220,9 +220,9 @@ export default function Home() {
         </motion.p>
 
         <div className="space-y-6 sm:space-y-8 text-left">
-          <GameSection label="Football" emoji="\u26BD" games={footballGames} baseDelay={0.3} allStats={stats} />
-          <GameSection label="Tennis" emoji="\uD83C\uDFBE" games={tennisGames} baseDelay={0.55} allStats={stats} />
-          <GameSection label="Formula 1" emoji="\uD83C\uDFCE\uFE0F" games={f1Games} baseDelay={0.65} allStats={stats} />
+          <GameSection label="Football" emoji="⚽" games={footballGames} baseDelay={0.3} allStats={stats} />
+          <GameSection label="Tennis" emoji="🎾" games={tennisGames} baseDelay={0.55} allStats={stats} />
+          <GameSection label="Formula 1" emoji="🏎️" games={f1Games} baseDelay={0.65} allStats={stats} />
         </div>
       </motion.div>
     </div>

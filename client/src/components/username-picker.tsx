@@ -18,9 +18,12 @@ export function UsernamePicker() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [takenUsername, setTakenUsername] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setTakenUsername("");
     setSubmitting(true);
 
     const result =
@@ -29,13 +32,28 @@ export function UsernamePicker() {
         : await login(username);
 
     if (!result.ok) {
+      if (result.error === "Username taken") {
+        setTakenUsername(username.trim());
+      } else {
+        setError(result.error || "Something went wrong");
+      }
+    }
+    setSubmitting(false);
+  };
+
+  const handleLoginAsTaken = async () => {
+    setTakenUsername("");
+    setError("");
+    setSubmitting(true);
+    const result = await login(takenUsername);
+    if (!result.ok) {
       setError(result.error || "Something went wrong");
     }
     setSubmitting(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center pt-[12vh] sm:pt-0 p-4 bg-background/80 backdrop-blur-sm overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -61,6 +79,7 @@ export function UsernamePicker() {
               onChange={(e) => {
                 setUsername(e.target.value);
                 setError("");
+                setTakenUsername("");
               }}
               placeholder="Username"
               autoFocus
@@ -103,18 +122,37 @@ export function UsernamePicker() {
             <p className="text-xs text-red-400 text-center">{error}</p>
           )}
 
-          <Button
-            type="submit"
-            disabled={submitting || !username.trim()}
-            className="w-full font-bold"
-            size="lg"
-          >
-            {submitting
-              ? "..."
-              : mode === "signup"
-                ? `Claim ${avatar}`
-                : "Log in"}
-          </Button>
+          {takenUsername && (
+            <div className="rounded-lg border border-border bg-background/50 p-3 text-center space-y-2">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-foreground">{takenUsername}</span> already exists
+              </p>
+              <Button
+                type="button"
+                onClick={handleLoginAsTaken}
+                disabled={submitting}
+                className="w-full font-bold"
+                size="sm"
+              >
+                {submitting ? "..." : `Log in as ${takenUsername}`}
+              </Button>
+            </div>
+          )}
+
+          {!takenUsername && (
+            <Button
+              type="submit"
+              disabled={submitting || !username.trim()}
+              className="w-full font-bold"
+              size="lg"
+            >
+              {submitting
+                ? "..."
+                : mode === "signup"
+                  ? `Claim ${avatar}`
+                  : "Log in"}
+            </Button>
+          )}
         </form>
 
         <button
@@ -122,6 +160,7 @@ export function UsernamePicker() {
           onClick={() => {
             setMode(mode === "signup" ? "login" : "signup");
             setError("");
+            setTakenUsername("");
           }}
           className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
         >
