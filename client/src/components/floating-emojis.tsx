@@ -18,9 +18,9 @@ export function FloatingEmojis({
   sizeRange = 14,
   opacityPeak = 0.5,
 }: FloatingEmojisProps) {
+  const count = counts[tier] ?? counts[counts.length - 1];
   const emojis = useMemo(() => {
     if (!emoji || tier === 0) return [];
-    const count = counts[tier] ?? counts[counts.length - 1];
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       emoji,
@@ -29,7 +29,8 @@ export function FloatingEmojis({
       duration: 3 + Math.random() * 4,
       size: sizeMin + Math.random() * sizeRange,
     }));
-  }, [emoji, tier, counts, sizeMin, sizeRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emoji, tier, count, sizeMin, sizeRange]);
 
   return (
     <AnimatePresence>
