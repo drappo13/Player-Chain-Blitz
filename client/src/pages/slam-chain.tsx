@@ -315,7 +315,7 @@ export default function SlamChain() {
   }
 
   return (
-    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-700">
+    <div className="bg-background relative transition-colors duration-700 overflow-x-hidden sm:min-h-screen">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <motion.div
           key={currentTournament?.tournament}

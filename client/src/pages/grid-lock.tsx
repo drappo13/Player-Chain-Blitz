@@ -266,7 +266,7 @@ export default function GridLock() {
   }
 
   return (
-    <div className="bg-background fixed inset-0 overflow-hidden sm:relative sm:inset-auto sm:overflow-x-hidden sm:min-h-screen transition-colors duration-700">
+    <div className="bg-background relative transition-colors duration-700 overflow-x-hidden sm:min-h-screen">
       <div className="fixed inset-0 pointer-events-none transition-all duration-700">
         <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent" />
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-500/8 rounded-full blur-3xl" />
