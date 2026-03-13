@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Target, ChevronRight, Home, Flag, Crosshair, Zap, Ticket } from "lucide-react";
+import { Timer, Trophy, Target, ChevronRight, Home, Flag, Crosshair, Zap, Ticket, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playScoreSound } from "@/lib/sounds";

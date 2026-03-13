@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, Home, Zap, SkipForward, GitMerge, Ticket } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Home, Zap, SkipForward, GitMerge, Ticket, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playNeutral, playTick, playScoreSound } from "@/lib/sounds";

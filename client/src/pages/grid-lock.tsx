@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { seasons, getTeamColor, type F1Driver, type F1Season } from "@/data/f1seasons";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Flag, Ticket } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Flag, Ticket, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick } from "@/lib/sounds";
