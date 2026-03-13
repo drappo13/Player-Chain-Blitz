@@ -214,10 +214,24 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-sm text-muted-foreground mb-6 sm:mb-10"
+          className="text-sm text-muted-foreground mb-4 sm:mb-6"
         >
           Test your sports knowledge
         </motion.p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="mb-6 sm:mb-10"
+        >
+          <Link href="/leaderboard">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
+              <Trophy className="w-3.5 h-3.5" />
+              Leaderboards
+              <ChevronRight className="w-3 h-3" />
+            </span>
+          </Link>
+        </motion.div>
 
         <div className="space-y-6 sm:space-y-8 text-left">
           <GameSection label="Football" emoji="⚽" games={footballGames} baseDelay={0.3} allStats={stats} />

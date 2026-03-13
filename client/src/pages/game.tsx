@@ -16,6 +16,8 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { FloatingEmojis } from "@/components/floating-emojis";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
+import { MiniLeaderboard } from "@/components/leaderboard-table";
+import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 const GAME_DURATION = 90;
 
@@ -228,8 +230,8 @@ export default function Game() {
         return;
       }
 
-      // Check starting letter against the player's actual surname, not the input
-      const playerSurnameStart = normalizeChar(player.originalLastName[0]);
+      // Check starting letter against the player's display surname (e.g. "Ronaldo" not "dos Santos Aveiro")
+      const playerSurnameStart = normalizeChar(player.lastName[0]);
       if (currentLetter && playerSurnameStart !== currentLetter) {
         setShowWrong(true);
         playWrong();
@@ -696,6 +698,8 @@ function EndScreen({
 }) {
   const { share, copied } = useShare();
   const { user } = useUser();
+  const [, navigate] = useLocation();
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("goalchain", "alltime", 10);
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
   const handleShare = () => share(`I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\nhttps://drapk.in/goalchain`);
@@ -810,6 +814,23 @@ function EndScreen({
             </div>
           </motion.div>
         )}
+
+        {/* Mini leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
+        >
+          <MiniLeaderboard
+            entries={lbEntries}
+            loading={lbLoading}
+            currentUser={user?.username}
+            accentBg="bg-emerald-500/10 border-emerald-500/30"
+            title="Top Scores"
+            onViewFull={() => navigate("/leaderboard")}
+          />
+        </motion.div>
 
         {guessedPlayers.length > 0 && (
           <motion.div

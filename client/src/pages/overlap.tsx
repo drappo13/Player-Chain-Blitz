@@ -17,6 +17,8 @@ import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
+import { MiniLeaderboard } from "@/components/leaderboard-table";
+import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 const theme = gameThemes.overlap;
 
@@ -1172,11 +1174,13 @@ function EndScreen({
 }) {
   const { share, copied } = useShare();
   const { user } = useUser();
+  const [, navigate] = useLocation();
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("overlap", "alltime", 10);
 
   const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\nhttps://drapk.in/overlap`);
 
@@ -1264,6 +1268,23 @@ function EndScreen({
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider">best</div>
             </div>
           )}
+        </motion.div>
+
+        {/* Mini leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
+        >
+          <MiniLeaderboard
+            entries={lbEntries}
+            loading={lbLoading}
+            currentUser={user?.username}
+            accentBg="bg-blue-500/10 border-blue-500/30"
+            title="Top Scores"
+            onViewFull={() => navigate("/leaderboard")}
+          />
         </motion.div>
 
         {/* Round history with top answers */}

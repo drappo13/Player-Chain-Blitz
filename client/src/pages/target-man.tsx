@@ -16,6 +16,8 @@ import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
+import { MiniLeaderboard } from "@/components/leaderboard-table";
+import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 const theme = gameThemes.warm;
 
@@ -1056,6 +1058,8 @@ function EndScreen({
 }) {
   const { share, copied } = useShare();
   const { user } = useUser();
+  const [, navigate] = useLocation();
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("targetman", "alltime", 10);
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
   const exactMatches = roundResults.filter((r) => r.basePoints === 50).length;
@@ -1147,6 +1151,23 @@ function EndScreen({
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider">best round</div>
             </div>
           )}
+        </motion.div>
+
+        {/* Mini leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
+        >
+          <MiniLeaderboard
+            entries={lbEntries}
+            loading={lbLoading}
+            currentUser={user?.username}
+            accentBg="bg-orange-500/10 border-orange-500/30"
+            title="Top Scores"
+            onViewFull={() => navigate("/leaderboard")}
+          />
         </motion.div>
 
         {/* Round history */}
