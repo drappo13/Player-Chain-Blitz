@@ -432,7 +432,7 @@ export default function ClubLadder() {
     setTimeout(() => {
       setShowShield(false);
       setFailFeedback(null);
-    }, 1500);
+    }, 3000);
 
     const board = generateBoard(clubIndex, currentThreshold, currentUsedKeys, lastAnswerClubRef.current);
     if (!board) {
@@ -999,24 +999,27 @@ function FailDetail({
   const reasonColor = muted ? "text-red-400/70" : "text-red-400";
   const detailColor = muted ? "text-muted-foreground/50" : "text-muted-foreground";
 
+  const showReason = feedback.reason === "not_found" || feedback.reason === "already_used" || feedback.reason === "no_club";
+
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
         <span className={`font-bold text-sm ${nameColor}`}>
           {feedback.playerName || feedback.guess}
         </span>
-        <span className={`text-xs font-medium ${reasonColor}`}>
-          {feedback.reason === "not_found" && "Not found in PL data"}
-          {feedback.reason === "already_used" && "Already used"}
-          {feedback.reason === "no_club" && "Didn't play for these clubs"}
-          {feedback.reason === "below_threshold" && `Needed > ${threshold} goals`}
-        </span>
+        {showReason && (
+          <span className={`text-xs font-medium ${reasonColor}`}>
+            {feedback.reason === "not_found" && "Not found in PL data"}
+            {feedback.reason === "already_used" && "Already used"}
+            {feedback.reason === "no_club" && "Not at these clubs"}
+          </span>
+        )}
       </div>
       {feedback.clubGoals && feedback.clubGoals.some((cg) => cg.goals > 0) && (
         <div className={`flex items-center gap-3 mt-1 text-xs ${detailColor}`}>
-          {feedback.clubGoals.map((cg) => (
-            <span key={cg.club} className={cg.goals > 0 ? "" : "opacity-30"}>
-              {cg.club}: {cg.goals > 0 ? `${cg.goals}g` : "\u2014"}
+          {feedback.clubGoals.filter((cg) => cg.goals > 0).map((cg) => (
+            <span key={cg.club}>
+              {cg.club}: {cg.goals}g
             </span>
           ))}
         </div>
