@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface FloatingEmojisProps {
   emoji: string;
@@ -10,6 +9,11 @@ interface FloatingEmojisProps {
   opacityPeak?: number;
 }
 
+/**
+ * Floating emoji background effect using pure CSS animations.
+ * CSS @keyframes run on the compositor thread — no main-thread JS overhead,
+ * which eliminates the jitter that Framer Motion's JS-driven repeat caused on mobile.
+ */
 export function FloatingEmojis({
   emoji,
   tier,
@@ -23,7 +27,6 @@ export function FloatingEmojis({
     if (!emoji || tier === 0) return [];
     return Array.from({ length: count }, (_, i) => ({
       id: i,
-      emoji,
       left: `${5 + Math.random() * 90}%`,
       delay: Math.random() * 3,
       duration: 3 + Math.random() * 4,
@@ -32,26 +35,26 @@ export function FloatingEmojis({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emoji, tier, count, sizeMin, sizeRange]);
 
+  if (emojis.length === 0) return null;
+
   return (
-    <AnimatePresence>
+    <>
       {emojis.map((e) => (
-        <motion.span
+        <span
           key={`${e.id}-${emoji}`}
-          initial={{ opacity: 0, y: "100vh" }}
-          animate={{ opacity: [0, opacityPeak, opacityPeak, 0], y: "-20vh" }}
-          exit={{ opacity: 0 }}
-          transition={{
-            duration: e.duration,
-            delay: e.delay,
-            repeat: Infinity,
-            ease: "linear",
+          className="absolute select-none pointer-events-none"
+          style={{
+            left: e.left,
+            fontSize: e.size,
+            animation: `floatUp ${e.duration}s linear ${e.delay}s infinite`,
+            willChange: "transform, opacity",
+            // CSS custom property for per-element opacity peak
+            ["--float-peak" as string]: opacityPeak,
           }}
-          className="absolute select-none"
-          style={{ left: e.left, fontSize: e.size }}
         >
-          {e.emoji}
-        </motion.span>
+          {emoji}
+        </span>
       ))}
-    </AnimatePresence>
+    </>
   );
 }

@@ -4,8 +4,6 @@ import {
   query,
   where,
   getDocs,
-  orderBy,
-  limit,
   Timestamp,
   doc,
   getDoc,
@@ -25,36 +23,37 @@ export type LeaderboardPeriod = "today" | "alltime";
 
 /**
  * Fetch top scores for a specific game.
- * Returns entries sorted by score descending.
+ * Uses only equality filters to avoid needing composite Firestore indexes.
+ * Sorting + dedup is done client-side.
  */
 async function fetchGameLeaderboard(
   game: GameSlug,
   period: LeaderboardPeriod,
   max: number,
 ): Promise<LeaderboardEntry[]> {
-  const constraints = [
-    where("game", "==", game),
-  ];
-
-  if (period === "today") {
-    const now = new Date();
-    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    constraints.push(where("timestamp", ">=", Timestamp.fromDate(startOfDay)));
-  }
-
-  // Query scores — we fetch more than needed to aggregate per-user best
+  // Simple equality query — no composite index needed
   const q = query(
     collection(db, "scores"),
-    ...constraints,
-    orderBy("score", "desc"),
-    limit(200),
+    where("game", "==", game),
   );
 
   const snap = await getDocs(q);
-  // Keep only the best score per username
+
+  const startOfDay = period === "today"
+    ? (() => {
+        const now = new Date();
+        return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      })()
+    : null;
+
+  // Keep only the best score per username, filtering by period client-side
   const bestByUser = new Map<string, number>();
   snap.forEach((d) => {
-    const data = d.data() as { username: string; score: number };
+    const data = d.data() as { username: string; score: number; timestamp?: Timestamp };
+    if (startOfDay && data.timestamp) {
+      const docDate = data.timestamp.toDate();
+      if (docDate < startOfDay) return;
+    }
     const existing = bestByUser.get(data.username);
     if (!existing || data.score > existing) {
       bestByUser.set(data.username, data.score);
@@ -71,39 +70,39 @@ async function fetchGameLeaderboard(
 
   return sorted.map(([username, score]) => ({
     username,
-    avatar: avatarMap.get(username) || "⚽",
+    avatar: avatarMap.get(username) || "\u26bd",
     score,
   }));
 }
 
 /**
  * Fetch global leaderboard: most plays or highest total score.
+ * Fetches all scores and aggregates client-side.
  */
 async function fetchGlobalLeaderboard(
   mode: "plays" | "points",
   period: LeaderboardPeriod,
   max: number,
 ): Promise<LeaderboardEntry[]> {
-  const constraints: ReturnType<typeof where>[] = [];
-
-  if (period === "today") {
-    const now = new Date();
-    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    constraints.push(where("timestamp", ">=", Timestamp.fromDate(startOfDay)));
-  }
-
-  const q = query(
-    collection(db, "scores"),
-    ...constraints,
-    orderBy("score", "desc"),
-    limit(500),
-  );
+  // Fetch all scores — no index needed
+  const q = query(collection(db, "scores"));
 
   const snap = await getDocs(q);
 
+  const startOfDay = period === "today"
+    ? (() => {
+        const now = new Date();
+        return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      })()
+    : null;
+
   const userStats = new Map<string, { plays: number; totalScore: number }>();
   snap.forEach((d) => {
-    const data = d.data() as { username: string; score: number };
+    const data = d.data() as { username: string; score: number; timestamp?: Timestamp };
+    if (startOfDay && data.timestamp) {
+      const docDate = data.timestamp.toDate();
+      if (docDate < startOfDay) return;
+    }
     const existing = userStats.get(data.username) || { plays: 0, totalScore: 0 };
     existing.plays += 1;
     existing.totalScore += data.score;
@@ -123,7 +122,7 @@ async function fetchGlobalLeaderboard(
 
   return entries.map((e) => ({
     username: e.username,
-    avatar: avatarMap.get(e.username) || "⚽",
+    avatar: avatarMap.get(e.username) || "\u26bd",
     score: e.value,
     plays: e.plays,
   }));
@@ -132,8 +131,6 @@ async function fetchGlobalLeaderboard(
 /** Batch-fetch avatars from the users collection */
 async function fetchAvatars(usernames: string[]): Promise<Map<string, string>> {
   const map = new Map<string, string>();
-  // Firestore doesn't support batch-get by doc IDs in the web SDK natively,
-  // so we fetch individually but in parallel (max ~20 users)
   const promises = usernames.map(async (u) => {
     try {
       const snap = await getDoc(doc(db, "users", u.toLowerCase()));

@@ -113,22 +113,24 @@ function GameCardComponent({ game, delay, gameStats }: { game: GameCard; delay: 
             <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br ${game.iconGradient} border ${game.iconBorder} flex items-center justify-center`}>
               <span className="text-xl sm:text-2xl">{game.emoji}</span>
             </div>
-            {gameStats.plays > 0 ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Ticket className="w-3 h-3" />
-                  <span className="text-[10px] font-medium">{gameStats.plays}</span>
+            <div className="h-5 flex items-center">
+              {gameStats.plays > 0 ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Ticket className="w-3 h-3" />
+                    <span className="text-[10px] font-medium">{gameStats.plays}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-400">
+                    <Trophy className="w-3 h-3" />
+                    <span className="text-[10px] font-bold">{gameStats.highScore.toLocaleString()}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-amber-400">
-                  <Trophy className="w-3 h-3" />
-                  <span className="text-[10px] font-bold">{gameStats.highScore.toLocaleString()}</span>
-                </div>
-              </div>
-            ) : (
-              <span className="text-[10px] font-medium text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/60">
-                New
-              </span>
-            )}
+              ) : (
+                <span className="text-[10px] font-medium text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/60">
+                  New
+                </span>
+              )}
+            </div>
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
             {game.title[0]}

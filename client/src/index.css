@@ -165,6 +165,13 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+@keyframes floatUp {
+  0% { transform: translateY(100vh); opacity: 0; }
+  10% { opacity: var(--float-peak, 0.5); }
+  80% { opacity: var(--float-peak, 0.5); }
+  100% { transform: translateY(-20vh); opacity: 0; }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -172,6 +179,15 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Reduce expensive blur on mobile to prevent GPU-induced jank.
+   blur-3xl (64px) on large elements is costly on mobile GPUs.
+   Decorative glow blobs use pointer-events-none + absolute positioning. */
+@media (max-width: 640px) {
+  .blur-3xl {
+    --tw-blur: blur(24px) !important;
   }
 }
 
