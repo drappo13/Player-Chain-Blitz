@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Shield, SkipForward, TrendingUp } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Home, Shield, SkipForward, TrendingUp, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playTick, playGameEnd, playHighScore, playScoreSound, playShieldBlock } from "@/lib/sounds";
@@ -1175,6 +1175,7 @@ function EndScreen({
   onRestart: () => void;
   onHome: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = turnResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0
@@ -1183,6 +1184,17 @@ function EndScreen({
   const peakThreshold = turnResults.length > 0
     ? Math.max(...turnResults.map((r) => r.threshold))
     : 0;
+
+  const handleShare = async () => {
+    const text = `I scored ${totalScore.toLocaleString()} on LadderUp ⚽ Can you beat me?\nhttps://drapk.in/clubladder`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (isNewHighScore) {
@@ -1226,6 +1238,10 @@ function EndScreen({
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Play Again
+          </Button>
+          <Button onClick={handleShare} variant="outline" size="lg" className={theme.outlineBtn}>
+            <Share2 className="w-5 h-5 mr-2" />
+            {copied ? "Copied!" : "Share"}
           </Button>
         </motion.div>
 

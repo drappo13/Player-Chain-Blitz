@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap } from "lucide-react";
+import { Timer, Trophy, Target, ChevronRight, RotateCcw, Star, Home, Flag, Crosshair, Zap, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playGameEnd, playHighScore, playScoreSound } from "@/lib/sounds";
@@ -1102,12 +1102,24 @@ function EndScreen({
   onRestart: () => void;
   onHome: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = roundResults.filter((r) => r.finalPoints > 0);
   const exactMatches = roundResults.filter((r) => r.basePoints === 50).length;
   const bestRound = scoringRounds.length > 0
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
+
+  const handleShare = async () => {
+    const text = `I scored ${totalScore.toLocaleString()} on TargetMan ⚽ Can you beat me?\nhttps://drapk.in/targetman`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (isNewHighScore) {
@@ -1151,6 +1163,10 @@ function EndScreen({
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Play Again
+          </Button>
+          <Button onClick={handleShare} variant="outline" size="lg" className={theme.outlineBtn}>
+            <Share2 className="w-5 h-5 mr-2" />
+            {copied ? "Copied!" : "Share"}
           </Button>
         </motion.div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { tournaments, type Tournament, type SlamPlayer } from "@/data/slams";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X } from "lucide-react";
+import { Timer, Trophy, ChevronRight, RotateCcw, Star, Flame, Home, SkipForward, X, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick, playGameEnd, playHighScore } from "@/lib/sounds";
@@ -783,6 +783,18 @@ function SlamEndScreen({
   onHome: () => void;
 }) {
   const isNewHighScore = score >= highScore && score > 0;
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const text = `I scored ${score.toLocaleString()} on Slam16 \u{1F3BE} Can you beat me?\nhttps://drapk.in/slamchain`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (isNewHighScore) {
@@ -839,6 +851,10 @@ function SlamEndScreen({
           >
             <RotateCcw className="w-5 h-5 mr-2" />
             Play Again
+          </Button>
+          <Button onClick={handleShare} variant="outline" size="lg" className="font-bold">
+            <Share2 className="w-5 h-5 mr-2" />
+            {copied ? "Copied!" : "Share"}
           </Button>
         </motion.div>
 
