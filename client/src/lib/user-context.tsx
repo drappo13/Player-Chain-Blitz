@@ -59,7 +59,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const key = trimmed.toLowerCase();
     if (!key) return { ok: false, error: "Enter a username" };
     if (key.length < 2) return { ok: false, error: "Too short (min 2 characters)" };
-    if (key.length > 16) return { ok: false, error: "Too long (max 16 characters)" };
+    if (key.length > 15) return { ok: false, error: "Too long (max 15 characters)" };
     if (!/^[a-z0-9_]+$/.test(key)) return { ok: false, error: "Letters, numbers & underscores only" };
     try {
       const snap = await getDoc(doc(db, "users", key));
