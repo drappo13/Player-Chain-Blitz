@@ -68,6 +68,15 @@ function buildPlayerLookup() {
     }
   }
 
+  // Mononym / nickname lookups
+  const mononyms: Record<string, string> = {
+    "gilberto": "gilbertosilva",
+  };
+  for (const [mono, targetKey] of Object.entries(mononyms)) {
+    const target = lookup.get(targetKey);
+    if (target && !lookup.has(mono)) lookup.set(mono, target);
+  }
+
   const alternates: Record<string, string> = {
     "vannistelrooij": "vannistelrooy",
     "nistelrooij": "nistelrooy",

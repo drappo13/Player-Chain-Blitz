@@ -105,6 +105,7 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
 
   const mononyms: Record<string, string> = {
     gabriel: "gabrielmagalhaes",
+    gilberto: "gilbertosilva",
   };
   for (const [mono, targetKey] of Object.entries(mononyms)) {
     const players = lookup.get(targetKey);

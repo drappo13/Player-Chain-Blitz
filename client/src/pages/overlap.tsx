@@ -112,6 +112,7 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
   // Maps normalized alias → normalized displayName key
   const mononyms: Record<string, string> = {
     gabriel: "gabrielmagalhaes",
+    gilberto: "gilbertosilva",
   };
   for (const [mono, targetKey] of Object.entries(mononyms)) {
     const players = lookup.get(targetKey);
