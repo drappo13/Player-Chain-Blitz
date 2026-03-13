@@ -115,8 +115,16 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
     gilberto: "gilbertosilva",
   };
   for (const [mono, targetKey] of Object.entries(mononyms)) {
-    const players = lookup.get(targetKey);
-    if (players && !lookup.has(mono)) lookup.set(mono, players);
+    const target = lookup.get(targetKey);
+    if (!target) continue;
+    const existing = lookup.get(mono);
+    if (!existing) {
+      lookup.set(mono, [...target]);
+    } else {
+      for (const p of target) {
+        if (!existing.some((e) => e.displayName === p.displayName)) existing.push(p);
+      }
+    }
   }
 
   const alternates: Record<string, string> = {
