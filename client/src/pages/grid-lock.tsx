@@ -773,31 +773,60 @@ function GridLockEndScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex items-center justify-center gap-3 mb-6"
+          className="mb-6"
         >
-          <Button
-            onClick={onHome}
-            variant="outline"
-            size="lg"
-            className="font-bold border-border focus-visible:ring-orange-500"
-            data-testid="button-home-end"
-          >
-            <Home className="w-5 h-5 mr-2" />
-            Home
-          </Button>
-          <Button
-            onClick={onRestart}
-            size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-red-600 focus-visible:ring-orange-500"
-            data-testid="button-restart"
-          >
-            <RotateCcw className="w-5 h-5 mr-2" />
-            Play Again
-          </Button>
-          <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-border focus-visible:ring-orange-500">
-            <Share2 className="w-5 h-5 mr-2" />
-            {copied ? "Copied!" : "Share"}
-          </Button>
+          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
+            <Button
+              onClick={onHome}
+              variant="outline"
+              size="lg"
+              className="font-bold border-border focus-visible:ring-orange-500 flex-1"
+              data-testid="button-home-end"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Home
+            </Button>
+            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-red-500/40 text-red-400 hover:bg-red-500/10">
+              <Share2 className="w-5 h-5 mr-2" />
+              {copied ? "Copied!" : "Share"}
+            </Button>
+          </div>
+          <div className="flex justify-center sm:hidden">
+            <Button
+              onClick={onRestart}
+              size="lg"
+              className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-red-600 focus-visible:ring-orange-500 w-full"
+              data-testid="button-restart"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Play Again
+            </Button>
+          </div>
+          <div className="hidden sm:flex items-center justify-center gap-3">
+            <Button
+              onClick={onHome}
+              variant="outline"
+              size="lg"
+              className="font-bold border-border focus-visible:ring-orange-500"
+              data-testid="button-home-end"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Home
+            </Button>
+            <Button
+              onClick={onRestart}
+              size="lg"
+              className="text-lg px-10 font-bold shadow-xl shadow-red-500/20 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white border-red-600 focus-visible:ring-orange-500"
+              data-testid="button-restart"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Play Again
+            </Button>
+            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-red-500/40 text-red-400 hover:bg-red-500/10">
+              <Share2 className="w-5 h-5 mr-2" />
+              {copied ? "Copied!" : "Share"}
+            </Button>
+          </div>
         </motion.div>
 
         {isNewHighScore && (

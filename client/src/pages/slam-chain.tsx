@@ -831,31 +831,60 @@ function SlamEndScreen({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex items-center justify-center gap-3 mb-6"
+          className="mb-6"
         >
-          <Button
-            onClick={onHome}
-            variant="outline"
-            size="lg"
-            className="font-bold"
-            data-testid="button-home-end"
-          >
-            <Home className="w-5 h-5 mr-2" />
-            Home
-          </Button>
-          <Button
-            onClick={onRestart}
-            size="lg"
-            className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-            data-testid="button-restart"
-          >
-            <RotateCcw className="w-5 h-5 mr-2" />
-            Play Again
-          </Button>
-          <Button onClick={handleShare} variant="outline" size="lg" className="font-bold">
-            <Share2 className="w-5 h-5 mr-2" />
-            {copied ? "Copied!" : "Share"}
-          </Button>
+          <div className="flex items-center justify-between gap-3 sm:hidden mb-3">
+            <Button
+              onClick={onHome}
+              variant="outline"
+              size="lg"
+              className="font-bold flex-1"
+              data-testid="button-home-end"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Home
+            </Button>
+            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold flex-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
+              <Share2 className="w-5 h-5 mr-2" />
+              {copied ? "Copied!" : "Share"}
+            </Button>
+          </div>
+          <div className="flex justify-center sm:hidden">
+            <Button
+              onClick={onRestart}
+              size="lg"
+              className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white w-full"
+              data-testid="button-restart"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Play Again
+            </Button>
+          </div>
+          <div className="hidden sm:flex items-center justify-center gap-3">
+            <Button
+              onClick={onHome}
+              variant="outline"
+              size="lg"
+              className="font-bold"
+              data-testid="button-home-end"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Home
+            </Button>
+            <Button
+              onClick={onRestart}
+              size="lg"
+              className="text-lg px-10 font-bold shadow-xl shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+              data-testid="button-restart"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Play Again
+            </Button>
+            <Button onClick={handleShare} variant="outline" size="lg" className="font-bold border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
+              <Share2 className="w-5 h-5 mr-2" />
+              {copied ? "Copied!" : "Share"}
+            </Button>
+          </div>
         </motion.div>
 
         {isNewHighScore && (
