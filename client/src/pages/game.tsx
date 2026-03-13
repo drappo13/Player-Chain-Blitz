@@ -926,7 +926,7 @@ function EndScreen({
           </div>
           <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
             <Ticket className="w-3.5 h-3.5" />
-            <span className="text-xs">Game #{totalPlays + 1}</span>
+            <span className="text-xs">Play #{totalPlays + 1}</span>
           </div>
         </motion.div>
 
