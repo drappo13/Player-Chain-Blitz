@@ -24,6 +24,7 @@ export const PL_MONONYMS: Record<string, string> = {
   gilberto: "gilbertosilva",
   gabriel: "gabrielmagalhaes",
   eduardo: "eduardodasilva",
+  kepa: "arrizabalaga",
 };
 
 export const PL_ALTERNATES: Record<string, string> = {
