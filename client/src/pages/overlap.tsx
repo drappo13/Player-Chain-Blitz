@@ -18,7 +18,6 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 import { MiniLeaderboard } from "@/components/leaderboard-table";
-import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 const theme = gameThemes.overlap;
 
@@ -390,7 +389,7 @@ export default function Overlap() {
           questionResolvedRef.current = true;
           setQuestionTimeLeft(0);
 
-          playWrong();
+          playNeutral();
           setComboStreak(0);
           const topPlayers = currentPair ? getTopPlayersForPair(currentPair, 5) : [];
           const result: RoundResult = {
@@ -957,11 +956,24 @@ export default function Overlap() {
                     </div>
                   ))}
                 </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Next Question CTA — shown after timeout or correct answer auto-advances */}
+          <AnimatePresence>
+            {showTimeoutReveal && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="w-full max-w-sm"
+              >
                 <button
                   onClick={() => advanceQuestion()}
-                  className="mt-2 w-full text-xs font-semibold text-blue-400 hover:text-blue-300 py-1.5 rounded-md border border-blue-500/20 hover:bg-blue-500/10 transition-colors"
+                  className="w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 rounded-md shadow-lg shadow-blue-500/20 transition-all"
                 >
-                  Next Question <ChevronRight className="w-3 h-3 inline" />
+                  Next Question <ChevronRight className="w-4 h-4 inline ml-1" />
                 </button>
               </motion.div>
             )}
@@ -1180,7 +1192,6 @@ function EndScreen({
   const bestRound = scoringRounds.length > 0
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("overlap", "alltime", 10, 1500);
 
   const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\nhttps://drapk.in/overlap`);
 
@@ -1278,12 +1289,10 @@ function EndScreen({
           className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
         >
           <MiniLeaderboard
-            entries={lbEntries}
-            loading={lbLoading}
+            game="overlap"
+            delay={1500}
             currentUser={user?.username}
             accentBg="bg-blue-500/10 border-blue-500/30"
-            title="Top Scores"
-            onViewFull={() => navigate("/leaderboard")}
           />
         </motion.div>
 

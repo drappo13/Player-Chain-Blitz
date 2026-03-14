@@ -14,7 +14,6 @@ import { useHighScore } from "@/hooks/use-high-score";
 import { useShare } from "@/hooks/use-share";
 import { useEndScreenEffects } from "@/hooks/use-end-screen-effects";
 import { MiniLeaderboard } from "@/components/leaderboard-table";
-import { useGameLeaderboard } from "@/lib/use-leaderboard";
 import { useLockScroll } from "@/hooks/use-lock-scroll";
 import { ScreenFlash } from "@/components/screen-flash";
 import { EndScreenActions } from "@/components/end-screen-actions";
@@ -1124,7 +1123,6 @@ function EndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("clubladder", "alltime", 10, 1500);
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = turnResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0
@@ -1255,12 +1253,10 @@ function EndScreen({
           className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
         >
           <MiniLeaderboard
-            entries={lbEntries}
-            loading={lbLoading}
+            game="clubladder"
+            delay={1500}
             currentUser={user?.username}
             accentBg="bg-purple-500/10 border-purple-500/30"
-            title="Top Scores"
-            onViewFull={() => navigate("/leaderboard")}
           />
         </motion.div>
 

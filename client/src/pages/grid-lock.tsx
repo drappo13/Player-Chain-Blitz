@@ -18,7 +18,6 @@ import { FloatingEmojis } from "@/components/floating-emojis";
 import { EndScreenActions } from "@/components/end-screen-actions";
 import { NewHighScoreBadge } from "@/components/new-high-score-badge";
 import { MiniLeaderboard } from "@/components/leaderboard-table";
-import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 const QUESTION_TIME = 30;
 const MAX_SKIPS = 3;
@@ -650,7 +649,6 @@ function GridLockEndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("gridlock", "alltime", 10, 1500);
 
   const handleShare = () => share(`I scored ${score.toLocaleString()} on GridLock \u{1F3CE}\u{FE0F} Can you beat me?\nhttps://drapk.in/gridlock`);
 
@@ -750,12 +748,10 @@ function GridLockEndScreen({
           className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
         >
           <MiniLeaderboard
-            entries={lbEntries}
-            loading={lbLoading}
+            game="gridlock"
+            delay={1500}
             currentUser={user?.username}
             accentBg="bg-red-500/10 border-red-500/30"
-            title="Top Scores"
-            onViewFull={() => navigate("/leaderboard")}
           />
         </motion.div>
 

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Loader2 } from "lucide-react";
-import type { LeaderboardEntry, LeaderboardPeriod } from "@/lib/use-leaderboard";
+import { useGameLeaderboard, type LeaderboardEntry, type LeaderboardPeriod } from "@/lib/use-leaderboard";
+import type { GameSlug } from "@/lib/save-score";
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
@@ -150,45 +152,41 @@ export function LeaderboardTable({
   );
 }
 
-/** Compact mini-leaderboard for end screens. Shows top 5 + user's rank. */
+/** Self-contained mini-leaderboard for game end screens.
+ *  Owns its own hook call and period toggle. Shows top 5 + user's rank. */
 export function MiniLeaderboard({
-  entries,
-  loading,
+  game,
+  delay = 0,
   currentUser,
   accentBg,
-  title,
-  onViewFull,
 }: {
-  entries: LeaderboardEntry[];
-  loading: boolean;
+  game: GameSlug;
+  delay?: number;
   currentUser?: string;
   accentBg?: string;
-  title?: string;
-  onViewFull?: () => void;
 }) {
+  const [period, setPeriod] = useState<LeaderboardPeriod>("alltime");
+  const { entries, loading } = useGameLeaderboard(game, period, 10, delay);
+
   return (
     <div className="w-full">
-      {title && (
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <Trophy className="w-3 h-3" />
-            {title}
-          </div>
-          {onViewFull && (
-            <button
-              onClick={onViewFull}
-              className="text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View all
-            </button>
-          )}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <Trophy className="w-3 h-3" />
+          Top Scores
         </div>
-      )}
+        <button
+          onClick={() => setPeriod((p) => p === "alltime" ? "today" : "alltime")}
+          className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors px-2 py-0.5 rounded border border-border/40"
+        >
+          {period === "alltime" ? "All Time" : "Today"}
+        </button>
+      </div>
       <LeaderboardTable
         entries={entries}
         loading={loading}
-        period="alltime"
-        onPeriodChange={() => {}}
+        period={period}
+        onPeriodChange={setPeriod}
         currentUser={currentUser}
         accentBg={accentBg}
         mini
