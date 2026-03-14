@@ -23,6 +23,7 @@ export function getCommonSurname(p: { displayName: string; lastName: string }): 
 export const PL_MONONYMS: Record<string, string> = {
   gilberto: "gilbertosilva",
   gabriel: "gabrielmagalhaes",
+  eduardo: "eduardodasilva",
 };
 
 export const PL_ALTERNATES: Record<string, string> = {
