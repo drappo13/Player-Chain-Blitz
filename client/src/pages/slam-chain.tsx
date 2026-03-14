@@ -705,7 +705,7 @@ function SlamEndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("slamchain", "alltime", 10);
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("slamchain", "alltime", 10, 1500);
 
   const handleShare = () => share(`I scored ${score.toLocaleString()} on Slam16 \u{1F3BE} Can you beat me?\nhttps://drapk.in/slamchain`);
 

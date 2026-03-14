@@ -699,7 +699,7 @@ function EndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("goalchain", "alltime", 10);
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("goalchain", "alltime", 10, 1500);
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
   const handleShare = () => share(`I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\nhttps://drapk.in/goalchain`);

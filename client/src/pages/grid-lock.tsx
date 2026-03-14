@@ -650,7 +650,7 @@ function GridLockEndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("gridlock", "alltime", 10);
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("gridlock", "alltime", 10, 1500);
 
   const handleShare = () => share(`I scored ${score.toLocaleString()} on GridLock \u{1F3CE}\u{FE0F} Can you beat me?\nhttps://drapk.in/gridlock`);
 

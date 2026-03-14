@@ -1180,7 +1180,7 @@ function EndScreen({
   const bestRound = scoringRounds.length > 0
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("overlap", "alltime", 10);
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("overlap", "alltime", 10, 1500);
 
   const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\nhttps://drapk.in/overlap`);
 

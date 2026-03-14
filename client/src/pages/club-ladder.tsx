@@ -1124,7 +1124,7 @@ function EndScreen({
   const { share, copied } = useShare();
   const { user } = useUser();
   const [, navigate] = useLocation();
-  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("clubladder", "alltime", 10);
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard("clubladder", "alltime", 10, 1500);
   const isNewHighScore = totalScore >= highScore && totalScore > 0;
   const scoringRounds = turnResults.filter((r) => r.finalPoints > 0);
   const bestRound = scoringRounds.length > 0

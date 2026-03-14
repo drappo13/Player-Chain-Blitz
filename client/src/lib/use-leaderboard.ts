@@ -146,11 +146,14 @@ async function fetchAvatars(usernames: string[]): Promise<Map<string, string>> {
   return map;
 }
 
-/** Hook: per-game leaderboard */
+/** Hook: per-game leaderboard.
+ *  Pass `delay` (ms) to wait before fetching — useful on end screens
+ *  so the score write has time to land before we query. */
 export function useGameLeaderboard(
   game: GameSlug,
   period: LeaderboardPeriod,
   max = 10,
+  delay = 0,
 ) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,16 +162,26 @@ export function useGameLeaderboard(
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchGameLeaderboard(game, period, max).then((data) => {
-      if (!cancelled) {
-        setEntries(data);
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
-    });
+
+    const doFetch = () => {
+      fetchGameLeaderboard(game, period, max).then((data) => {
+        if (!cancelled) {
+          setEntries(data);
+          setLoading(false);
+        }
+      }).catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    };
+
+    if (delay > 0) {
+      const timer = setTimeout(doFetch, delay);
+      return () => { cancelled = true; clearTimeout(timer); };
+    }
+
+    doFetch();
     return () => { cancelled = true; };
-  }, [game, period, max, refreshKey]);
+  }, [game, period, max, delay, refreshKey]);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
