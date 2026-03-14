@@ -770,12 +770,27 @@ function EndScreen({
           </div>
         </motion.div>
 
+        {/* Mini leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
+        >
+          <MiniLeaderboard
+            game="goalchain"
+            delay={1500}
+            currentUser={user?.username}
+            accentBg="bg-emerald-500/10 border-emerald-500/30"
+          />
+        </motion.div>
+
         {guessedPlayers.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-8 mb-8"
+            className="mt-2 mb-8"
           >
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
               Goal Contributions
@@ -812,21 +827,6 @@ function EndScreen({
             </div>
           </motion.div>
         )}
-
-        {/* Mini leaderboard */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38 }}
-          className="mb-6 rounded-lg border border-border/40 bg-card/50 p-3"
-        >
-          <MiniLeaderboard
-            game="goalchain"
-            delay={1500}
-            currentUser={user?.username}
-            accentBg="bg-emerald-500/10 border-emerald-500/30"
-          />
-        </motion.div>
 
         {guessedPlayers.length > 0 && (
           <motion.div

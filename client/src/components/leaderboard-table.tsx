@@ -190,7 +190,7 @@ export function MiniLeaderboard({
         currentUser={currentUser}
         accentBg={accentBg}
         mini
-        max={5}
+        max={10}
       />
     </div>
   );
