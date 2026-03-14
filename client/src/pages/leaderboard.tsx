@@ -59,12 +59,13 @@ export default function Leaderboard() {
           <div className="w-[72px]" /> {/* Spacer to center title */}
         </div>
 
-        {/* Tab bar — horizontally scrollable on mobile */}
-        <div className="flex gap-1 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
+        {/* Tab bar — horizontally scrollable on mobile, hidden scrollbar */}
+        <div className="flex gap-1 overflow-x-auto pb-2 mb-4 -mx-1 px-1 no-scrollbar">
           <TabButton
             active={activeTab === "global"}
             onClick={() => setActiveTab("global")}
-            label="Global"
+            label="All Games"
+            accent
           />
           {GAME_TABS.map((g) => (
             <TabButton
@@ -105,18 +106,24 @@ function TabButton({
   active,
   onClick,
   label,
+  accent,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  accent?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors shrink-0 ${
         active
-          ? "bg-foreground/10 text-foreground"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+          ? accent
+            ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+            : "bg-foreground/10 text-foreground"
+          : accent
+            ? "text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
       }`}
     >
       {label}

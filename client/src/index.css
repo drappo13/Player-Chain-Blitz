@@ -182,6 +182,10 @@
   }
 }
 
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
 /* Reduce expensive blur on mobile to prevent GPU-induced jank.
    blur-3xl (64px) on large elements is costly on mobile GPUs.
    Decorative glow blobs use pointer-events-none + absolute positioning. */
