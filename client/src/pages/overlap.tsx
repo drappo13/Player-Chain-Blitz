@@ -474,10 +474,9 @@ export default function Overlap() {
         return;
       }
 
-      // Find candidate who played for both clubs and not used
+      // Find candidate who played for both clubs
       let matchedPlayer: PLPlayer | null = null;
       for (const c of candidates) {
-        if (usedPlayerKeys.has(c.displayName.toLowerCase())) continue;
         if (c.clubs[currentPair.clubA] && c.clubs[currentPair.clubB]) {
           matchedPlayer = c;
           break;
@@ -485,28 +484,9 @@ export default function Overlap() {
       }
 
       if (!matchedPlayer) {
-        // Already used?
-        const anyUsed = candidates.some((c) => usedPlayerKeys.has(c.displayName.toLowerCase()));
-        const anyMatch = candidates.some(
-          (c) => c.clubs[currentPair.clubA] && c.clubs[currentPair.clubB]
-        );
-
-        if (anyUsed && anyMatch) {
-          setShowWrong(true);
-          playWrong();
-          setComboStreak(0);
-          questionTimeRef.current = Math.max(0.1, questionTimeRef.current - WRONG_GUESS_PENALTY);
-          setShowPenalty(true);
-          setTimeout(() => setShowPenalty(false), 800);
-          setTimeout(() => setShowWrong(false), 400);
-          setInputValue("");
-          return;
-        }
-
         // One club only?
         const oneClubPlayer = candidates.find(
           (c) =>
-            !usedPlayerKeys.has(c.displayName.toLowerCase()) &&
             (c.clubs[currentPair.clubA] || c.clubs[currentPair.clubB])
         );
 
@@ -606,7 +586,7 @@ export default function Overlap() {
       setInputValue("");
       setTimeout(() => advanceQuestion(), 300);
     },
-    [gameState, inputValue, currentPair, usedPlayerKeys, playerLookup, comboStreak, questionNum, advanceQuestion, clearQuestionTimer]
+    [gameState, inputValue, currentPair, playerLookup, comboStreak, questionNum, advanceQuestion, clearQuestionTimer]
   );
 
   const timePercent = (questionTimeLeft / QUESTION_TIME) * 100;
