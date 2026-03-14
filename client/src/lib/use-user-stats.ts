@@ -21,14 +21,45 @@ const ALL_GAMES: GameSlug[] = [
   "clubladder",
 ];
 
+const CACHE_KEY_PREFIX = "pcb-stats-";
+
+function makeEmpty(): UserStats {
+  return Object.fromEntries(ALL_GAMES.map((g) => [g, { ...EMPTY_STATS }])) as UserStats;
+}
+
+/** Read cached stats from localStorage — instant, no network */
+function readCache(username: string): UserStats | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_PREFIX + username.toLowerCase());
+    if (!raw) return null;
+    return JSON.parse(raw) as UserStats;
+  } catch {
+    return null;
+  }
+}
+
+/** Write stats to localStorage for instant future loads */
+function writeCache(username: string, stats: UserStats) {
+  try {
+    localStorage.setItem(CACHE_KEY_PREFIX + username.toLowerCase(), JSON.stringify(stats));
+  } catch {
+    // Quota exceeded or private browsing — ignore
+  }
+}
+
 export function useUserStats(username: string | undefined): {
   stats: UserStats;
   loading: boolean;
   refresh: () => void;
 } {
-  const [stats, setStats] = useState<UserStats>(
-    () => Object.fromEntries(ALL_GAMES.map((g) => [g, { ...EMPTY_STATS }])) as UserStats
-  );
+  const [stats, setStats] = useState<UserStats>(() => {
+    // Initialize from cache immediately — no layout shift
+    if (username) {
+      const cached = readCache(username);
+      if (cached) return cached;
+    }
+    return makeEmpty();
+  });
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -46,9 +77,7 @@ export function useUserStats(username: string | undefined): {
         );
         const snap = await getDocs(q);
 
-        const result = Object.fromEntries(
-          ALL_GAMES.map((g) => [g, { highScore: 0, plays: 0 }])
-        ) as UserStats;
+        const result = makeEmpty();
 
         snap.forEach((doc) => {
           const d = doc.data() as { game: GameSlug; score: number };
@@ -59,7 +88,10 @@ export function useUserStats(username: string | undefined): {
           }
         });
 
-        if (!cancelled) setStats(result);
+        if (!cancelled) {
+          setStats(result);
+          writeCache(username, result);
+        }
       } catch {
         // Silent failure — stats are non-critical
       } finally {
