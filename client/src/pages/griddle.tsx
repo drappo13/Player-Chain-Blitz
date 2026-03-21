@@ -313,22 +313,36 @@ function makeBoardHash(clubs: string[]): string {
   return clubs.join(",");
 }
 
-function loadState(dateKey: string, clubs: string[]): GriddleState {
+function storageKey(dateKey: string, username?: string): string {
+  return username ? `griddle-${username.toLowerCase()}-${dateKey}` : `griddle-${dateKey}`;
+}
+
+function loadState(dateKey: string, clubs: string[], username?: string): GriddleState {
   const hash = makeBoardHash(clubs);
-  try {
-    const raw = localStorage.getItem(`griddle-${dateKey}`);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed.dateKey === dateKey && parsed.boardHash === hash) {
-        return {
-          ...parsed,
-          clubHits: parsed.clubHits || {},
-          submitted: parsed.submitted || false,
-          coverageLevel: parsed.coverageLevel || 1,
-        };
+  const key = storageKey(dateKey, username);
+  // Also check old key (no username) for migration
+  const keys = username ? [key, `griddle-${dateKey}`] : [key];
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.dateKey === dateKey && parsed.boardHash === hash) {
+          // Migrate to new key if found under old key
+          if (k !== key) {
+            localStorage.setItem(key, raw);
+            localStorage.removeItem(k);
+          }
+          return {
+            ...parsed,
+            clubHits: parsed.clubHits || {},
+            submitted: parsed.submitted || false,
+            coverageLevel: parsed.coverageLevel || 1,
+          };
+        }
       }
-    }
-  } catch { /* ignore */ }
+    } catch { /* ignore */ }
+  }
   return {
     dateKey,
     boardHash: hash,
@@ -341,9 +355,9 @@ function loadState(dateKey: string, clubs: string[]): GriddleState {
   };
 }
 
-function saveState(state: GriddleState) {
+function saveState(state: GriddleState, username?: string) {
   try {
-    localStorage.setItem(`griddle-${state.dateKey}`, JSON.stringify(state));
+    localStorage.setItem(storageKey(state.dateKey, username), JSON.stringify(state));
   } catch { /* ignore */ }
 }
 
@@ -393,7 +407,7 @@ export default function Griddle() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const totalValid = useMemo(() => getValidAnswers(boardClubs).length, [boardClubs]);
 
-  const [state, setState] = useState<GriddleState>(() => loadState(dateKey, boardClubs));
+  const [state, setState] = useState<GriddleState>(() => loadState(dateKey, boardClubs, user?.username));
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [flashColor, setFlashColor] = useState<string | null>(null);
@@ -410,7 +424,7 @@ export default function Griddle() {
   const floatId = useRef(0);
   const [showRules, setShowRules] = useState(() => {
     // Skip rules if they already have progress or submitted
-    const s = loadState(dateKey, boardClubs);
+    const s = loadState(dateKey, boardClubs, user?.username);
     return s.foundPlayers.length === 0 && !s.submitted;
   });
   const inputRef = useRef<HTMLInputElement>(null);
@@ -436,7 +450,7 @@ export default function Griddle() {
 
   // Persist state on change
   useEffect(() => {
-    saveState(state);
+    saveState(state, user?.username);
   }, [state]);
 
   // Auto-focus input
