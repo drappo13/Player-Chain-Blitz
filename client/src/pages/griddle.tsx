@@ -306,29 +306,27 @@ interface Feedback {
   bonuses?: string[];
 }
 
-// --- Hit count colors ---
-function getHitColor(hits: number): string {
+// --- Hit count dot/number color (blue → green → yellow spectrum) ---
+function getHitIndicatorColor(hits: number): string {
+  if (hits >= 10) return "text-yellow-400";
+  if (hits >= 8) return "text-yellow-300";
+  if (hits >= 6) return "text-lime-400";
+  if (hits >= 5) return "text-green-400";
+  if (hits >= 4) return "text-emerald-400";
+  if (hits >= 3) return "text-teal-400";
+  if (hits >= 2) return "text-cyan-400";
+  return "text-blue-400";
+}
+
+function getHitDotBg(hits: number): string {
   if (hits >= 10) return "bg-yellow-400";
-  if (hits >= 5) return "bg-blue-300";
-  if (hits >= 3) return "bg-blue-400";
-  if (hits >= 2) return "bg-blue-400/80";
+  if (hits >= 8) return "bg-yellow-300";
+  if (hits >= 6) return "bg-lime-400";
+  if (hits >= 5) return "bg-green-400";
+  if (hits >= 4) return "bg-emerald-400";
+  if (hits >= 3) return "bg-teal-400";
+  if (hits >= 2) return "bg-cyan-400";
   return "bg-blue-400/60";
-}
-
-function getHitBorder(hits: number): string {
-  if (hits >= 10) return "border-yellow-400/60";
-  if (hits >= 5) return "border-blue-300/50";
-  if (hits >= 3) return "border-blue-400/50";
-  if (hits >= 2) return "border-blue-400/40";
-  return "border-blue-500/30";
-}
-
-function getHitBg(hits: number): string {
-  if (hits >= 10) return "bg-yellow-400/15";
-  if (hits >= 5) return "bg-blue-300/15";
-  if (hits >= 3) return "bg-blue-400/15";
-  if (hits >= 2) return "bg-blue-500/12";
-  return "bg-blue-500/10";
 }
 
 // --- Component ---
@@ -602,7 +600,7 @@ export default function Griddle() {
                   ${isHighlighted
                     ? "bg-gradient-to-br from-emerald-500/30 to-green-400/20 border-emerald-400/60 text-emerald-200 shadow-lg shadow-emerald-500/25"
                     : isCovered
-                      ? `${getHitBg(hits)} ${getHitBorder(hits)} text-foreground`
+                      ? "bg-blue-500/10 border-blue-500/30 text-foreground"
                       : "bg-card/50 border-border text-muted-foreground"
                   }
                 `}
@@ -611,9 +609,9 @@ export default function Griddle() {
                 {isCovered && !isHighlighted && (
                   <div className="absolute top-1 right-1 flex items-center gap-0.5">
                     {hits > 1 && (
-                      <span className="text-[10px] font-bold tabular-nums text-blue-300/80">{hits}</span>
+                      <span className={`text-[10px] font-bold tabular-nums ${getHitIndicatorColor(hits)}`}>{hits}</span>
                     )}
-                    <div className={`w-1.5 h-1.5 rounded-full ${getHitColor(hits)}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${getHitDotBg(hits)}`} />
                   </div>
                 )}
               </motion.div>
