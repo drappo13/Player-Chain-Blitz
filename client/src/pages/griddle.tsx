@@ -543,7 +543,7 @@ export default function Griddle() {
       }
       if (notFound.length > 1) {
         playNeutral();
-        showFeedbackMsg({ type: "ambiguous", message: `Multiple matches: ${notFound.map(p => p.displayName).join(", ")}. Be more specific.` });
+        showFeedbackMsg({ type: "ambiguous", message: `Multiple players match — try adding a first name` });
         return;
       }
       player = notFound[0];
