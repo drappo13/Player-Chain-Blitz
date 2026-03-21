@@ -458,7 +458,7 @@ export default function Griddle() {
     const result = scoreAnswer(player, boardClubs, coveredSet, state.allCoveredAwarded);
 
     playCorrect();
-    setFlashColor("bg-blue-500");
+    setFlashColor("bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
     // Briefly highlight matched clubs
@@ -600,7 +600,7 @@ export default function Griddle() {
                   relative rounded-lg border p-2 text-center text-sm font-medium
                   transition-all duration-300
                   ${isHighlighted
-                    ? "bg-blue-500/25 border-blue-400/60 text-blue-200 shadow-lg shadow-blue-500/20"
+                    ? "bg-gradient-to-br from-emerald-500/30 to-green-400/20 border-emerald-400/60 text-emerald-200 shadow-lg shadow-emerald-500/25"
                     : isCovered
                       ? `${getHitBg(hits)} ${getHitBorder(hits)} text-foreground`
                       : "bg-card/50 border-border text-muted-foreground"
