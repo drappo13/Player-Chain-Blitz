@@ -37,4 +37,6 @@ export const PL_PRIORITY_MONONYMS: Record<string, string> = {
 export const PL_ALTERNATES: Record<string, string> = {
   vannistelrooij: "vannistelrooy",
   nistelrooij: "nistelrooy",
+  kuyt: "kuijt",
+  dirkkuyt: "dirkkuijt",
 };
