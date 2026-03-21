@@ -27,31 +27,35 @@
   <body>
     <div id="root"></div>
     <script>
-      // Register service worker to bust stale HTML cache
+      // Register service worker to clear caches
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(function(reg) {
-          reg.addEventListener('updatefound', function() {
-            var w = reg.installing;
-            if (w) w.addEventListener('statechange', function() {
-              if (w.state === 'activated') location.reload();
-            });
-          });
+        navigator.serviceWorker.register('/sw.js');
+        navigator.serviceWorker.addEventListener('message', function(e) {
+          if (e.data && e.data.type === 'SW_ACTIVATED') location.reload();
         });
       }
-      // Fallback: force reload if app fails to render (stale bundle)
-      window.__pcbLoaded = false;
-      setTimeout(function() {
-        if (!window.__pcbLoaded && !document.getElementById('root').children.length) {
-          if (!sessionStorage.getItem('pcb-reloaded')) {
-            sessionStorage.setItem('pcb-reloaded', '1');
-            location.reload();
-          }
-        } else {
-          sessionStorage.removeItem('pcb-reloaded');
-        }
-      }, 3000);
     </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" onerror="window.__pcbModuleFailed=true"></script>
+    <script>
+      // Catch module load failures (stale cache pointing to deleted chunks)
+      window.addEventListener('error', function(e) {
+        if (e.filename && e.filename.includes('/assets/') || window.__pcbModuleFailed) {
+          if (!sessionStorage.getItem('pcb-module-retry')) {
+            sessionStorage.setItem('pcb-module-retry', '1');
+            location.href = location.pathname + '?cb=' + Date.now();
+          }
+        }
+      });
+      // Also catch unhandled import() failures from lazy loading
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && (e.reason.message || '').includes('Failed to fetch dynamically imported module')) {
+          if (!sessionStorage.getItem('pcb-module-retry')) {
+            sessionStorage.setItem('pcb-module-retry', '1');
+            location.href = location.pathname + '?cb=' + Date.now();
+          }
+        }
+      });
+    </script>
     <script data-goatcounter="https://drapkin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   </body>
 </html>

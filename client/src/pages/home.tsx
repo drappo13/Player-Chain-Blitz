@@ -119,7 +119,8 @@ const f1Games: GameCard[] = [
   },
 ];
 
-function GameCardComponent({ game, delay, gameStats }: { game: GameCard; delay: number; gameStats: GameStats }) {
+function GameCardComponent({ game, delay, gameStats: rawStats }: { game: GameCard; delay: number; gameStats: GameStats }) {
+  const gameStats = rawStats || { highScore: 0, plays: 0 };
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}

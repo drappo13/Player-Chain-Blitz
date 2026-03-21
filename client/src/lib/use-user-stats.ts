@@ -28,12 +28,19 @@ function makeEmpty(): UserStats {
   return Object.fromEntries(ALL_GAMES.map((g) => [g, { ...EMPTY_STATS }])) as UserStats;
 }
 
-/** Read cached stats from localStorage — instant, no network */
+/** Read cached stats from localStorage — instant, no network.
+ *  Merges with defaults so missing game keys don't cause crashes. */
 function readCache(username: string): UserStats | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY_PREFIX + username.toLowerCase());
     if (!raw) return null;
-    return JSON.parse(raw) as UserStats;
+    const cached = JSON.parse(raw) as UserStats;
+    // Merge with defaults to fill any missing game keys (e.g., newly added games)
+    const merged = makeEmpty();
+    for (const [key, val] of Object.entries(cached)) {
+      if (key in merged) (merged as any)[key] = val;
+    }
+    return merged;
   } catch {
     return null;
   }
