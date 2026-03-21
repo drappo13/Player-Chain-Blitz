@@ -17,7 +17,7 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 const theme = gameThemes.overlap;
 
 // Board version — bump to regenerate all daily boards
-const BOARD_VERSION = 5;
+const BOARD_VERSION = 6;
 
 // --- Top 25 PL clubs by total appearances ---
 const ELIGIBLE_CLUBS = [
@@ -202,14 +202,11 @@ interface ScoreResult {
   multiplierLabel: string | null;
   total: number;
   matchedClubs: string[];
-  triggeredAllCovered: boolean;
 }
 
 function scoreAnswer(
   player: PLPlayer,
   boardClubs: string[],
-  coveredClubs: Set<string>,
-  allCoveredAwarded: boolean,
 ): ScoreResult {
   const boardSet = new Set(boardClubs);
   const matchedClubs = Object.keys(player.clubs).filter(c => boardSet.has(c));
@@ -250,11 +247,23 @@ function scoreAnswer(
   }
 
   const total = basePoints * multiplier;
-  const newCovered = new Set(coveredClubs);
-  for (const c of matchedClubs) newCovered.add(c);
-  const triggeredAllCovered = !allCoveredAwarded && newCovered.size === 9;
+  return { basePoints, multiplier, multiplierLabel, total, matchedClubs };
+}
 
-  return { basePoints, multiplier, multiplierLabel, total, matchedClubs, triggeredAllCovered };
+// --- Coverage level system ---
+function getCoverageBonus(level: number): number {
+  if (level <= 0) return 0;
+  if (level === 1) return 5;
+  if (level === 2) return 7;
+  if (level === 3) return 10;
+  if (level === 4) return 12;
+  if (level === 5) return 15;
+  if (level === 6) return 20;
+  return 20 + (level - 6) * 5; // 25, 30, 35, ...
+}
+
+function getClubsAtLevel(clubHits: Record<string, number>, boardClubs: string[], level: number): number {
+  return boardClubs.filter(c => (clubHits[c] || 0) >= level).length;
 }
 
 // --- Get top missed players for end screen ---
@@ -295,15 +304,13 @@ interface GriddleState {
   foundPlayers: FoundPlayer[];
   coveredClubs: string[];
   clubHits: Record<string, number>;
-  allCoveredAwarded: boolean;
+  coverageLevel: number; // next level to achieve (1 = all clubs hit 1x, 2 = all hit 2x, etc.)
   submitted: boolean;
 }
 
 function makeBoardHash(clubs: string[]): string {
   return clubs.join(",");
 }
-
-const ALL_COVERED_BONUS = 25;
 
 function loadState(dateKey: string, clubs: string[]): GriddleState {
   const hash = makeBoardHash(clubs);
@@ -312,7 +319,12 @@ function loadState(dateKey: string, clubs: string[]): GriddleState {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.dateKey === dateKey && parsed.boardHash === hash) {
-        return { ...parsed, clubHits: parsed.clubHits || {}, submitted: parsed.submitted || false };
+        return {
+          ...parsed,
+          clubHits: parsed.clubHits || {},
+          submitted: parsed.submitted || false,
+          coverageLevel: parsed.coverageLevel || 1,
+        };
       }
     }
   } catch { /* ignore */ }
@@ -323,7 +335,7 @@ function loadState(dateKey: string, clubs: string[]): GriddleState {
     foundPlayers: [],
     coveredClubs: [],
     clubHits: {},
-    allCoveredAwarded: false,
+    coverageLevel: 1,
     submitted: false,
   };
 }
@@ -386,6 +398,7 @@ export default function Griddle() {
   const [flashColor, setFlashColor] = useState<string | null>(null);
   const [highlightClubs, setHighlightClubs] = useState<Set<string>>(new Set());
   const [showCoverBonus, setShowCoverBonus] = useState(false);
+  const [coverBonusInfo, setCoverBonusInfo] = useState<{ level: number; bonus: number; newLevel: number } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
@@ -542,7 +555,7 @@ export default function Griddle() {
       return;
     }
 
-    const result = scoreAnswer(player, boardClubs, coveredSet, state.allCoveredAwarded);
+    const result = scoreAnswer(player, boardClubs);
 
     // Richer sounds for multi-club answers
     if (result.matchedClubs.length >= 3 || result.multiplier >= 2) {
@@ -587,18 +600,28 @@ export default function Griddle() {
     const newCovered = new Set(state.coveredClubs);
     for (const c of result.matchedClubs) newCovered.add(c);
 
-    const newAllCoveredAwarded = state.allCoveredAwarded || result.triggeredAllCovered;
-
     // Track tier before update for tier upgrade detection
     const prevTier = getCurrentTier(state.foundPlayers.length, totalValid).current?.label || null;
 
+    // Check coverage level completion
+    const prevLevel = state.coverageLevel;
+    const clubsAtLevel = getClubsAtLevel(newClubHits, boardClubs, prevLevel);
+    let newCoverageLevel = prevLevel;
+    let coverageBonusTotal = 0;
+
+    // Could complete multiple levels at once (e.g., 3-club player fills both 1x and 2x)
+    while (getClubsAtLevel(newClubHits, boardClubs, newCoverageLevel) === 9) {
+      coverageBonusTotal += getCoverageBonus(newCoverageLevel);
+      newCoverageLevel++;
+    }
+
     setState(prev => ({
       ...prev,
-      score: prev.score + result.total,
+      score: prev.score + result.total + coverageBonusTotal,
       foundPlayers: [newFound, ...prev.foundPlayers],
       coveredClubs: Array.from(newCovered),
       clubHits: newClubHits,
-      allCoveredAwarded: newAllCoveredAwarded,
+      coverageLevel: newCoverageLevel,
     }));
 
     // Check for tier upgrade
@@ -613,12 +636,16 @@ export default function Griddle() {
 
     showFeedbackMsg({ type: "correct", message: `${player.displayName}`, points: result.total, bonuses: bonusLabels });
 
-    if (result.triggeredAllCovered) {
+    // Coverage level completion animation
+    if (newCoverageLevel > prevLevel) {
       setTimeout(() => {
         setShowCoverBonus(true);
-        setState(prev => ({ ...prev, score: prev.score + ALL_COVERED_BONUS }));
-        setTimeout(() => setShowCoverBonus(false), 3000);
-      }, 1500);
+        setCoverBonusInfo({ level: prevLevel, bonus: coverageBonusTotal, newLevel: newCoverageLevel });
+        setTimeout(() => {
+          setShowCoverBonus(false);
+          setCoverBonusInfo(null);
+        }, 2500);
+      }, 1200);
     }
   }, [input, playerLookup, boardClubs, state, coveredSet, showFeedbackMsg, isFinished]);
 
@@ -698,13 +725,27 @@ export default function Griddle() {
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-blue-500"} />
 
       <AnimatePresence>
-        {showCoverBonus && (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+        {showCoverBonus && coverBonusInfo && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-4 rounded-2xl shadow-2xl shadow-blue-500/30 text-center">
-              <div className="text-lg font-bold">Board Covered!</div>
-              <div className="text-3xl font-black mt-1">+{ALL_COVERED_BONUS}</div>
-            </div>
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.05, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 250, damping: 18 }}
+              className="w-72 py-6 rounded-2xl bg-card/95 backdrop-blur-sm border border-yellow-500/40 shadow-2xl shadow-yellow-500/20 text-center"
+            >
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">Board Coverage</div>
+              <div className="text-2xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                {coverBonusInfo.level}× Complete!
+              </div>
+              <div className="text-3xl font-black text-yellow-400 mt-1">+{coverBonusInfo.bonus}</div>
+              {coverBonusInfo.newLevel <= 10 && (
+                <div className="text-xs text-muted-foreground mt-2">
+                  Now working on {coverBonusInfo.newLevel}× coverage...
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -928,18 +969,33 @@ export default function Griddle() {
         </AnimatePresence>
 
         {/* Coverage bar */}
-        <div className="w-full mb-4">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>Board coverage {state.allCoveredAwarded ? `— +${ALL_COVERED_BONUS} bonus earned!` : ""}</span>
-            <span>{coveredSet.size} / 9 clubs</span>
-          </div>
-          <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${state.allCoveredAwarded ? "bg-gradient-to-r from-yellow-400 to-amber-400" : "bg-gradient-to-r from-yellow-500 to-orange-500"}`}
-              initial={false} animate={{ width: `${(coveredSet.size / 9) * 100}%` }} transition={{ duration: 0.4, ease: "easeOut" }}
-            />
-          </div>
-        </div>
+        {(() => {
+          const level = state.coverageLevel;
+          const clubsAtLevel = getClubsAtLevel(state.clubHits, boardClubs, level);
+          const bonus = getCoverageBonus(level);
+          return (
+            <div className="w-full mb-4">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold px-1.5 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/20 text-[10px]">
+                    {level}×
+                  </span>
+                  <span>Board coverage</span>
+                  <span className="text-yellow-400/70">+{bonus}</span>
+                </div>
+                <span>{clubsAtLevel} / 9</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-orange-500"
+                  initial={false}
+                  animate={{ width: `${(clubsAtLevel / 9) * 100}%` }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Found players list */}
         {state.foundPlayers.length > 0 && (
