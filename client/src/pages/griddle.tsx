@@ -12,16 +12,14 @@ import { ScreenFlash } from "@/components/screen-flash";
 
 const theme = gameThemes.overlap;
 
-// --- All PL clubs in dataset, minus the weakest 5 ---
-const WEAK_CLUBS = new Set(["Luton", "Barnsley", "Swindon", "Oldham", "Huddersfield"]);
-
-const ALL_CLUBS = (() => {
-  const clubs = new Set<string>();
-  for (const p of plPlayers as PLPlayer[]) {
-    for (const c of Object.keys(p.clubs)) clubs.add(c);
-  }
-  return Array.from(clubs).filter(c => !WEAK_CLUBS.has(c)).sort();
-})();
+// --- Top 25 PL clubs by total appearances (ensures well-connected boards) ---
+const ELIGIBLE_CLUBS = [
+  "Chelsea", "Arsenal", "Man Utd", "Liverpool", "Tottenham",
+  "Everton", "Newcastle", "Aston Villa", "West Ham", "Man City",
+  "Southampton", "Fulham", "Leicester", "Blackburn", "Crystal Palace",
+  "Sunderland", "Leeds", "Middlesbrough", "West Brom", "Bolton",
+  "Wolves", "Norwich", "Stoke", "Burnley", "Brighton",
+];
 
 // --- Seeded PRNG (mulberry32) ---
 function hashString(str: string): number {
@@ -55,7 +53,7 @@ function generateBoard(dateStr: string): string[] {
   let seed = hashString(dateStr);
   for (let attempt = 0; attempt < 100; attempt++) {
     const rng = mulberry32(seed + attempt);
-    const shuffled = [...ALL_CLUBS];
+    const shuffled = [...ELIGIBLE_CLUBS];
     // Fisher-Yates shuffle
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
@@ -66,7 +64,7 @@ function generateBoard(dateStr: string): string[] {
     if (valid.length >= 25) return board;
   }
   // Fallback: use first 9 from sorted list (shouldn't happen)
-  return ALL_CLUBS.slice(0, 9);
+  return ELIGIBLE_CLUBS.slice(0, 9);
 }
 
 function getTodayStr(): string {
