@@ -628,7 +628,7 @@ export default function Griddle() {
 
             <div className="text-left space-y-3 mb-8">
               <RuleItem icon="🏟️" text="A 3×3 grid of 9 Premier League clubs appears each day" />
-              <RuleItem icon="🧠" text="Name players who made PL appearances for at least 2 clubs on the board" />
+              <RuleItem icon="🧠" text="Name players who made Premier League appearances for at least 2 clubs on the board (only PL apps count)" />
               <RuleItem icon="📈" text="More clubs = more points. Base: 5 pts (2 clubs) up to 50 pts (6+ clubs)" />
               <RuleItem icon="🔗" text="Adjacent clubs on the grid score 2× bonus" />
               <RuleItem icon="📐" text="Complete a row, column, or diagonal for 5× bonus" />
