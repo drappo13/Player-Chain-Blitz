@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playNeutral } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
-import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES } from "@/lib/normalize";
+import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 
@@ -118,6 +118,13 @@ function buildPlayerLookup(): Map<string, PLPlayer[]> {
   for (const [alt, official] of Object.entries(PL_ALTERNATES)) {
     const target = lookup.get(official);
     if (target && !lookup.has(alt)) lookup.set(alt, target);
+  }
+
+  for (const [key, displayName] of Object.entries(PL_PRIORITY_MONONYMS)) {
+    const candidates = lookup.get(key);
+    if (candidates) {
+      candidates.sort((a, b) => (a.displayName === displayName ? -1 : b.displayName === displayName ? 1 : 0));
+    }
   }
 
   return lookup;

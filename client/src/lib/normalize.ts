@@ -27,6 +27,13 @@ export const PL_MONONYMS: Record<string, string> = {
   kepa: "arrizabalaga",
 };
 
+// Players known by a single name — when the normalized key matches,
+// the player whose displayName matches exactly gets moved to the front
+// of the candidates array so they're picked first / prioritized.
+export const PL_PRIORITY_MONONYMS: Record<string, string> = {
+  anderson: "Anderson",
+};
+
 export const PL_ALTERNATES: Record<string, string> = {
   vannistelrooij: "vannistelrooy",
   nistelrooij: "nistelrooy",

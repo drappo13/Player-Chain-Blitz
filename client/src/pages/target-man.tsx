@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { playWrong, playTick, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { useUser } from "@/lib/user-context";
-import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES } from "@/lib/normalize";
+import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
 import { useShare } from "@/hooks/use-share";
@@ -67,6 +67,13 @@ function buildPlayerLookup() {
     const target = lookup.get(official);
     if (target && !lookup.has(alt)) {
       lookup.set(alt, target);
+    }
+  }
+
+  for (const [key, displayName] of Object.entries(PL_PRIORITY_MONONYMS)) {
+    const candidates = lookup.get(key);
+    if (candidates) {
+      candidates.sort((a, b) => (a.displayName === displayName ? -1 : b.displayName === displayName ? 1 : 0));
     }
   }
 
