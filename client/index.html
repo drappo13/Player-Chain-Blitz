@@ -27,7 +27,18 @@
   <body>
     <div id="root"></div>
     <script>
-      // Force reload if app fails to render (stale cache)
+      // Register service worker to bust stale HTML cache
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+          reg.addEventListener('updatefound', function() {
+            var w = reg.installing;
+            if (w) w.addEventListener('statechange', function() {
+              if (w.state === 'activated') location.reload();
+            });
+          });
+        });
+      }
+      // Fallback: force reload if app fails to render (stale bundle)
       window.__pcbLoaded = false;
       setTimeout(function() {
         if (!window.__pcbLoaded && !document.getElementById('root').children.length) {
