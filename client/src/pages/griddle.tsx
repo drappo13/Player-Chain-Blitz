@@ -404,13 +404,17 @@ export default function Griddle() {
 
   const isFinished = state.submitted;
 
-  // Check for remote submission on load (cross-device)
+  // Check remote submission on load — handles cross-device AND failed writes
   useEffect(() => {
-    if (checkedRemote.current || !user?.username || state.submitted) return;
+    if (checkedRemote.current || !user?.username) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "griddle", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
+        // Found on Firebase but not local — cross-device case
         setState(prev => ({ ...prev, submitted: true, score: result.score }));
+      } else if (!result.submitted && state.submitted) {
+        // Local says submitted but Firebase has nothing — failed write, let them retry
+        setState(prev => ({ ...prev, submitted: false }));
       }
     });
   }, [user?.username, dateKey, state.submitted]);
@@ -981,7 +985,7 @@ function EndScreen({
 }) {
   const tierInfo = getCurrentTier(state.foundPlayers.length, totalValid);
   const topMissed = useMemo(
-    () => getTopMissed(boardClubs, new Set(state.foundPlayers.map(fp => fp.displayName)), 5),
+    () => getTopMissed(boardClubs, new Set(state.foundPlayers.map(fp => fp.displayName)), 20),
     [boardClubs, state.foundPlayers],
   );
   const [lbPeriod, setLbPeriod] = useState<DailyPeriod>("today");
