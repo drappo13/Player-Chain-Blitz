@@ -600,8 +600,9 @@ export default function Griddle() {
     const newCovered = new Set(state.coveredClubs);
     for (const c of result.matchedClubs) newCovered.add(c);
 
-    // Track tier before update for tier upgrade detection
-    const prevTier = getCurrentTier(state.foundPlayers.length, totalValid).current?.label || null;
+    // Track tier for upgrade detection (use actual count from state including this answer)
+    const oldCount = state.foundPlayers.length;
+    const newCount = oldCount + 1;
 
     // Check coverage level completion
     const prevLevel = state.coverageLevel;
@@ -625,11 +626,13 @@ export default function Griddle() {
     }));
 
     // Check for tier upgrade
-    const newTier = getCurrentTier(state.foundPlayers.length + 1, totalValid).current?.label || null;
+    const prevTier = getCurrentTier(oldCount, totalValid).current?.label || null;
+    const newTier = getCurrentTier(newCount, totalValid).current?.label || null;
     if (newTier && newTier !== prevTier) {
+      const tierLabel = newTier; // capture for closure
       setTimeout(() => {
         playBoostHit();
-        setTierUpgrade(newTier);
+        setTierUpgrade(tierLabel);
         setTimeout(() => setTierUpgrade(null), 2000);
       }, 600);
     }
@@ -758,12 +761,12 @@ export default function Griddle() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            className="fixed inset-0 z-50 flex items-start justify-center pt-28 pointer-events-none"
           >
             <motion.div
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.05, opacity: 0 }}
+              initial={{ scale: 0.7, opacity: 0, y: -20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 1.05, opacity: 0, y: -10 }}
               transition={{ type: "spring", stiffness: 250, damping: 18 }}
               className="w-72 py-8 rounded-2xl bg-card/95 backdrop-blur-sm border border-blue-500/40 shadow-2xl shadow-blue-500/20 text-center"
             >
