@@ -2,6 +2,13 @@
 
 Sports trivia game site hosted at **drapk.in** via GitHub Pages.
 
+## Quick Reference
+
+- **Live site:** https://drapk.in
+- **Repo:** Public on GitHub
+- **Deploy:** Auto on push to `main` (~1 min via GitHub Actions)
+- **Architecture doc:** See `docs/ARCHITECTURE.md` for full technical context
+
 ## Tech Stack
 
 - **Framework:** React 18 + TypeScript + Vite
@@ -10,147 +17,66 @@ Sports trivia game site hosted at **drapk.in** via GitHub Pages.
 - **Animation:** Framer Motion
 - **Sound:** Web Audio API (oscillators, no audio files)
 - **State:** React hooks (no global store), TanStack React Query for async
+- **Database:** Firebase Firestore (scores, users, daily-scores)
 - **Icons:** Lucide React
 
-## Project Structure
+## Critical Rules
 
-```
-client/src/
-├── App.tsx              # Router setup (wouter Switch/Route)
-├── main.tsx             # Entry point
-├── index.css            # Tailwind base + custom styles
-├── pages/
-│   ├── home.tsx         # Game picker landing page
-│   ├── game.tsx         # GoalChain (PL goalscorer chain game)
-│   ├── slam-chain.tsx   # Slam16 (Grand Slam tennis players)
-│   ├── target-man.tsx   # TargetMan (match target goal numbers)
-│   ├── grid-lock.tsx    # GridLock (F1 points scorers)
-│   ├── overlap.tsx      # Overlap (shared PL club appearances)
-│   └── not-found.tsx
-├── data/
-│   ├── players.ts       # 2,859 PL goalscorers {lastName, firstName, displayName, goals}
-│   ├── pl-players.json  # 5,107 PL players: bio + per-club apps/goals/assists
-│   ├── slams.ts         # Grand Slam tournament data
-│   └── f1seasons.ts     # F1 season/driver data
-├── lib/
-│   ├── game-themes.ts   # Reusable color theme system (emerald, warm, racing)
-│   ├── sounds.ts        # All game sounds via Web Audio API
-│   ├── utils.ts         # cn() helper (clsx + tailwind-merge)
-│   └── queryClient.ts
-├── components/ui/       # 48 shadcn/ui components (do not edit manually)
-└── hooks/
-    ├── use-mobile.tsx
-    └── use-toast.ts
-```
+1. **Each game is a single self-contained page file** — game logic + UI together in one file under `client/src/pages/`
+2. **No backend** — all game data is bundled client-side. Firebase is only used for scores/users/leaderboards
+3. **Builds happen in GitHub Actions only** — Kandji MDM blocks local `npm install`. Commit + push to verify builds
+4. **No lockfile** — use `npm install` not `npm ci`
+5. **Always commit and push after changes** — the user expects to see updates live immediately
+6. **Don't edit `components/ui/`** — these are shadcn/ui generated components
+7. **Use game themes** — newer games use `lib/game-themes.ts` for consistent colors (TargetMan, Overlap, ClubLadder, Griddle). Older games (GoalChain, SlamChain, GridLock) use inline color classes. Either way, don't introduce unrelated colors for a game
+8. **Player name lookup** — shared normalization in `lib/normalize.ts`, each game builds its own lookup Map. Some games use `Map<string, PLPlayer[]>` (arrays), others use `Map<string, Player>` (single value) — the priority mononym handling differs between these
+9. **SPA single bundle** — a crash in ANY module kills ALL pages. Always verify imports don't break other games
+10. **Pin dependency versions** — no lockfile means `^` ranges can pull breaking versions. Pin exact if issues arise
 
-scripts/
-├── fetch-players.mjs      # Fetches all PL player data from official API
+## Game Types
 
-Config files at repo root:
-- `vite.config.ts` — root is `client/`, output is `dist/`
-- `tailwind.config.ts` — custom theme, animations
-- `tsconfig.json` — strict mode, `@/` alias → `client/src/`
-- `package.json` — scripts: `dev`, `build`, `check`, `preview`
+There are two categories of games:
 
-## Routes
+### Daily Games (play once per day, submit score)
+- **Griddle** (`/griddle`) — Daily 3×3 PL club grid, name players for 2+ clubs
 
-| Path | Component | Game |
-|------|-----------|------|
-| `/` | Home | Game picker |
-| `/goalchain` | Game | Chain PL scorers by last letter of surname |
-| `/slamchain` | SlamChain | Name Grand Slam tennis players |
-| `/targetman` | TargetMan | Match target goal numbers with PL scorers |
-| `/gridlock` | GridLock | Name F1 drivers who scored points |
-| `/overlap` | Overlap | Name players who appeared for both shown PL clubs |
-
-## Game Themes
-
-Defined in `lib/game-themes.ts`. Each game uses a theme for consistent colors:
-- **emerald** — GoalChain, SlamChain (green/primary)
-- **warm** — TargetMan (orange/amber)
-- **racing** — GridLock (red/orange)
-- **overlap** — Overlap (blue/cyan)
-
-When adding UI to a game page, use its theme colors. Don't introduce unrelated colors (e.g., no violet in TargetMan's orange theme).
-
-## Sound System
-
-All sounds in `lib/sounds.ts` use Web Audio API oscillators. Key exports:
-- `playCorrect/Wrong/Tick/GameEnd` — shared across games
-- `playScoreSound(opts)` — TargetMan's unified sound (scales layers by score)
-- `playComboCorrect(streak)` — ascending pitch with combo
-- `playHighScore()` — celebration arpeggio
-- Helper layers: `playBassThump`, `playShimmer`, `playChord`
-
-## Deployment
-
-**Auto-deploys on push to `main`** via GitHub Actions (`.github/workflows/deploy.yml`).
-
-### To deploy changes:
-1. `git add <files>` — stage changed files
-2. `git commit -m "message"` — commit
-3. `git push` — push to main; GitHub Actions builds and deploys automatically
-4. Live at **drapk.in** within ~1 minute
-
-### What the workflow does:
-1. `npm install` (no lockfile, so `npm ci` won't work)
-2. `npm run build`
-3. Copies `dist/index.html` → `dist/404.html` (SPA fallback routing)
-4. Deploys `dist/` to GitHub Pages
-
-### DNS
-Domain **drapk.in** configured via GoDaddy:
-- 4 A records pointing to GitHub Pages IPs (185.199.108–111.153)
-- CNAME configured in GitHub Pages settings
+### Arcade Games (play anytime, replayable)
+- **TargetMan** (`/targetman`) — Match target goal numbers
+- **Overlap** (`/overlap`) — Name players who appeared for both shown clubs
+- **ClubLadder** (`/clubladder`) — Climb goal thresholds across 3 clubs
+- **GoalChain** (`/goalchain`) — Chain PL scorers by last letter of surname
+- **Slam16** (`/slamchain`) — Name Grand Slam tennis players
+- **GridLock** (`/gridlock`) — Name F1 points scorers
 
 ## Development
 
 ```bash
 npm install    # install deps
-npm run dev    # start dev server
+npm run dev    # start dev server (if not blocked by MDM)
 npm run build  # production build
 npm run check  # TypeScript type checking
 ```
 
-### Local environment constraints
-- **Kandji (MDM) blocks `npm install`** and network access from Claude Code's sandbox — cannot install deps or run builds locally
-- `node_modules/` is not present in the sandbox; `tsc`, `vite`, etc. are unavailable
-- **Builds happen in GitHub Actions only** — commit + push to verify builds
-- Data fetch scripts (`scripts/*.mjs`) use only Node built-ins + `fetch` — no npm deps needed, can run locally
-- If a build fails after push, check the Actions log and fix forward
+If a build fails after push, check GitHub Actions log and fix forward.
 
-## Data Sources & Scripts
+## Keeping Docs Updated
 
-### Premier League API (PulseVive)
-The official PL website uses a public, unauthenticated API at `footballapi.pulselive.com`. Used to fetch player data.
+When pushing changes, update `docs/ARCHITECTURE.md` if you:
+- Add a new game, route, or page
+- Add or change a Firebase collection or its structure
+- Change the scoring system or game mechanics
+- Add a new shared library, hook, or component
+- Change the build/deploy pipeline
+- Add a new data source or modify data model
 
-**Endpoint pattern:**
-```
-https://footballapi.pulselive.com/football/stats/ranked/players/{STAT}?page={PAGE}&pageSize=100&comps=1&teams={TEAM_ID}&altIds=true
-```
-- Requires `Origin: https://www.premierleague.com` header
-- Paginated JSON (100/page). Stats used: `appearances`, `goals`, `goal_assist`
-- 51 PL teams (full ID list in `scripts/fetch-players.mjs`)
-- Many more stats available (tackles, passes, saves, etc.) — see script comments
+Do NOT update docs for: copy changes, bug fixes, styling tweaks, name lookups, or minor UI adjustments. Only document things that would meaningfully help a future agent understand the codebase.
 
-**`scripts/fetch-players.mjs`** — Fetches all 3 stats across 51 teams, merges by `playerId`, outputs `client/src/data/pl-players.json`. Run: `node scripts/fetch-players.mjs`
+## Key Files to Read First
 
-**`pl-players.json` format** (5,107 players, sorted by totalAppearances desc):
-```json
-{
-  "displayName": "Ryan Giggs",
-  "firstName": "Ryan", "lastName": "Giggs",
-  "position": "Midfielder", "nationality": "Wales", "dob": "29 November 1973",
-  "clubs": { "Man Utd": { "appearances": 632, "goals": 109, "assists": 162 } },
-  "totalAppearances": 632, "totalGoals": 109, "totalAssists": 162
-}
-```
-
-## Conventions
-
-- Each game is a single self-contained page file (game logic + UI together)
-- Player name normalization and lookup (`normalizeName`, `buildPlayerLookup`) is duplicated per game page — not shared
-- No backend/API — all data is bundled client-side in `data/` files
-- No lockfile in repo — use `npm install` not `npm ci`
-- Buttons use shadcn Button component with theme-specific className overrides
-- Always commit and push after making changes — the user expects to see updates live on drapk.in
+When starting work, read these to understand the codebase:
+1. **This file** — conventions and rules
+2. **`docs/ARCHITECTURE.md`** — full technical context, Firebase setup, game patterns, data model
+3. **The specific game page** you're modifying (e.g., `client/src/pages/griddle.tsx`)
+4. **`client/src/lib/normalize.ts`** — player name normalization (shared across all PL games)
+5. **`client/src/lib/game-themes.ts`** — color theme system
+6. **`client/src/lib/sounds.ts`** — sound effects API

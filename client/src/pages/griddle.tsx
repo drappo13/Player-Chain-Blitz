@@ -1048,26 +1048,8 @@ function EndScreen({
           )}
         </motion.div>
 
-        {/* Top missed players */}
-        {topMissed.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="w-full mb-6">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Top players you missed</h3>
-            <div className="space-y-1.5">
-              {topMissed.map(({ player, clubs, score }) => (
-                <div key={player.displayName} className="flex items-center justify-between px-3 py-2 rounded-lg bg-card/50 border border-border text-sm">
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium text-foreground">{player.displayName}</span>
-                    <span className="text-xs text-muted-foreground ml-1.5">{clubs.join(", ")}</span>
-                  </div>
-                  <span className="font-bold tabular-nums text-muted-foreground ml-2">+{score}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {/* Leaderboard */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full mb-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="w-full mb-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Trophy className="w-3 h-3" />Leaderboard
@@ -1095,6 +1077,24 @@ function EndScreen({
             max={10}
           />
         </motion.div>
+
+        {/* Top missed players */}
+        {topMissed.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full mb-6">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Top players you missed</h3>
+            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+              {topMissed.map(({ player, clubs, score }) => (
+                <div key={player.displayName} className="flex items-center justify-between px-3 py-2 rounded-lg bg-card/50 border border-border text-sm">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-foreground">{player.displayName}</span>
+                    <span className="text-xs text-muted-foreground ml-1.5">{clubs.join(", ")}</span>
+                  </div>
+                  <span className="font-bold tabular-nums text-muted-foreground ml-2">+{score}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Come back tomorrow */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
