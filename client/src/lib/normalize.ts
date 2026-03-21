@@ -32,6 +32,7 @@ export const PL_MONONYMS: Record<string, string> = {
 // of the candidates array so they're picked first / prioritized.
 export const PL_PRIORITY_MONONYMS: Record<string, string> = {
   anderson: "Anderson",
+  cisse: "Djibril Cissé",
 };
 
 export const PL_ALTERNATES: Record<string, string> = {
