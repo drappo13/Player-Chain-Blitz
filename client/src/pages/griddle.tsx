@@ -727,57 +727,7 @@ export default function Griddle() {
 
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-blue-500"} />
 
-      <AnimatePresence>
-        {showCoverBonus && coverBonusInfo && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <motion.div
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.05, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 250, damping: 18 }}
-              className="w-72 py-6 rounded-2xl bg-card/95 backdrop-blur-sm border border-yellow-500/40 shadow-2xl shadow-yellow-500/20 text-center"
-            >
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">Board Coverage</div>
-              <div className="text-2xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                {coverBonusInfo.level}× Complete!
-              </div>
-              <div className="text-3xl font-black text-yellow-400 mt-1">+{coverBonusInfo.bonus}</div>
-              {coverBonusInfo.newLevel <= 10 && (
-                <div className="text-xs text-muted-foreground mt-2">
-                  Now working on {coverBonusInfo.newLevel}× coverage...
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Tier upgrade celebration — large overlay */}
-      <AnimatePresence>
-        {tierUpgrade && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-start justify-center pt-28 pointer-events-none"
-          >
-            <motion.div
-              initial={{ scale: 0.7, opacity: 0, y: -20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 1.05, opacity: 0, y: -10 }}
-              transition={{ type: "spring", stiffness: 250, damping: 18 }}
-              className="w-72 py-8 rounded-2xl bg-card/95 backdrop-blur-sm border border-blue-500/40 shadow-2xl shadow-blue-500/20 text-center"
-            >
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Tier Up!</div>
-              <div className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                {tierUpgrade}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Tier + Coverage overlays are rendered inside the grid container below */}
 
       {/* Confirm modal */}
       <AnimatePresence>
@@ -885,36 +835,95 @@ export default function Griddle() {
           </div>
         </div>
 
-        {/* 3x3 Grid */}
-        <div className="w-full grid grid-cols-3 gap-1.5 mb-4">
-          {boardClubs.map((club, i) => {
-            const hits = state.clubHits[club] || 0;
-            const isCovered = coveredSet.has(club);
-            const isHighlighted = highlightClubs.has(club);
-            return (
-              <motion.div key={club}
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={isHighlighted
-                  ? { opacity: 1, scale: [1, 1.08, 1], transition: { duration: 0.35, ease: "easeOut" } }
-                  : { opacity: 1, scale: 1 }
-                }
-                transition={{ delay: i * 0.04, duration: 0.3 }}
-                className={`relative rounded-lg border p-2 text-center text-sm font-medium transition-colors duration-300
-                  ${isHighlighted
-                    ? "bg-gradient-to-br from-emerald-500/30 to-green-400/20 border-emerald-400/60 text-emerald-200 shadow-lg shadow-emerald-500/25"
-                    : isCovered
-                      ? "bg-blue-500/10 border-blue-500/30 text-foreground"
-                      : "bg-card/50 border-border text-muted-foreground"}`}>
-                <span className="block truncate leading-tight">{club}</span>
-                {isCovered && !isHighlighted && (
-                  <div className="absolute top-1 right-1 flex items-center gap-0.5">
-                    {hits > 1 && <span className={`text-[10px] font-bold tabular-nums ${getHitIndicatorColor(hits)}`}>{hits}</span>}
-                    <div className={`w-1.5 h-1.5 rounded-full ${getHitDotBg(hits)}`} />
+        {/* 3x3 Grid + overlays */}
+        <div className="w-full relative mb-4">
+          <div className="grid grid-cols-3 gap-1.5">
+            {boardClubs.map((club, i) => {
+              const hits = state.clubHits[club] || 0;
+              const isCovered = coveredSet.has(club);
+              const isHighlighted = highlightClubs.has(club);
+              return (
+                <motion.div key={club}
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={isHighlighted
+                    ? { opacity: 1, scale: [1, 1.08, 1], transition: { duration: 0.35, ease: "easeOut" } }
+                    : { opacity: 1, scale: 1 }
+                  }
+                  transition={{ delay: i * 0.04, duration: 0.3 }}
+                  className={`relative rounded-lg border p-2 text-center text-sm font-medium transition-colors duration-300
+                    ${isHighlighted
+                      ? "bg-gradient-to-br from-emerald-500/30 to-green-400/20 border-emerald-400/60 text-emerald-200 shadow-lg shadow-emerald-500/25"
+                      : isCovered
+                        ? "bg-blue-500/10 border-blue-500/30 text-foreground"
+                        : "bg-card/50 border-border text-muted-foreground"}`}>
+                  <span className="block truncate leading-tight">{club}</span>
+                  {isCovered && !isHighlighted && (
+                    <div className="absolute top-1 right-1 flex items-center gap-0.5">
+                      {hits > 1 && <span className={`text-[10px] font-bold tabular-nums ${getHitIndicatorColor(hits)}`}>{hits}</span>}
+                      <div className={`w-1.5 h-1.5 rounded-full ${getHitDotBg(hits)}`} />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Coverage bonus overlay — positioned over the grid */}
+          <AnimatePresence>
+            {showCoverBonus && coverBonusInfo && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm"
+              >
+                <motion.div
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.05, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 250, damping: 18 }}
+                  className="text-center"
+                >
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">Board Coverage</div>
+                  <div className="text-2xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    {coverBonusInfo.level}× Complete!
                   </div>
-                )}
+                  <div className="text-4xl font-black text-yellow-400 mt-1">+{coverBonusInfo.bonus}</div>
+                  {coverBonusInfo.newLevel <= 10 && (
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Now working on {coverBonusInfo.newLevel}× coverage...
+                    </div>
+                  )}
+                </motion.div>
               </motion.div>
-            );
-          })}
+            )}
+          </AnimatePresence>
+
+          {/* Tier upgrade overlay — positioned over the grid */}
+          <AnimatePresence>
+            {tierUpgrade && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm"
+              >
+                <motion.div
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 1.05, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 250, damping: 18 }}
+                  className="text-center"
+                >
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Tier Up!</div>
+                  <div className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    {tierUpgrade}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Input / Submitted state */}
