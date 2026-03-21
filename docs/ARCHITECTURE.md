@@ -70,6 +70,9 @@ client/src/
 scripts/
 └── fetch-players.mjs            # Fetches PL data from official API
 
+client/public/
+└── sw.js                        # Service worker — clears caches, no fetch interception
+
 Config (root):
 ├── vite.config.ts               # Root: client/, output: dist/
 ├── tailwind.config.ts           # Custom theme + animations
@@ -137,7 +140,7 @@ Lifecycle: `"idle"` → `"playing"` → `"finished"` (defined in `lib/game-types
 Title, rules, high score display, "Start Game" button.
 
 ### Playing Screen
-- Header: Home button + Info button (returns to idle) + timer/question counter
+- Header: Home button + Info button (`(i)` icon, returns to start/rules screen) + timer/question counter
 - Input field with theme-colored focus ring
 - `ScreenFlash` on correct/wrong + `playCorrect()`/`playWrong()` sounds
 - Score display with combo/multiplier indicators
@@ -194,16 +197,30 @@ Validates: ≥2 big six clubs AND ≥25 valid answers. Retries up to 100 seeds.
 
 - **Adjacent 2×**: all matched clubs form connected group on grid
 - **Line 5×**: complete row, column, or diagonal (highest multiplier wins)
-- **All-covered +25**: one-time bonus when all 9 clubs touched
 - **Wrong answer -1**: unknown players or 0 clubs on board. 1 club = neutral (no penalty)
 
+### Multi-Level Board Coverage
+Coverage bar tracks hitting all 9 clubs at each level (1×, 2×, 3×...). When all 9 clubs reach the current level, a bonus is awarded and the bar resets to track the next level.
+
+| Level | Bonus |
+|---|---|
+| 1× | +5 |
+| 2× | +7 |
+| 3× | +10 |
+| 4× | +12 |
+| 5× | +15 |
+| 6× | +20 |
+| 7×+ | +25, +30, ... (+5 per level) |
+
+Can complete multiple levels at once if a player's clubs span several levels. Celebration overlay appears on the grid on completion.
+
 ### Progress Tiers (% of valid answers)
-Kickoff (1%) → Squad Player (2%) → Sub (4%) → First Team (8%) → Key Player (15%) → Captain (25%) → Legend (35%) → Encyclopaedia (50%)
+Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledgeable (13%) → Expert (18%) → Masterful (27%) → Legendary (38%) → Encyclopaedic (50%)
 
 ### Persistence
-- `localStorage` key: `griddle-{dateKey}`, includes `boardHash` for invalidation
+- `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
-- Cross-device: `hasDailySubmission()` checks Firebase on load
+- Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
 ---
 
