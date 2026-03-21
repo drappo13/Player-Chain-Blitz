@@ -19,6 +19,7 @@ const ALL_GAMES: GameSlug[] = [
   "gridlock",
   "overlap",
   "clubladder",
+  "griddle",
 ];
 
 const CACHE_KEY_PREFIX = "pcb-stats-";
