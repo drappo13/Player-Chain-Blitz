@@ -627,12 +627,9 @@ export default function Griddle() {
             <p className="text-sm text-muted-foreground mb-6">Daily PL Club Grid</p>
 
             <div className="text-left space-y-3 mb-8">
-              <RuleItem icon="🏟️" text="A 3×3 grid of 9 Premier League clubs appears each day" />
               <RuleItem icon="🧠" text="Name players who made Premier League appearances for at least 2 clubs on the board (only PL apps count)" />
-              <RuleItem icon="📈" text="More clubs = more points. Base: 5 pts (2 clubs) up to 50 pts (6+ clubs)" />
-              <RuleItem icon="🔗" text="Adjacent clubs on the grid score 2× bonus" />
-              <RuleItem icon="📐" text="Complete a row, column, or diagonal for 5× bonus" />
-              <RuleItem icon="🎯" text="Cover all 9 clubs for a one-time +25 bonus" />
+              <RuleItem icon="📈" text="Players for 3+ clubs score more" />
+              <RuleItem icon="🔗" text="Hitting adjacent tiles, full rows, columns & diagonals for bonus points!" />
               <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
