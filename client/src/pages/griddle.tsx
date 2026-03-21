@@ -199,22 +199,29 @@ interface FoundPlayer {
 
 interface GriddleState {
   dateKey: string;
+  boardHash: string;
   score: number;
   foundPlayers: FoundPlayer[];
   coveredClubs: string[];
   allCoveredAwarded: boolean;
 }
 
-function loadState(dateKey: string): GriddleState {
+function boardHash(clubs: string[]): string {
+  return clubs.join(",");
+}
+
+function loadState(dateKey: string, clubs: string[]): GriddleState {
+  const hash = boardHash(clubs);
   try {
     const raw = localStorage.getItem(`griddle-${dateKey}`);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.dateKey === dateKey) return parsed;
+      if (parsed.dateKey === dateKey && parsed.boardHash === hash) return parsed;
     }
   } catch { /* ignore */ }
   return {
     dateKey,
+    boardHash: hash,
     score: 0,
     foundPlayers: [],
     coveredClubs: [],
@@ -247,7 +254,7 @@ export default function Griddle() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const totalValid = useMemo(() => getValidAnswers(boardClubs).length, [boardClubs]);
 
-  const [state, setState] = useState<GriddleState>(() => loadState(dateKey));
+  const [state, setState] = useState<GriddleState>(() => loadState(dateKey, boardClubs));
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [flashColor, setFlashColor] = useState<string | null>(null);
