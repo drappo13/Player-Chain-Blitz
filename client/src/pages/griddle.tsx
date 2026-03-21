@@ -313,27 +313,31 @@ interface Feedback {
   bonuses?: string[];
 }
 
-// --- Hit count dot/number color (blue → green → yellow spectrum) ---
+// --- Hit count dot/number color (white → blue → green → yellow at 20+) ---
 function getHitIndicatorColor(hits: number): string {
-  if (hits >= 10) return "text-yellow-400";
-  if (hits >= 8) return "text-yellow-300";
-  if (hits >= 6) return "text-lime-400";
-  if (hits >= 5) return "text-green-400";
-  if (hits >= 4) return "text-emerald-400";
-  if (hits >= 3) return "text-teal-400";
-  if (hits >= 2) return "text-cyan-400";
-  return "text-blue-400";
+  if (hits >= 20) return "text-yellow-400";
+  if (hits >= 16) return "text-amber-400";
+  if (hits >= 13) return "text-lime-400";
+  if (hits >= 10) return "text-green-400";
+  if (hits >= 8) return "text-emerald-400";
+  if (hits >= 6) return "text-teal-400";
+  if (hits >= 4) return "text-cyan-400";
+  if (hits >= 3) return "text-blue-400";
+  if (hits >= 2) return "text-blue-300";
+  return "text-white/70";
 }
 
 function getHitDotBg(hits: number): string {
-  if (hits >= 10) return "bg-yellow-400";
-  if (hits >= 8) return "bg-yellow-300";
-  if (hits >= 6) return "bg-lime-400";
-  if (hits >= 5) return "bg-green-400";
-  if (hits >= 4) return "bg-emerald-400";
-  if (hits >= 3) return "bg-teal-400";
-  if (hits >= 2) return "bg-cyan-400";
-  return "bg-blue-400/60";
+  if (hits >= 20) return "bg-yellow-400";
+  if (hits >= 16) return "bg-amber-400";
+  if (hits >= 13) return "bg-lime-400";
+  if (hits >= 10) return "bg-green-400";
+  if (hits >= 8) return "bg-emerald-400";
+  if (hits >= 6) return "bg-teal-400";
+  if (hits >= 4) return "bg-cyan-400";
+  if (hits >= 3) return "bg-blue-400";
+  if (hits >= 2) return "bg-blue-300";
+  return "bg-white/70";
 }
 
 // --- Component ---
@@ -700,7 +704,7 @@ export default function Griddle() {
               className={`h-full rounded-full ${
                 state.allCoveredAwarded
                   ? "bg-gradient-to-r from-yellow-400 to-amber-400"
-                  : "bg-gradient-to-r from-blue-500 to-cyan-500"
+                  : "bg-gradient-to-r from-yellow-500 to-orange-500"
               }`}
               initial={false}
               animate={{ width: `${(coveredSet.size / 9) * 100}%` }}
