@@ -707,22 +707,28 @@ export default function Griddle() {
         )}
       </AnimatePresence>
 
-      {/* Tier upgrade celebration */}
+      {/* Tier upgrade celebration — large overlay */}
       <AnimatePresence>
         {tierUpgrade && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
           >
-            <div className="px-5 py-2.5 rounded-xl bg-card border border-blue-500/40 shadow-xl shadow-blue-500/20 text-center">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Tier Up!</div>
-              <div className="text-lg font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.05, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 250, damping: 18 }}
+              className="w-72 py-8 rounded-2xl bg-card/95 backdrop-blur-sm border border-blue-500/40 shadow-2xl shadow-blue-500/20 text-center"
+            >
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Tier Up!</div>
+              <div className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                 {tierUpgrade}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -783,12 +789,12 @@ export default function Griddle() {
           </div>
         </div>
 
-        {/* Title + Score + Tier */}
-        <div className="w-full flex items-center justify-between mb-4">
+        {/* Title + Score + Tier — three equal columns */}
+        <div className="w-full grid grid-cols-3 items-center mb-4">
           <h1 className="text-2xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
           </h1>
-          <div className="relative">
+          <div className="relative flex justify-center">
             <motion.div
               key={state.score}
               animate={scorePulse ? { scale: [1, 1.15, 1] } : {}}
