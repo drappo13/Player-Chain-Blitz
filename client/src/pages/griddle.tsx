@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Flag, Trophy, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd, playComboCorrect } from "@/lib/sounds";
+import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd, playComboCorrect, playBoostHit } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
@@ -599,6 +599,7 @@ export default function Griddle() {
     const newTier = getCurrentTier(state.foundPlayers.length + 1, totalValid).current?.label || null;
     if (newTier && newTier !== prevTier) {
       setTimeout(() => {
+        playBoostHit();
         setTierUpgrade(newTier);
         setTimeout(() => setTierUpgrade(null), 2000);
       }, 600);
