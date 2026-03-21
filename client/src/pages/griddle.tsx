@@ -32,14 +32,15 @@ const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Tottenham", "Man Ut
 
 // --- Progress tiers (% of total valid answers) ---
 const TIERS = [
-  { pct: 0.01, label: "Kickoff",       color: "text-white/70",    bg: "bg-white/10 border-white/20" },
-  { pct: 0.02, label: "Squad Player",  color: "text-blue-300",    bg: "bg-blue-500/10 border-blue-400/20" },
-  { pct: 0.04, label: "Sub",           color: "text-cyan-400",    bg: "bg-cyan-500/10 border-cyan-400/20" },
-  { pct: 0.08, label: "First Team",    color: "text-teal-400",    bg: "bg-teal-500/10 border-teal-400/20" },
-  { pct: 0.15, label: "Key Player",    color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-400/20" },
-  { pct: 0.25, label: "Captain",       color: "text-green-400",   bg: "bg-green-500/10 border-green-400/20" },
-  { pct: 0.35, label: "Legend",         color: "text-lime-400",    bg: "bg-lime-500/10 border-lime-400/20" },
-  { pct: 0.50, label: "Encyclopaedia", color: "text-yellow-400",  bg: "bg-yellow-500/10 border-yellow-400/20" },
+  { pct: 0.01, label: "Beginner",       color: "text-white/70",    bg: "bg-white/10 border-white/20" },
+  { pct: 0.03, label: "Amateur",        color: "text-blue-300",    bg: "bg-blue-500/10 border-blue-400/20" },
+  { pct: 0.05, label: "Acceptable",     color: "text-cyan-400",    bg: "bg-cyan-500/10 border-cyan-400/20" },
+  { pct: 0.09, label: "Decent",         color: "text-teal-400",    bg: "bg-teal-500/10 border-teal-400/20" },
+  { pct: 0.13, label: "Knowledgeable",  color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-400/20" },
+  { pct: 0.18, label: "Expert",         color: "text-green-400",   bg: "bg-green-500/10 border-green-400/20" },
+  { pct: 0.27, label: "Masterful",      color: "text-lime-400",    bg: "bg-lime-500/10 border-lime-400/20" },
+  { pct: 0.38, label: "Legendary",      color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-400/20" },
+  { pct: 0.50, label: "Encyclopaedic",  color: "text-yellow-400",  bg: "bg-yellow-500/10 border-yellow-400/20" },
 ];
 
 function getCurrentTier(found: number, total: number) {
