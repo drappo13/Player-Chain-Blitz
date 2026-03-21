@@ -16,6 +16,9 @@
     <meta name="twitter:title" content="drapk.in - Sports Trivia Games" />
     <meta name="twitter:description" content="Test your sports knowledge with football, tennis and F1 trivia games." />
     <meta name="twitter:image" content="https://drapk.in/og-image.png" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +26,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Force reload if app fails to render (stale cache)
+      window.__pcbLoaded = false;
+      setTimeout(function() {
+        if (!window.__pcbLoaded && !document.getElementById('root').children.length) {
+          if (!sessionStorage.getItem('pcb-reloaded')) {
+            sessionStorage.setItem('pcb-reloaded', '1');
+            location.reload();
+          }
+        } else {
+          sessionStorage.removeItem('pcb-reloaded');
+        }
+      }, 3000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script data-goatcounter="https://drapkin.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   </body>
