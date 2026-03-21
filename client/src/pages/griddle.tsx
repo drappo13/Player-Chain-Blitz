@@ -33,8 +33,8 @@ const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Tottenham", "Man Ut
 // --- Progress tiers (% of total valid answers) ---
 const TIERS = [
   { pct: 0.01, label: "Kickoff",       color: "text-white/70",    bg: "bg-white/10 border-white/20" },
-  { pct: 0.02, label: "Sub",           color: "text-blue-300",    bg: "bg-blue-500/10 border-blue-400/20" },
-  { pct: 0.04, label: "Squad Player",  color: "text-cyan-400",    bg: "bg-cyan-500/10 border-cyan-400/20" },
+  { pct: 0.02, label: "Squad Player",  color: "text-blue-300",    bg: "bg-blue-500/10 border-blue-400/20" },
+  { pct: 0.04, label: "Sub",           color: "text-cyan-400",    bg: "bg-cyan-500/10 border-cyan-400/20" },
   { pct: 0.08, label: "First Team",    color: "text-teal-400",    bg: "bg-teal-500/10 border-teal-400/20" },
   { pct: 0.15, label: "Key Player",    color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-400/20" },
   { pct: 0.25, label: "Captain",       color: "text-green-400",   bg: "bg-green-500/10 border-green-400/20" },
@@ -388,6 +388,11 @@ export default function Griddle() {
   const [showCoverBonus, setShowCoverBonus] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showRules, setShowRules] = useState(() => {
+    // Skip rules if they already have progress or submitted
+    const s = loadState(dateKey, boardClubs);
+    return s.foundPlayers.length === 0 && !s.submitted;
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
   const checkedRemote = useRef(false);
@@ -593,6 +598,55 @@ export default function Griddle() {
     />;
   }
 
+  // --- Rules Screen ---
+  if (showRules) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className={`absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl ${theme.glowA}`} />
+          <div className={`absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl ${theme.glowB}`} />
+        </div>
+        <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-8 flex-1">
+          <div className="w-full flex items-center justify-between mb-6">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}
+              className="text-muted-foreground hover:text-foreground">
+              <Home className="w-4 h-4 mr-1" /> Home
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-xs font-semibold">
+                <Calendar className="w-3 h-3" />DAILY
+              </span>
+              <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
+            </div>
+          </div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center">
+            <h1 className="text-3xl font-black tracking-tight mb-1">
+              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
+            </h1>
+            <p className="text-sm text-muted-foreground mb-6">Daily PL Club Grid</p>
+
+            <div className="text-left space-y-3 mb-8">
+              <RuleItem icon="🏟️" text="A 3×3 grid of 9 Premier League clubs appears each day" />
+              <RuleItem icon="🧠" text="Name players who made PL appearances for at least 2 clubs on the board" />
+              <RuleItem icon="📈" text="More clubs = more points. Base: 5 pts (2 clubs) up to 50 pts (6+ clubs)" />
+              <RuleItem icon="🔗" text="Adjacent clubs on the grid score 2× bonus" />
+              <RuleItem icon="📐" text="Complete a row, column, or diagonal for 5× bonus" />
+              <RuleItem icon="🎯" text="Cover all 9 clubs for a one-time +25 bonus" />
+              <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
+              <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
+            </div>
+
+            <Button className={`w-full text-lg py-6 ${theme.primaryBtn}`} onClick={() => setShowRules(false)}>
+              Play today's board
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   // --- Playing Screen ---
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -662,35 +716,31 @@ export default function Griddle() {
           </div>
         </div>
 
-        {/* Title + Score */}
-        <div className="w-full flex items-center justify-between mb-2">
+        {/* Title + Score + Tier */}
+        <div className="w-full flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
           </h1>
-          <div className="text-right">
-            <div className={`text-2xl font-bold tabular-nums ${theme.accent}`}>{state.score}</div>
+          <div className={`text-3xl font-black tabular-nums ${theme.accent}`}>{state.score}</div>
+          <div className="text-right flex flex-col items-end gap-1">
             <div className="text-xs text-muted-foreground">{state.foundPlayers.length} / {totalValid} found</div>
-          </div>
-        </div>
-
-        {/* Tier badge */}
-        <div className="w-full mb-4">
-          {tierInfo.current ? (
-            <div className="flex items-center justify-between">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${tierInfo.current.bg} ${tierInfo.current.color}`}>
-                {tierInfo.current.label}
-              </span>
-              {tierInfo.nextTier && (
-                <span className="text-[10px] text-muted-foreground">
-                  {Math.ceil(tierInfo.nextTier.pct * totalValid) - state.foundPlayers.length} more for {tierInfo.nextTier.label}
+            {tierInfo.current ? (
+              <>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tierInfo.current.bg} ${tierInfo.current.color}`}>
+                  {tierInfo.current.label}
                 </span>
-              )}
-            </div>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">
-              {Math.ceil(TIERS[0].pct * totalValid)} more for {TIERS[0].label}
-            </span>
-          )}
+                {tierInfo.nextTier && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {Math.ceil(tierInfo.nextTier.pct * totalValid) - state.foundPlayers.length} more for {tierInfo.nextTier.label}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-[10px] text-muted-foreground">
+                {Math.ceil(TIERS[0].pct * totalValid)} more for {TIERS[0].label}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* 3x3 Grid */}
@@ -729,7 +779,7 @@ export default function Griddle() {
           />
           {state.foundPlayers.length > 0 && (
             <button type="button" onClick={() => setShowConfirm(true)}
-              className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-blue-400 hover:border-blue-500/40 transition-colors"
+              className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
               title="I'm done — submit score">
               <Flag className="w-5 h-5" />
             </button>
@@ -810,6 +860,15 @@ export default function Griddle() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function RuleItem({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-lg shrink-0 mt-0.5">{icon}</span>
+      <span className="text-sm text-muted-foreground">{text}</span>
     </div>
   );
 }

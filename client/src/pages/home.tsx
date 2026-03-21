@@ -25,7 +25,7 @@ const footballGames: GameCard[] = [
     slug: "griddle",
     testId: "link-griddle",
     mode: "daily",
-    emoji: "\uD83D\uDFE9",
+    emoji: "\uD83E\uDDE9",
     iconGradient: "from-blue-500/20 to-cyan-500/5",
     iconBorder: "border-blue-500/20",
     title: ["Grid", "dle"],
