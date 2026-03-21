@@ -19,7 +19,7 @@
 
 ```
 client/src/
-├── App.tsx                      # Router — ALL routes defined here
+├── App.tsx                      # Router + lazy loading + error boundary
 ├── pages/
 │   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
 │   ├── griddle.tsx              # Griddle (daily)
@@ -327,9 +327,16 @@ Workflow (`.github/workflows/deploy.yml`):
 3. Copy `dist/index.html` → `dist/404.html` (SPA fallback)
 4. Deploy `dist/` to GitHub Pages
 
+**Resilience layers:**
+- **Lazy loading** — all pages use `React.lazy()` in `App.tsx`. A crash in one page's chunk can't kill others.
+- **Error boundary** — wraps entire app. Shows "Refresh" button instead of blank screen on unhandled errors.
+- **Stats cache merging** — `readCache` in `use-user-stats.ts` merges cached data with `makeEmpty()` defaults, so newly added game slugs don't crash the homepage.
+- **Defensive guards** — `GameCardComponent` in `home.tsx` falls back to `{ highScore: 0, plays: 0 }` if stats are undefined.
+
 **Common issues:**
-- All pages black? → Check Actions log. SPA bundle crash kills every route.
 - Dep broke? → Pin exact version in `package.json` (e.g., `@tanstack/react-query` pinned to `5.60.5`)
+- Page crash? → Only that route is affected (lazy loading). Check console for the specific error.
+- Old users seeing blank? → Likely stale localStorage. The stats cache merge should handle this automatically.
 
 ---
 
@@ -337,10 +344,10 @@ Workflow (`.github/workflows/deploy.yml`):
 
 Checklist:
 1. Create page file in `client/src/pages/`
-2. Add route in `App.tsx`
+2. Add lazy import + route in `App.tsx`
 3. Add card in `home.tsx` (with `mode: "daily" | "arcade"`)
 4. Add slug to `GameSlug` in `lib/save-score.ts`
-5. Add slug to `ALL_GAMES` in `lib/use-user-stats.ts`
+5. **Add slug to `ALL_GAMES` in `lib/use-user-stats.ts`** — CRITICAL: missing this crashes the homepage for all users (stats cache returns undefined for the new game)
 6. If daily game:
    - Add `DailyGameSlug` type in `lib/daily-score.ts`
    - Add Firestore rules for collection (Firebase Console)
