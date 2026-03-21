@@ -95,10 +95,12 @@ function buildPlayerLookup() {
     }
   }
 
+  // Priority mononyms: for single-value lookups, set the preferred player
   for (const [key, displayName] of Object.entries(PL_PRIORITY_MONONYMS)) {
-    const candidates = lookup.get(key);
-    if (candidates) {
-      candidates.sort((a, b) => (a.displayName === displayName ? -1 : b.displayName === displayName ? 1 : 0));
+    const existing = lookup.get(key);
+    if (existing && existing.displayName !== displayName) {
+      const preferred = (players as Player[]).find(p => p.displayName === displayName);
+      if (preferred) lookup.set(key, { ...preferred, originalLastName: preferred.lastName });
     }
   }
 
