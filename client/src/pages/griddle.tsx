@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Flag, Trophy, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd } from "@/lib/sounds";
+import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd, playComboCorrect } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
@@ -388,6 +388,11 @@ export default function Griddle() {
   const [showCoverBonus, setShowCoverBonus] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [floatingPoints, setFloatingPoints] = useState<{ id: number; value: number } | null>(null);
+  const [tierUpgrade, setTierUpgrade] = useState<string | null>(null);
+  const [scorePulse, setScorePulse] = useState(false);
+  const prevTierRef = useRef<string | null>(null);
+  const floatId = useRef(0);
   const [showRules, setShowRules] = useState(() => {
     // Skip rules if they already have progress or submitted
     const s = loadState(dateKey, boardClubs);
@@ -533,11 +538,30 @@ export default function Griddle() {
 
     const result = scoreAnswer(player, boardClubs, coveredSet, state.allCoveredAwarded);
 
-    playCorrect();
+    // Richer sounds for multi-club answers
+    if (result.matchedClubs.length >= 3 || result.multiplier >= 2) {
+      playComboCorrect(result.matchedClubs.length);
+    } else {
+      playCorrect();
+    }
+
     setFlashColor("bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
-    setHighlightClubs(new Set(result.matchedClubs));
-    setTimeout(() => setHighlightClubs(new Set()), 1500);
+
+    // Staggered ripple highlight on matched clubs
+    const matchedArr = result.matchedClubs;
+    matchedArr.forEach((club, i) => {
+      setTimeout(() => {
+        setHighlightClubs(prev => new Set([...prev, club]));
+      }, i * 120);
+    });
+    setTimeout(() => setHighlightClubs(new Set()), 1200 + matchedArr.length * 120);
+
+    // Floating points + score pulse
+    setFloatingPoints({ id: ++floatId.current, value: result.total });
+    setTimeout(() => setFloatingPoints(null), 1200);
+    setScorePulse(true);
+    setTimeout(() => setScorePulse(false), 400);
 
     const bonusLabels: string[] = [];
     if (result.multiplierLabel) bonusLabels.push(result.multiplierLabel);
@@ -559,6 +583,9 @@ export default function Griddle() {
 
     const newAllCoveredAwarded = state.allCoveredAwarded || result.triggeredAllCovered;
 
+    // Track tier before update for tier upgrade detection
+    const prevTier = getCurrentTier(state.foundPlayers.length, totalValid).current?.label || null;
+
     setState(prev => ({
       ...prev,
       score: prev.score + result.total,
@@ -567,6 +594,15 @@ export default function Griddle() {
       clubHits: newClubHits,
       allCoveredAwarded: newAllCoveredAwarded,
     }));
+
+    // Check for tier upgrade
+    const newTier = getCurrentTier(state.foundPlayers.length + 1, totalValid).current?.label || null;
+    if (newTier && newTier !== prevTier) {
+      setTimeout(() => {
+        setTierUpgrade(newTier);
+        setTimeout(() => setTierUpgrade(null), 2000);
+      }, 600);
+    }
 
     showFeedbackMsg({ type: "correct", message: `${player.displayName}`, points: result.total, bonuses: bonusLabels });
 
@@ -666,6 +702,26 @@ export default function Griddle() {
         )}
       </AnimatePresence>
 
+      {/* Tier upgrade celebration */}
+      <AnimatePresence>
+        {tierUpgrade && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          >
+            <div className="px-5 py-2.5 rounded-xl bg-card border border-blue-500/40 shadow-xl shadow-blue-500/20 text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Tier Up!</div>
+              <div className="text-lg font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                {tierUpgrade}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Confirm modal */}
       <AnimatePresence>
         {showConfirm && (
@@ -727,7 +783,30 @@ export default function Griddle() {
           <h1 className="text-2xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
           </h1>
-          <div className={`text-3xl font-black tabular-nums ${theme.accent}`}>{state.score}</div>
+          <div className="relative">
+            <motion.div
+              key={state.score}
+              animate={scorePulse ? { scale: [1, 1.15, 1] } : {}}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={`text-3xl font-black tabular-nums ${theme.accent}`}
+            >
+              {state.score}
+            </motion.div>
+            <AnimatePresence>
+              {floatingPoints && (
+                <motion.div
+                  key={floatingPoints.id}
+                  initial={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: 0, y: -30 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 text-sm font-bold text-emerald-400 pointer-events-none whitespace-nowrap"
+                >
+                  +{floatingPoints.value}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <div className="text-right flex flex-col items-end gap-1">
             <div className="text-xs text-muted-foreground">{state.foundPlayers.length} / {totalValid} found</div>
             {tierInfo.current ? (
@@ -751,14 +830,19 @@ export default function Griddle() {
 
         {/* 3x3 Grid */}
         <div className="w-full grid grid-cols-3 gap-1.5 mb-4">
-          {boardClubs.map((club) => {
+          {boardClubs.map((club, i) => {
             const hits = state.clubHits[club] || 0;
             const isCovered = coveredSet.has(club);
             const isHighlighted = highlightClubs.has(club);
             return (
               <motion.div key={club}
-                animate={isHighlighted ? { scale: [1, 1.05, 1], transition: { duration: 0.3 } } : {}}
-                className={`relative rounded-lg border p-2 text-center text-sm font-medium transition-all duration-300
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={isHighlighted
+                  ? { opacity: 1, scale: [1, 1.08, 1], transition: { duration: 0.35, ease: "easeOut" } }
+                  : { opacity: 1, scale: 1 }
+                }
+                transition={{ delay: i * 0.04, duration: 0.3 }}
+                className={`relative rounded-lg border p-2 text-center text-sm font-medium transition-colors duration-300
                   ${isHighlighted
                     ? "bg-gradient-to-br from-emerald-500/30 to-green-400/20 border-emerald-400/60 text-emerald-200 shadow-lg shadow-emerald-500/25"
                     : isCovered
@@ -840,7 +924,10 @@ export default function Griddle() {
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">Found Players</h3>
             <div className="space-y-1.5 max-h-64 overflow-y-auto">
               {state.foundPlayers.map((fp, i) => (
-                <motion.div key={fp.displayName} initial={i === 0 ? { opacity: 0, x: -12 } : false} animate={{ opacity: 1, x: 0 }}
+                <motion.div key={fp.displayName}
+                  initial={i === 0 ? { opacity: 0, y: -8, scale: 0.97 } : false}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   className="px-3 py-2 rounded-lg bg-card/50 border border-border text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">{fp.displayName}</span>
