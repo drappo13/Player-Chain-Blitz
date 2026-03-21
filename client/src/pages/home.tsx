@@ -20,6 +20,18 @@ interface GameCard {
 
 const footballGames: GameCard[] = [
   {
+    href: "/griddle",
+    slug: "griddle",
+    testId: "link-griddle",
+    emoji: "\uD83D\uDFE9",
+    iconGradient: "from-blue-500/20 to-cyan-500/5",
+    iconBorder: "border-blue-500/20",
+    title: ["Grid", "dle"],
+    titleGradient: "from-blue-400 to-cyan-400",
+    description: "Daily 3×3 board. Name players who played for 2+ clubs. No timer, no game over.",
+    playColor: "text-blue-400",
+  },
+  {
     href: "/targetman",
     slug: "targetman",
     testId: "link-targetman",

@@ -13,6 +13,7 @@ import GridLock from "@/pages/grid-lock";
 import TargetMan from "@/pages/target-man";
 import Overlap from "@/pages/overlap";
 import ClubLadder from "@/pages/club-ladder";
+import Griddle from "@/pages/griddle";
 import Leaderboard from "@/pages/leaderboard";
 import NotFound from "@/pages/not-found";
 
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/targetman" component={TargetMan} />
       <Route path="/overlap" component={Overlap} />
       <Route path="/clubladder" component={ClubLadder} />
+      <Route path="/griddle" component={Griddle} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route component={NotFound} />
     </Switch>
