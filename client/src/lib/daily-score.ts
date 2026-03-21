@@ -3,7 +3,7 @@ import {
   query,
   where,
   getDocs,
-  setDoc,
+  addDoc,
   serverTimestamp,
   doc,
   getDoc,
@@ -19,11 +19,12 @@ export interface DailyScoreDoc {
   score: number;
   found: number; // number of players found
   total: number; // total valid answers
+  /** Composite key for easy single-field lookups: game_dateKey_username */
+  key: string;
   timestamp: unknown; // serverTimestamp
 }
 
-/** Deterministic doc ID to avoid composite index queries */
-function docId(username: string, game: DailyGameSlug, dateKey: string): string {
+function makeKey(username: string, game: DailyGameSlug, dateKey: string): string {
   return `${game}_${dateKey}_${username.toLowerCase()}`;
 }
 
@@ -34,9 +35,14 @@ export async function hasDailySubmission(
   dateKey: string,
 ): Promise<{ submitted: boolean; score: number; found: number; total: number }> {
   try {
-    const snap = await getDoc(doc(db, "daily-scores", docId(username, game, dateKey)));
-    if (snap.exists()) {
-      const data = snap.data() as DailyScoreDoc;
+    const k = makeKey(username, game, dateKey);
+    const q = query(
+      collection(db, "daily-scores"),
+      where("key", "==", k),
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const data = snap.docs[0].data() as DailyScoreDoc;
       return { submitted: true, score: data.score, found: data.found, total: data.total };
     }
   } catch { /* silent */ }
@@ -54,17 +60,20 @@ export async function submitDailyScore(
 ): Promise<boolean> {
   if (!username || score < 0) return false;
   try {
-    const id = docId(username, game, dateKey);
-    const existing = await getDoc(doc(db, "daily-scores", id));
-    if (existing.exists()) return false;
+    const k = makeKey(username, game, dateKey);
 
-    await setDoc(doc(db, "daily-scores", id), {
+    // Check for existing submission
+    const existing = await hasDailySubmission(username, game, dateKey);
+    if (existing.submitted) return false;
+
+    await addDoc(collection(db, "daily-scores"), {
       username: username.toLowerCase(),
       game,
       dateKey,
       score,
       found,
       total,
+      key: k,
       timestamp: serverTimestamp(),
     });
     return true;
@@ -73,15 +82,13 @@ export async function submitDailyScore(
   }
 }
 
-/** Fetch daily leaderboard for a specific game + date.
- *  Uses a single-field query (dateKey) to avoid composite indexes. */
+/** Fetch daily leaderboard for a specific game + date */
 export async function fetchDailyLeaderboard(
   game: DailyGameSlug,
   dateKey: string,
   max: number,
 ): Promise<{ username: string; avatar: string; score: number; found: number }[]> {
   try {
-    // Query by dateKey only — filter game client-side to avoid composite index
     const q = query(
       collection(db, "daily-scores"),
       where("dateKey", "==", dateKey),

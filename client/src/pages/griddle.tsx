@@ -17,7 +17,7 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 const theme = gameThemes.overlap;
 
 // Board version — bump to regenerate all daily boards
-const BOARD_VERSION = 3;
+const BOARD_VERSION = 4;
 
 // --- Top 25 PL clubs by total appearances ---
 const ELIGIBLE_CLUBS = [
@@ -388,6 +388,7 @@ export default function Griddle() {
   const [showCoverBonus, setShowCoverBonus] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showEndScreen, setShowEndScreen] = useState(false);
   const [floatingPoints, setFloatingPoints] = useState<{ id: number; value: number } | null>(null);
   const [tierUpgrade, setTierUpgrade] = useState<string | null>(null);
   const [scorePulse, setScorePulse] = useState(false);
@@ -465,6 +466,7 @@ export default function Griddle() {
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
+    setShowEndScreen(true);
   }, [user?.username, dateKey, state.score, state.foundPlayers.length, totalValid]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -627,7 +629,7 @@ export default function Griddle() {
   };
 
   // --- End Screen ---
-  if (isFinished) {
+  if (showEndScreen) {
     return <EndScreen
       state={state}
       boardClubs={boardClubs}
@@ -871,21 +873,31 @@ export default function Griddle() {
           })}
         </div>
 
-        {/* Input + Finish button */}
-        <form onSubmit={handleSubmit} className="w-full mb-3 flex gap-2">
-          <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
-            placeholder="Enter a player name..."
-            autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-            className={`flex-1 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
-          />
-          {state.foundPlayers.length > 0 && (
-            <button type="button" onClick={() => setShowConfirm(true)}
-              className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
-              title="I'm done — submit score">
-              <Flag className="w-5 h-5" />
-            </button>
-          )}
-        </form>
+        {/* Input / Submitted state */}
+        {isFinished ? (
+          <button
+            onClick={() => setShowEndScreen(true)}
+            className={`w-full mb-3 px-4 py-3 rounded-xl font-semibold text-base transition-all ${theme.primaryBtn} flex items-center justify-center gap-2`}
+          >
+            <Trophy className="w-5 h-5" />
+            View Results & Leaderboard
+          </button>
+        ) : (
+          <form onSubmit={handleSubmit} className="w-full mb-3 flex gap-2">
+            <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
+              placeholder="Enter a player name..."
+              autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+              className={`flex-1 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
+            />
+            {state.foundPlayers.length > 0 && (
+              <button type="button" onClick={() => setShowConfirm(true)}
+                className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
+                title="I'm done — submit score">
+                <Flag className="w-5 h-5" />
+              </button>
+            )}
+          </form>
+        )}
 
         {/* Feedback */}
         <AnimatePresence mode="wait">
