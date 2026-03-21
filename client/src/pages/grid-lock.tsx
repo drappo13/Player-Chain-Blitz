@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { seasons, getTeamColor, type F1Driver, type F1Season } from "@/data/f1seasons";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Flag, Ticket, Star } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Flag, Ticket, Star, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick } from "@/lib/sounds";
@@ -286,6 +286,13 @@ export default function GridLock() {
               data-testid="button-home"
             >
               <Home className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setGameState("idle")}
+              className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="How to play"
+            >
+              <Info className="w-4 h-4" />
             </button>
             <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : "bg-muted/30"}`}>
               <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : "text-muted-foreground"}`} />

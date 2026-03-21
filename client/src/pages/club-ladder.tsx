@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, ChevronRight, Home, Shield, SkipForward, TrendingUp, Ticket, Star } from "lucide-react";
+import { Timer, Trophy, ChevronRight, Home, Shield, SkipForward, TrendingUp, Ticket, Star, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playTick, playScoreSound, playShieldBlock } from "@/lib/sounds";
@@ -656,6 +656,13 @@ export default function ClubLadder() {
               className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <Home className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setGameState("idle")}
+              className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="How to play"
+            >
+              <Info className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
               <span className="text-sm font-bold text-purple-400 tabular-nums">Turn {turnNum}</span>

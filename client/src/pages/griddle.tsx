@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Home, Flag, Trophy, ChevronRight } from "lucide-react";
+import { Calendar, Home, Flag, Trophy, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd } from "@/lib/sounds";
@@ -704,10 +704,19 @@ export default function Griddle() {
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-8 flex-1">
         {/* Header */}
         <div className="w-full flex items-center justify-between mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground">
-            <Home className="w-4 h-4 mr-1" /> Home
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}
+              className="text-muted-foreground hover:text-foreground">
+              <Home className="w-4 h-4 mr-1" /> Home
+            </Button>
+            <button
+              onClick={() => setShowRules(true)}
+              className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="How to play"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-xs font-semibold">
               <Calendar className="w-3 h-3" />DAILY

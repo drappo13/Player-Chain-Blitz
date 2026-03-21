@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { players, type Player } from "@/data/players";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, Trophy, Target, ChevronRight, Home, Flag, Crosshair, Zap, Ticket, Star } from "lucide-react";
+import { Timer, Trophy, Target, ChevronRight, Home, Flag, Crosshair, Zap, Ticket, Star, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playScoreSound } from "@/lib/sounds";
@@ -577,6 +577,13 @@ export default function TargetMan() {
               className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
             >
               <Home className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setGameState("idle")}
+              className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="How to play"
+            >
+              <Info className="w-4 h-4" />
             </button>
             <div className={`p-1.5 rounded-md ${isUrgent ? "bg-red-500/20" : isWarning ? "bg-amber-500/15" : theme.timerIcon}`}>
               <Timer className={`w-4 h-4 ${isUrgent ? "text-red-400" : isWarning ? "text-amber-400" : theme.timerIconColor}`} />
