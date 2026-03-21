@@ -17,7 +17,7 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 const theme = gameThemes.overlap;
 
 // Board version — bump to regenerate all daily boards
-const BOARD_VERSION = 6;
+const BOARD_VERSION = 7;
 
 // --- Top 25 PL clubs by total appearances ---
 const ELIGIBLE_CLUBS = [
