@@ -16,6 +16,7 @@ interface GameCard {
   titleGradient: string;
   description: string;
   playColor: string;
+  mode?: "daily" | "arcade";
 }
 
 const footballGames: GameCard[] = [
@@ -23,6 +24,7 @@ const footballGames: GameCard[] = [
     href: "/griddle",
     slug: "griddle",
     testId: "link-griddle",
+    mode: "daily",
     emoji: "\uD83D\uDFE9",
     iconGradient: "from-blue-500/20 to-cyan-500/5",
     iconBorder: "border-blue-500/20",
@@ -35,6 +37,7 @@ const footballGames: GameCard[] = [
     href: "/targetman",
     slug: "targetman",
     testId: "link-targetman",
+    mode: "arcade",
     emoji: "\uD83C\uDFAF",
     iconGradient: "from-orange-500/20 to-orange-500/5",
     iconBorder: "border-orange-500/20",
@@ -47,6 +50,7 @@ const footballGames: GameCard[] = [
     href: "/overlap",
     slug: "overlap",
     testId: "link-overlap",
+    mode: "arcade",
     emoji: "\uD83D\uDD17",
     iconGradient: "from-blue-500/20 to-blue-500/5",
     iconBorder: "border-blue-500/20",
@@ -59,6 +63,7 @@ const footballGames: GameCard[] = [
     href: "/clubladder",
     slug: "clubladder",
     testId: "link-clubladder",
+    mode: "arcade",
     emoji: "\uD83D\uDCC8",
     iconGradient: "from-purple-500/20 to-purple-500/5",
     iconBorder: "border-purple-500/20",
@@ -71,6 +76,7 @@ const footballGames: GameCard[] = [
     href: "/goalchain",
     slug: "goalchain",
     testId: "link-goalchain",
+    mode: "arcade",
     emoji: "\u26BD",
     iconGradient: "from-primary/20 to-primary/5",
     iconBorder: "border-primary/20",
@@ -86,6 +92,7 @@ const tennisGames: GameCard[] = [
     href: "/slamchain",
     slug: "slamchain",
     testId: "link-slamchain",
+    mode: "arcade",
     emoji: "\uD83C\uDFBE",
     iconGradient: "from-emerald-500/20 to-emerald-500/5",
     iconBorder: "border-emerald-500/20",
@@ -101,6 +108,7 @@ const f1Games: GameCard[] = [
     href: "/gridlock",
     slug: "gridlock",
     testId: "link-gridlock",
+    mode: "arcade",
     emoji: "\uD83C\uDFCE\uFE0F",
     iconGradient: "from-red-500/20 to-red-500/5",
     iconBorder: "border-red-500/20",
@@ -144,12 +152,23 @@ function GameCardComponent({ game, delay, gameStats }: { game: GameCard; delay: 
               )}
             </div>
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1.5">
-            {game.title[0]}
-            <span className={`bg-gradient-to-r ${game.titleGradient} bg-clip-text text-transparent`}>
-              {game.title[1]}
-            </span>
-          </h2>
+          <div className="flex items-center gap-2 mb-1.5">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">
+              {game.title[0]}
+              <span className={`bg-gradient-to-r ${game.titleGradient} bg-clip-text text-transparent`}>
+                {game.title[1]}
+              </span>
+            </h2>
+            {game.mode && (
+              <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
+                game.mode === "daily"
+                  ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+              }`}>
+                {game.mode}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4 flex-1">
             {game.description}
           </p>
