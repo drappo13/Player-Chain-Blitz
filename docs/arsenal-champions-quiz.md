@@ -91,6 +91,25 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 | 9 | *"It's going to come on full blast now, being bottle jobs, melting."* | Paul Merson | Feb 2026 | [Sky Sports](https://www.skysports.com/football/news/11670/13509316/paul-merson-slams-slow-and-lazy-arsenal-after-wolves-draw-and-expects-bottle-jobs-talk-to-ramp-up) | Merson, Keane, Neville, Souness |
 | 10 | *"It's only natural that they would man up a little bit and start challenging for titles, even though they haven't still reached that level."* [said 2 games before Arsenal clinched it] | Bernardo Silva | May 2026 | [ESPN](https://www.espn.com/soccer/story/_/id/48776772/bernardo-silva-only-natural-arsenal-man-challenge-titles) | Bernardo Silva, Rodri, Haaland, De Bruyne |
 
+### Confirmed final 10 quotes (in display order)
+
+| # | Person | Quote (display text) | When | Options |
+|---|--------|----------------------|------|---------|
+| 1 | Gary Neville | "That's in some ways as good as it gets [for Arsenal under Arteta]" | Apr 2022 | Neville / Carragher / Merson / Shearer |
+| 2 | Graeme Souness | "Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline." | Feb 2023 | Souness / Keane / Merson / Neville |
+| 3 | Rodri | "When they came here I thought: these guys do not want to beat us. They just want to draw." | May 2024 | Rodri / Bernardo Silva / De Bruyne / Haaland |
+| 4 | Roy Keane | "They were just booting it, like a small team with a small mentality." | Sep 2024 | Keane / Souness / Neville / Carragher |
+| 5 | Patrice Evra | "Watching Arsenal is like watching Netflix. You always have to wait for the next season!" | Oct 2024 | Evra / Neville / Scholes / Simon Jordan |
+| 6 | Erling Haaland | "Stay humble, eh. Stay humble, eh." [said directly to Arteta pitchside] | Sep 2024 | Haaland / Rodri / De Bruyne / Bernardo Silva |
+| 7 | Pep Guardiola | "The day my friend Mikel Arteta wins the title, it will only be because of what he's spent, not because of his work." | Sep 2025 | Guardiola / Klopp / Mourinho / Ten Hag |
+| 8 | Paul Merson | "He's got to be in the top two by Christmas or they'll go for someone else." | May 2025 | Merson / Souness / Shearer / Carragher |
+| 9 | Paul Merson | "It's going to come on full blast now, being bottle jobs, melting." | Feb 2026 | Merson / Keane / Neville / Souness |
+| 10 | Peter Schmeichel | "We can't have all these games and the championship decided on corner kicks. We just can't." | Mar 2026 | Schmeichel / Souness / Neville / Keane |
+
+**After reveal, show for each:** Person, role/club, date/context. E.g. "Peter Schmeichel — Man Utd legend & pundit. Said after Arsenal 2-1 Chelsea (both goals from corners), March 2026. Irony: Schmeichel's own 1999 UCL win ended with two late corners."
+
+**Count: 10 quotes confirmed ✅** (Plus 4 verified alternates: Paul Scholes "boring", Wayne Rooney "celebrate when you win", Troy Deeney "players not turning up", Schmeichel "ugly brand of football")
+
 **⚠️ User to verify all source URLs before going live**  
 **⚠️ Neville quote is a paraphrase/compression of 3 sentences from one appearance — verify wording**
 
@@ -169,10 +188,32 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Photos:** Stored in `public/arsenal-quiz/corners/` in the repo  
 **Key context:** Set-piece coach Nicolas Jover designed Arsenal's famous corner routines. Arsenal broke PL records for corner goals under Arteta. Gabriel Magalhães is the primary beneficiary but many others scored.
 
-**TODO once corner goal list arrives:**
-- Select 10 with the best available photos
-- Confirm scorer, opponent, date for each
-- Source/compress photos and add to public/
+### Corner Goals Research (from research agent, May 2026)
+
+Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 2022-23 they've scored 50+ from corners — at least 11 more than any other team. Nicolas Jover (set-piece coach, from Man City) reportedly gets a bonus per Arsenal corner goal.
+
+**10 best photo moments for the quiz (pick these 10):**
+
+| # | Scorer | Opponent | Date | Key detail | Source |
+|---|--------|----------|------|-----------|--------|
+| 1 | Gabriel | Chelsea (Stamford Bridge) | 6 Nov 2022 | Saka inswinger, Gabriel poked through crowd; 1-0 win in title race | Sky Sports |
+| 2 | Trossard | Everton | 17 Sep 2023 | Short corner switch — Saka to Trossard, first-time shot off post. Most viral corner moment | [Sky Sports](https://www.skysports.com/football/news/11095/12961166/) |
+| 3 | Zinchenko | Burnley | 11 Nov 2023 | Acrobatic scissor volley after corner hit bar. Won Arsenal Goal of Month | various |
+| 4 | Havertz | Tottenham | 28 Apr 2024 | Ben White barged Vicario; Rice delivery; part of 3-2 NLD win (Arteta's 100th PL win) | [Arsenal.com](https://www.arsenal.com/fixture/arsenal/2024-Apr-28/tottenham-hotspur-2-3-arsenal-match-report) |
+| 5 | Gabriel | Man City (Etihad) | 22 Sep 2024 | Header while Arsenal down to 10 men; Nicolas Jover's ecstatic celebration widely shared | [Tribuna](https://tribuna.com/en/news/arsenal-2024-09-22-spotted-nicolas-jovers-reaction-to-gabriel-scoring-from-corner/) |
+| 6 | Gabriel | Tottenham | 15 Sep 2024 | 64th min header; sole goal in 1-0 NLD win | [Sky Sports](https://www.skysports.com/football/news/12309/13213070/) |
+| 7 | Timber | Man Utd | 4 Dec 2024 | Near-post flick from Rice corner; 2-0 win | [Sky Sports](https://www.skysports.com/football/news/11661/13265256/) |
+| 8 | Gabriel | Newcastle | 28 Sep 2025 | 96th-minute winner header; comeback from 1 down | [Sky Sports](https://www.skysports.com/football/news/12040/13438480/) |
+| 9 | Saliba + Timber | Chelsea | 1 Mar 2026 | Both scored from corners in same match as Arsenal equalled then broke record | [Sky Sports](https://www.skysports.com/football/news/11095/13512600/) |
+| 10 | Eze | Newcastle | ~Apr 2026 | Short corner routine; record-breaking 17th corner goal of the season | PL.com |
+
+**Records:**
+- 2023-24: 16 corner goals = joint PL record (matched Oldham 1992-93, WBA 2016-17)
+- 2025-26: **17 corner goals = new all-time PL record**
+- Ødegaard used a subtle hand signal to indicate which routine
+- Gabriel's technique: always starts outside box, sprints late; almost all delivered by Saka
+
+**TODO:** User to source and compress photos for each of the 10 above → `public/arsenal-quiz/corners/`
 
 ---
 
@@ -303,6 +344,36 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 | `scripts/fetch-arteta-stats.mjs` | Re-fetch Arsenal Arteta-era stats from PL API | ✅ Available |
 
 ---
+
+## Session State (as of May 23 2026)
+
+### What's built and live at drapk.in/arsenal-pl-champions-2026
+- Full quiz shell: intro screen, between-rounds, placeholder rounds (all 10), results screen
+- Intro: vivid Arsenal red (#DB0007) full-screen, Bebas Neue font, metallic gold CHAMPIONS, crown + trophy, gold sparkles
+- Routing: `/arsenal-pl-champions-2026` in App.tsx; card on home page
+- Scoring: 1pt per question, 10 per round, 100 total
+- No timer, no wrong-answer penalty
+- Bebas Neue font loaded via Google Fonts in index.html
+- All buttons are plain `<button>` (no shadcn) to avoid global green focus ring
+- Data: `arteta-arsenal-stats.json` live with all 7 Arteta PL seasons
+
+### Next thing to build (user requested, not yet started)
+**Round 2 — "Who Doubted Us?"** — sequential questions, each shows a quote, player picks from 4 options, after selection reveals who said it + date + context. Round title stays visible throughout. Q1/Q2 etc. shown. Context shown on reveal regardless of right/wrong answer. Don't hook up to scoring yet, just get the UX right.
+
+All 10 quotes are in the table above. Each needs: quote, person, 4 options, reveal context text.
+
+### Round build priority order
+1. ✅ Shell (built)
+2. 🔴 Round 2: Who Doubted Us? (next)
+3. 🔴 Round 1: Trust the Process (scores data ready — see table in Round 1 section)
+4. 🔴 Round 6: Top Scorers (data ready in arteta-arsenal-stats.json)
+5. 🔴 Round 7: Assist Masters (data ready)
+6. 🔴 Round 4: Season stats (need verified numbers)
+7. 🔴 Round 5: Corner Kings (need user photos)
+8. 🔴 Round 8: Memory Lane (need user photos)
+9. 🔴 Round 9: Build the XI (need confirmed starting XI)
+10. 🔴 Round 3: Arteta Speaks (need quotes sourced)
+11. 🔴 Round 10: Transfer Window (need fees verified)
 
 ## Open Questions / TODOs
 
