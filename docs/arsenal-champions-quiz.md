@@ -177,9 +177,9 @@ These narratives make the round more resonant — each quote can be prefaced wit
 | 7 | How many times did Arsenal score 5+ goals in a PL game this season? | **1** | 0, 1, 2, 3 | Once — 5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club. |
 | 8 | How many times did Arsenal concede more than 2 goals in a PL game? | **1** | 0, 1, 2, 3 | Just once all season — and the only time Arsenal conceded more than 2 in a league game since 2023. |
 | 9 | Which outfield player logged the most PL minutes for Arsenal? | **Declan Rice** *(3,094)* | Rice, Zubimendi, Gabriel, Saliba | Declan Rice: 3,094 minutes — 4 goals, 5 assists, and barely off the pitch all season. |
-| 10 | How many Arsenal players scored a PL penalty this season? | **2** | 1, 2, 3, 4 | Gyökeres and Saka. Two penalties, both scored, both mattered. |
+| 10 | How many Arsenal players scored a PL penalty this season? | **2** | 1, 2, 3, 4 | Gyökeres and Saka — Gyökeres scored 3, Saka 1. All four converted. |
 
-**⚠️ Remaining unverified: Q1 (clean sheets), Q2 (Spurs vs City goals), Q4 (yellows), Q5 (Trossard assists), Q6 (unbeaten run), Q9 (Rice minutes), Q10 (penalties). Q7 (5-0 Leeds) and Q8 (conceded 2+) confirmed.**
+**⚠️ Remaining unverified: Q1 (clean sheets), Q2 (Spurs vs City goals), Q4 (yellows), Q5 (Trossard assists), Q6 (unbeaten run), Q9 (Rice minutes). Q7 (5-0 Leeds), Q8 (conceded 2+), Q10 (penalties: Gyök 3, Saka 1) confirmed.**
 
 ---
 
