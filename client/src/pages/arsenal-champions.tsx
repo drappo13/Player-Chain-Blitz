@@ -564,75 +564,76 @@ function Round2WhoDoubtedUs({ onComplete }: { onComplete: (score: number) => voi
 // ─── Round 1 data ─────────────────────────────────────────────────────────────
 
 interface HorrorGame {
-  opponent: string;
+  homeTeam: string;
+  awayTeam: string;
   date: string;
-  venue: "H" | "A";
-  score: string;
-  result: "W" | "D" | "L";
-  options: string[];
+  homeScore: number;
+  awayScore: number;
+  result: "W" | "D" | "L"; // from Arsenal's perspective
+  options: string[]; // "X-Y" in home-away format
   reveal: string;
 }
 
 const ROUND1_GAMES: HorrorGame[] = [
   {
-    opponent: "Manchester City", date: "17 Oct 2020", venue: "A",
-    score: "0-1", result: "L",
-    options: ["0-1", "0-2", "1-1", "1-2"],
-    reveal: "An early reminder of how far Arsenal had to go. Aguero scored the only goal.",
+    homeTeam: "Manchester City", awayTeam: "Arsenal", date: "17 Oct 2020",
+    homeScore: 1, awayScore: 0, result: "L",
+    options: ["1-0", "2-0", "1-1", "2-1"],
+    reveal: "An early reminder of how far Arsenal had to go. Agüero scored the only goal.",
   },
   {
-    opponent: "Leicester City", date: "25 Oct 2020", venue: "H",
-    score: "0-1", result: "L",
+    homeTeam: "Arsenal", awayTeam: "Leicester City", date: "25 Oct 2020",
+    homeScore: 0, awayScore: 1, result: "L",
     options: ["0-1", "1-0", "1-1", "2-1"],
     reveal: "Vardy got the winner. Arsenal had no answer at the Emirates.",
   },
   {
-    opponent: "Manchester United", date: "1 Nov 2020", venue: "A",
-    score: "1-0", result: "W",
-    options: ["1-0", "0-1", "1-1", "0-0"],
-    reveal: "A rare bright spot. Aubameyang converted a penalty — Arsenal's first win at Old Trafford in 14 years.",
+    homeTeam: "Manchester United", awayTeam: "Arsenal", date: "1 Nov 2020",
+    homeScore: 0, awayScore: 1, result: "W",
+    options: ["0-1", "1-0", "1-1", "0-0"],
+    reveal: "Aubameyang converted a penalty — Arsenal's first win at Old Trafford in 14 years.",
   },
   {
-    opponent: "Aston Villa", date: "8 Nov 2020", venue: "H",
-    score: "0-3", result: "L",
+    homeTeam: "Arsenal", awayTeam: "Aston Villa", date: "8 Nov 2020",
+    homeScore: 0, awayScore: 3, result: "L",
     options: ["0-3", "1-2", "0-2", "1-1"],
     reveal: "Emiliano Martínez kept a clean sheet against his former club. Arteta said afterwards: \"It's my fault.\" The low point that sparked the cultural reset.",
   },
   {
-    opponent: "Leeds United", date: "22 Nov 2020", venue: "A",
-    score: "0-0", result: "D",
+    homeTeam: "Leeds United", awayTeam: "Arsenal", date: "22 Nov 2020",
+    homeScore: 0, awayScore: 0, result: "D",
     options: ["0-0", "1-0", "0-1", "1-1"],
     reveal: "A point at Elland Road felt about right — Arsenal were deeply uninspiring.",
   },
   {
-    opponent: "Wolves", date: "29 Nov 2020", venue: "H",
-    score: "1-2", result: "L",
+    homeTeam: "Arsenal", awayTeam: "Wolves", date: "29 Nov 2020",
+    homeScore: 1, awayScore: 2, result: "L",
     options: ["1-2", "0-1", "1-1", "2-1"],
     reveal: "Pepe gave Arsenal the lead, Wolves scored twice in the second half. Another home defeat.",
   },
   {
-    opponent: "Tottenham", date: "6 Dec 2020", venue: "A",
-    score: "0-2", result: "L",
-    options: ["0-2", "1-2", "0-1", "1-1"],
-    reveal: "Son and Hojbjerg scored. Arteta's first NLD in charge ended in defeat.",
+    homeTeam: "Tottenham", awayTeam: "Arsenal", date: "6 Dec 2020",
+    homeScore: 2, awayScore: 0, result: "L",
+    options: ["2-0", "1-0", "2-1", "1-1"],
+    reveal: "Son and Højbjerg scored. Arteta's first NLD in charge ended in defeat.",
   },
   {
-    opponent: "Burnley", date: "13 Dec 2020", venue: "H",
-    score: "0-1", result: "L",
+    homeTeam: "Arsenal", awayTeam: "Burnley", date: "13 Dec 2020",
+    homeScore: 0, awayScore: 1, result: "L",
     options: ["0-1", "1-0", "1-1", "0-2"],
     reveal: "Burnley won at the Emirates. Arsenal were 15th in the table.",
   },
   {
-    opponent: "Southampton", date: "16 Dec 2020", venue: "H",
-    score: "1-1", result: "D",
+    homeTeam: "Arsenal", awayTeam: "Southampton", date: "16 Dec 2020",
+    homeScore: 1, awayScore: 1, result: "D",
     options: ["1-1", "0-1", "1-0", "2-1"],
     reveal: "A draw felt like a relief at this point. Arsenal couldn't win at home.",
   },
   {
-    opponent: "Everton", date: "19 Dec 2020", venue: "A",
-    score: "1-2", result: "L",
-    options: ["1-2", "0-1", "1-1", "2-2"],
-    reveal: "Arteta's side were three points above the relegation zone at Christmas. The turnaround started on Boxing Day.",
+    homeTeam: "Everton", awayTeam: "Arsenal", date: "19 Dec 2020",
+    homeScore: 2, awayScore: 1, result: "L",
+    options: ["2-1", "0-1", "1-1", "2-2"],
+    reveal: "Three points above the relegation zone at Christmas. The turnaround started on Boxing Day.",
   },
 ];
 
@@ -644,8 +645,9 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
   const [answers, setAnswers] = useState<boolean[]>([]);
 
   const g = ROUND1_GAMES[qIndex];
+  const correctScore = `${g.homeScore}-${g.awayScore}`;
   const revealed = selected !== null;
-  const isCorrect = selected === g.score;
+  const isCorrect = selected === correctScore;
 
   function handleSelect(opt: string) {
     if (revealed) return;
@@ -653,7 +655,7 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
   }
 
   function handleNext() {
-    const newAnswers = [...answers, selected === g.score];
+    const newAnswers = [...answers, selected === correctScore];
     if (qIndex + 1 >= ROUND1_GAMES.length) {
       onComplete(newAnswers.filter(Boolean).length);
     } else {
@@ -727,10 +729,12 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-xs font-semibold mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-              {g.venue === "H" ? "HOME" : "AWAY"} · {g.date}
+              {g.date}
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-white" style={{ fontFamily: BEBAS, letterSpacing: "0.04em" }}>
-              {g.venue === "H" ? <>Arsenal <span style={{ color: "rgba(255,255,255,0.3)" }}>vs</span> {g.opponent}</> : <>{g.opponent} <span style={{ color: "rgba(255,255,255,0.3)" }}>vs</span> Arsenal</>}
+              <span style={{ color: g.homeTeam === "Arsenal" ? RED : "white" }}>{g.homeTeam}</span>
+              <span className="mx-2" style={{ color: "rgba(255,255,255,0.25)" }}>vs</span>
+              <span style={{ color: g.awayTeam === "Arsenal" ? RED : "white" }}>{g.awayTeam}</span>
             </div>
           </div>
           <div
@@ -740,8 +744,8 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
             {revealed ? resultLabel : "?"}
           </div>
         </div>
-        <div className="mt-3 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-          What was the final score? (Arsenal first)
+        <div className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+          What was the final score?
         </div>
       </div>
 
@@ -794,7 +798,7 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
                 <span className="font-bold text-sm" style={{ color: isCorrect ? GOLD_LIGHT : "white" }}>
-                  {isCorrect ? "Correct!" : `It was ${g.score}`}
+                  {isCorrect ? "Correct!" : `It was ${correctScore}`}
                 </span>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{g.reveal}</p>
