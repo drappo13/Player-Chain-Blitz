@@ -164,19 +164,20 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "2025/26 — the numbers behind the title"  
 **Format:** 10 multiple-choice stats questions about the 2025-26 PL season specifically  
 **Points:** 10 per correct answer  
-**Status:** 🔴 Content needed — questions to be written
+**Status:** 🔴 Content needed — needs building. Numbers need verification before going live.
 
-**Draft questions (verify all numbers from official sources):**
-1. How many PL clean sheets did Arsenal keep in 2025-26? → **19** (options: 14, 17, 19, 22)
-2. How many points did Arsenal finish on? → **82** (options: 78, 82, 85, 89)
-3. David Raya won the Golden Glove — which consecutive year was this? → **3rd** (options: 1st, 2nd, 3rd, 4th)
-4. How many goals did Arsenal concede — fewer than the Invincibles? → **24** (options: 21, 24, 28, 31)
-5. Arsenal's top PL scorer in 2025-26? → **Viktor Gyökeres, 14 goals** (options: Saka, Gyökeres, Havertz, Eze)
-6. Who did Arsenal beat to clinch the title (result confirmed when that game ended)? → TBC
-7. How many matches to go when Arsenal clinched it? → **1** (options: 0, 1, 2, 3)
-8. What was Arsenal's longest winning run in the league this season? → **TBC**
-9. Arsenal defeated which Champions League holders in the quarter-finals? → **Real Madrid** (options: Real Madrid, PSG, Bayern, Inter)
-10. Who was Arsenal's captain for the title-winning season? → **Martin Ødegaard** (options: Ødegaard, Rice, Saliba, Saka)
+| # | Question | Answer | Options | Reveal context |
+|---|----------|--------|---------|----------------|
+| 1 | How many PL clean sheets did Arsenal keep in 2025-26? | **19** | 17, 18, 19, 20 | David Raya: 19 clean sheets, 3 Golden Gloves in a row. The wall. |
+| 2 | How many goals did Spurs score against Man City across both PL fixtures? | **4** | 2, 3, 4, 5 | Four goals against City across the two fixtures. Spurs couldn't win a trophy all season — but they did win us the league. |
+| 3 | How many PL goals did top scorer Viktor Gyökeres score? | **14** | 12, 13, 14, 15 | 14 goals in his debut Arsenal season. Not bad for a flop. |
+| 4 | Which two Arsenal players shared the most yellow cards (5 each)? | **Calafiori & Timber** | Calafiori & Timber / Zubimendi & Gabriel / Mosquera & Gabriel / Rice & Zubimendi | Calafiori and Timber — 5 yellows each. Some things never change. |
+| 5 | How many Arsenal players made more PL assists than Trossard? | **0** | 0, 1, 2, 3 | Trossard finished joint-top with Ødegaard on 6 assists. Zero players made more. Still underrated. |
+| 6 | What was Arsenal's longest unbeaten run in the league this season? | **11** | 7, 9, 11, 13 | 11 games unbeaten — the run that put the title beyond doubt. |
+| 7 | How many times did Arsenal score 5+ goals in a PL game this season? | **1** | 0, 1, 2, 3 | Once — 5-1 vs Man City at the Emirates, February 2025. They only needed to do it once. |
+| 8 | How many times did Arsenal concede more than 2 goals in a PL game? | **1** | 0, 1, 2, 3 | Just once all season. The defence was almost flawless. |
+| 9 | Which outfield player logged the most PL minutes for Arsenal? | **Declan Rice** *(3,094)* | Rice, Zubimendi, Gabriel, Saliba | Declan Rice: 3,094 minutes — 4 goals, 5 assists, and barely off the pitch all season. |
+| 10 | How many Arsenal players scored a PL penalty this season? | **2** | 1, 2, 3, 4 | Gyökeres and Saka. Two penalties, both scored, both mattered. |
 
 **⚠️ All numbers need verification from official sources before building**
 
