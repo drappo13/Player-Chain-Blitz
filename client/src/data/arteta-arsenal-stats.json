@@ -1,0 +1,1743 @@
+[
+  {
+    "displayName": "Bukayo Saka",
+    "firstName": "Bukayo",
+    "lastName": "Saka",
+    "position": "Left Winger",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 26,
+        "goals": 1,
+        "assists": 5
+      },
+      "2020/21": {
+        "appearances": 32,
+        "goals": 5,
+        "assists": 3
+      },
+      "2021/22": {
+        "appearances": 38,
+        "goals": 11,
+        "assists": 7
+      },
+      "2022/23": {
+        "appearances": 38,
+        "goals": 14,
+        "assists": 11
+      },
+      "2023/24": {
+        "appearances": 35,
+        "goals": 16,
+        "assists": 9
+      },
+      "2024/25": {
+        "appearances": 25,
+        "goals": 6,
+        "assists": 10
+      },
+      "2025/26": {
+        "appearances": 31,
+        "goals": 7,
+        "assists": 5
+      }
+    },
+    "totalAppearances": 225,
+    "totalGoals": 60,
+    "totalAssists": 50
+  },
+  {
+    "displayName": "Gabriel Martinelli",
+    "firstName": "Gabriel Teodoro",
+    "lastName": "Martinelli Silva",
+    "position": "Left Winger",
+    "nationality": "Brazil",
+    "seasons": {
+      "2019/20": {
+        "appearances": 14,
+        "goals": 3,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 14,
+        "goals": 2,
+        "assists": 1
+      },
+      "2021/22": {
+        "appearances": 29,
+        "goals": 6,
+        "assists": 6
+      },
+      "2022/23": {
+        "appearances": 36,
+        "goals": 15,
+        "assists": 5
+      },
+      "2023/24": {
+        "appearances": 35,
+        "goals": 6,
+        "assists": 4
+      },
+      "2024/25": {
+        "appearances": 33,
+        "goals": 8,
+        "assists": 4
+      },
+      "2025/26": {
+        "appearances": 29,
+        "goals": 1,
+        "assists": 3
+      }
+    },
+    "totalAppearances": 190,
+    "totalGoals": 41,
+    "totalAssists": 23
+  },
+  {
+    "displayName": "Pierre-Emerick Aubameyang",
+    "firstName": "Pierre-Emerick",
+    "lastName": "Aubameyang",
+    "position": "Centre Striker",
+    "nationality": "Gabon",
+    "seasons": {
+      "2019/20": {
+        "appearances": 36,
+        "goals": 22,
+        "assists": 3
+      },
+      "2020/21": {
+        "appearances": 29,
+        "goals": 10,
+        "assists": 3
+      },
+      "2021/22": {
+        "appearances": 14,
+        "goals": 4,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 79,
+    "totalGoals": 36,
+    "totalAssists": 7
+  },
+  {
+    "displayName": "Martin Ødegaard",
+    "firstName": "Martin",
+    "lastName": "Ødegaard",
+    "position": "Left/Centre/Right Attacking Midfielder",
+    "nationality": "Norway",
+    "seasons": {
+      "2020/21": {
+        "appearances": 14,
+        "goals": 1,
+        "assists": 2
+      },
+      "2021/22": {
+        "appearances": 36,
+        "goals": 7,
+        "assists": 4
+      },
+      "2022/23": {
+        "appearances": 37,
+        "goals": 15,
+        "assists": 7
+      },
+      "2023/24": {
+        "appearances": 35,
+        "goals": 8,
+        "assists": 10
+      },
+      "2024/25": {
+        "appearances": 30,
+        "goals": 3,
+        "assists": 8
+      },
+      "2025/26": {
+        "appearances": 24,
+        "goals": 1,
+        "assists": 6
+      }
+    },
+    "totalAppearances": 176,
+    "totalGoals": 35,
+    "totalAssists": 37
+  },
+  {
+    "displayName": "Leandro Trossard",
+    "firstName": "Leandro",
+    "lastName": "Trossard",
+    "position": "Forward",
+    "nationality": "Belgium",
+    "seasons": {
+      "2022/23": {
+        "appearances": 20,
+        "goals": 1,
+        "assists": 10
+      },
+      "2023/24": {
+        "appearances": 34,
+        "goals": 12,
+        "assists": 1
+      },
+      "2024/25": {
+        "appearances": 38,
+        "goals": 8,
+        "assists": 7
+      },
+      "2025/26": {
+        "appearances": 31,
+        "goals": 6,
+        "assists": 6
+      }
+    },
+    "totalAppearances": 123,
+    "totalGoals": 27,
+    "totalAssists": 24
+  },
+  {
+    "displayName": "Alexandre Lacazette",
+    "firstName": "Alexandre",
+    "lastName": "Lacazette",
+    "position": "Forward",
+    "nationality": "France",
+    "seasons": {
+      "2019/20": {
+        "appearances": 30,
+        "goals": 10,
+        "assists": 4
+      },
+      "2020/21": {
+        "appearances": 31,
+        "goals": 13,
+        "assists": 2
+      },
+      "2021/22": {
+        "appearances": 30,
+        "goals": 4,
+        "assists": 7
+      }
+    },
+    "totalAppearances": 91,
+    "totalGoals": 27,
+    "totalAssists": 13
+  },
+  {
+    "displayName": "Kai Havertz",
+    "firstName": "Kai",
+    "lastName": "Havertz",
+    "position": "Left/Centre/Right Second Striker",
+    "nationality": "Germany",
+    "seasons": {
+      "2023/24": {
+        "appearances": 37,
+        "goals": 13,
+        "assists": 7
+      },
+      "2024/25": {
+        "appearances": 23,
+        "goals": 9,
+        "assists": 3
+      },
+      "2025/26": {
+        "appearances": 11,
+        "goals": 2,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 71,
+    "totalGoals": 24,
+    "totalAssists": 12
+  },
+  {
+    "displayName": "Gabriel Jesus",
+    "firstName": "Gabriel Fernando",
+    "lastName": "de Jesus",
+    "position": "Second Striker",
+    "nationality": "Brazil",
+    "seasons": {
+      "2022/23": {
+        "appearances": 26,
+        "goals": 11,
+        "assists": 6
+      },
+      "2023/24": {
+        "appearances": 27,
+        "goals": 4,
+        "assists": 5
+      },
+      "2024/25": {
+        "appearances": 17,
+        "goals": 3,
+        "assists": 0
+      },
+      "2025/26": {
+        "appearances": 13,
+        "goals": 2,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 83,
+    "totalGoals": 20,
+    "totalAssists": 11
+  },
+  {
+    "displayName": "Gabriel Magalhães",
+    "firstName": "Gabriel",
+    "lastName": "dos Santos Magalhães",
+    "position": "Centre Central Defender",
+    "nationality": "Brazil",
+    "seasons": {
+      "2020/21": {
+        "appearances": 23,
+        "goals": 2,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 35,
+        "goals": 5,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 38,
+        "goals": 3,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 36,
+        "goals": 4,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 28,
+        "goals": 3,
+        "assists": 1
+      },
+      "2025/26": {
+        "appearances": 31,
+        "goals": 3,
+        "assists": 4
+      }
+    },
+    "totalAppearances": 191,
+    "totalGoals": 20,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Eddie Nketiah",
+    "firstName": "Eddie",
+    "lastName": "Nketiah",
+    "position": "Centre Striker",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 13,
+        "goals": 2,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 17,
+        "goals": 2,
+        "assists": 1
+      },
+      "2021/22": {
+        "appearances": 21,
+        "goals": 5,
+        "assists": 1
+      },
+      "2022/23": {
+        "appearances": 30,
+        "goals": 4,
+        "assists": 1
+      },
+      "2023/24": {
+        "appearances": 27,
+        "goals": 5,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 108,
+    "totalGoals": 18,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Nicolas Pépé",
+    "firstName": "Nicolas",
+    "lastName": "Pépé",
+    "position": "Right Winger",
+    "nationality": "Cote D’Ivoire",
+    "seasons": {
+      "2019/20": {
+        "appearances": 31,
+        "goals": 5,
+        "assists": 6
+      },
+      "2020/21": {
+        "appearances": 29,
+        "goals": 10,
+        "assists": 1
+      },
+      "2021/22": {
+        "appearances": 20,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 80,
+    "totalGoals": 16,
+    "totalAssists": 9
+  },
+  {
+    "displayName": "Declan Rice",
+    "firstName": "Declan",
+    "lastName": "Rice",
+    "position": "Centre Central Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2023/24": {
+        "appearances": 38,
+        "goals": 7,
+        "assists": 8
+      },
+      "2024/25": {
+        "appearances": 35,
+        "goals": 4,
+        "assists": 7
+      },
+      "2025/26": {
+        "appearances": 36,
+        "goals": 4,
+        "assists": 5
+      }
+    },
+    "totalAppearances": 109,
+    "totalGoals": 15,
+    "totalAssists": 20
+  },
+  {
+    "displayName": "Viktor Gyökeres",
+    "firstName": "Viktor",
+    "lastName": "Gyökeres",
+    "position": "Striker",
+    "nationality": "Sweden",
+    "seasons": {
+      "2025/26": {
+        "appearances": 35,
+        "goals": 14,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 35,
+    "totalGoals": 14,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Emile Smith Rowe",
+    "firstName": "Emile",
+    "lastName": "Smith Rowe",
+    "position": "Centre Attacking Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 20,
+        "goals": 2,
+        "assists": 4
+      },
+      "2021/22": {
+        "appearances": 33,
+        "goals": 10,
+        "assists": 2
+      },
+      "2022/23": {
+        "appearances": 12,
+        "goals": 0,
+        "assists": 2
+      },
+      "2023/24": {
+        "appearances": 13,
+        "goals": 0,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 80,
+    "totalGoals": 12,
+    "totalAssists": 9
+  },
+  {
+    "displayName": "Mikel Merino",
+    "firstName": "Mikel",
+    "lastName": "Merino",
+    "position": "Centre Central Midfielder",
+    "nationality": "Spain",
+    "seasons": {
+      "2024/25": {
+        "appearances": 28,
+        "goals": 7,
+        "assists": 2
+      },
+      "2025/26": {
+        "appearances": 21,
+        "goals": 4,
+        "assists": 3
+      }
+    },
+    "totalAppearances": 49,
+    "totalGoals": 11,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Granit Xhaka",
+    "firstName": "Granit",
+    "lastName": "Xhaka",
+    "position": "Central Defender",
+    "nationality": "Switzerland",
+    "seasons": {
+      "2019/20": {
+        "appearances": 31,
+        "goals": 1,
+        "assists": 2
+      },
+      "2020/21": {
+        "appearances": 31,
+        "goals": 1,
+        "assists": 2
+      },
+      "2021/22": {
+        "appearances": 27,
+        "goals": 1,
+        "assists": 2
+      },
+      "2022/23": {
+        "appearances": 37,
+        "goals": 7,
+        "assists": 7
+      }
+    },
+    "totalAppearances": 126,
+    "totalGoals": 10,
+    "totalAssists": 13
+  },
+  {
+    "displayName": "Thomas Partey",
+    "firstName": "Thomas",
+    "lastName": "Partey",
+    "position": "Centre Defensive Midfielder",
+    "nationality": "Ghana",
+    "seasons": {
+      "2020/21": {
+        "appearances": 24,
+        "goals": 0,
+        "assists": 2
+      },
+      "2021/22": {
+        "appearances": 24,
+        "goals": 2,
+        "assists": 1
+      },
+      "2022/23": {
+        "appearances": 33,
+        "goals": 3,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 14,
+        "goals": 0,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 35,
+        "goals": 4,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 130,
+    "totalGoals": 9,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "William Saliba",
+    "firstName": "William",
+    "lastName": "Saliba",
+    "position": "Central Defender",
+    "nationality": "France",
+    "seasons": {
+      "2022/23": {
+        "appearances": 27,
+        "goals": 2,
+        "assists": 1
+      },
+      "2023/24": {
+        "appearances": 38,
+        "goals": 2,
+        "assists": 1
+      },
+      "2024/25": {
+        "appearances": 35,
+        "goals": 2,
+        "assists": 0
+      },
+      "2025/26": {
+        "appearances": 31,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 131,
+    "totalGoals": 7,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Eberechi Eze",
+    "firstName": "Eberechi",
+    "lastName": "Eze",
+    "position": "Centre Attacking Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2025/26": {
+        "appearances": 31,
+        "goals": 7,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 31,
+    "totalGoals": 7,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Ben White",
+    "firstName": "Ben",
+    "lastName": "White",
+    "position": "Centre/Right Central Defender",
+    "nationality": "England",
+    "seasons": {
+      "2021/22": {
+        "appearances": 32,
+        "goals": 0,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 38,
+        "goals": 2,
+        "assists": 5
+      },
+      "2023/24": {
+        "appearances": 37,
+        "goals": 4,
+        "assists": 4
+      },
+      "2024/25": {
+        "appearances": 17,
+        "goals": 0,
+        "assists": 2
+      },
+      "2025/26": {
+        "appearances": 12,
+        "goals": 0,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 136,
+    "totalGoals": 6,
+    "totalAssists": 12
+  },
+  {
+    "displayName": "Martín Zubimendi",
+    "firstName": "Martín",
+    "lastName": "Zubimendi",
+    "position": "Defensive Midfielder",
+    "nationality": "Spain",
+    "seasons": {
+      "2025/26": {
+        "appearances": 37,
+        "goals": 5,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 37,
+    "totalGoals": 5,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Kieran Tierney",
+    "firstName": "Kieran",
+    "lastName": "Tierney",
+    "position": "Left Full Back",
+    "nationality": "Scotland",
+    "seasons": {
+      "2019/20": {
+        "appearances": 15,
+        "goals": 1,
+        "assists": 1
+      },
+      "2020/21": {
+        "appearances": 27,
+        "goals": 1,
+        "assists": 3
+      },
+      "2021/22": {
+        "appearances": 22,
+        "goals": 1,
+        "assists": 3
+      },
+      "2022/23": {
+        "appearances": 27,
+        "goals": 0,
+        "assists": 1
+      },
+      "2024/25": {
+        "appearances": 13,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 104,
+    "totalGoals": 4,
+    "totalAssists": 8
+  },
+  {
+    "displayName": "Jurriën Timber",
+    "firstName": "Jurriën",
+    "lastName": "Timber",
+    "position": "Central Defender",
+    "nationality": "Netherlands",
+    "seasons": {
+      "2023/24": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 30,
+        "goals": 1,
+        "assists": 3
+      },
+      "2025/26": {
+        "appearances": 30,
+        "goals": 3,
+        "assists": 5
+      }
+    },
+    "totalAppearances": 62,
+    "totalGoals": 4,
+    "totalAssists": 8
+  },
+  {
+    "displayName": "Reiss Nelson",
+    "firstName": "Reiss",
+    "lastName": "Nelson",
+    "position": "Striker",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 17,
+        "goals": 1,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 11,
+        "goals": 3,
+        "assists": 2
+      },
+      "2023/24": {
+        "appearances": 15,
+        "goals": 0,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 47,
+    "totalGoals": 4,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Ethan Nwaneri",
+    "firstName": "Ethan",
+    "lastName": "Nwaneri",
+    "position": "Attacking Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2022/23": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 26,
+        "goals": 4,
+        "assists": 2
+      },
+      "2025/26": {
+        "appearances": 6,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 34,
+    "totalGoals": 4,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Jakub Kiwior",
+    "firstName": "Jakub",
+    "lastName": "Kiwior",
+    "position": "Centre Central Defender",
+    "nationality": "Poland",
+    "seasons": {
+      "2022/23": {
+        "appearances": 7,
+        "goals": 1,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 20,
+        "goals": 1,
+        "assists": 3
+      },
+      "2024/25": {
+        "appearances": 17,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 44,
+    "totalGoals": 3,
+    "totalAssists": 3
+  },
+  {
+    "displayName": "Riccardo Calafiori",
+    "firstName": "Riccardo",
+    "lastName": "Calafiori",
+    "position": "Left Full Back",
+    "nationality": "Italy",
+    "seasons": {
+      "2024/25": {
+        "appearances": 19,
+        "goals": 2,
+        "assists": 1
+      },
+      "2025/26": {
+        "appearances": 25,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 44,
+    "totalGoals": 3,
+    "totalAssists": 3
+  },
+  {
+    "displayName": "David Luiz",
+    "firstName": "David Luiz",
+    "lastName": "Moreira Marinho",
+    "position": "Defender",
+    "nationality": "Brazil",
+    "seasons": {
+      "2019/20": {
+        "appearances": 33,
+        "goals": 2,
+        "assists": 1
+      },
+      "2020/21": {
+        "appearances": 20,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 53,
+    "totalGoals": 3,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Oleksandr Zinchenko",
+    "firstName": "Oleksandr",
+    "lastName": "Zinchenko",
+    "position": "Left Full Back",
+    "nationality": "Ukraine",
+    "seasons": {
+      "2022/23": {
+        "appearances": 27,
+        "goals": 1,
+        "assists": 2
+      },
+      "2023/24": {
+        "appearances": 27,
+        "goals": 1,
+        "assists": 2
+      },
+      "2024/25": {
+        "appearances": 15,
+        "goals": 0,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 69,
+    "totalGoals": 2,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Fábio Vieira",
+    "firstName": "Fábio Daniel",
+    "lastName": "Ferreira Vieira",
+    "position": "Centre/Right Attacking Midfielder",
+    "nationality": "Portugal",
+    "seasons": {
+      "2022/23": {
+        "appearances": 22,
+        "goals": 1,
+        "assists": 2
+      },
+      "2023/24": {
+        "appearances": 11,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 33,
+    "totalGoals": 2,
+    "totalAssists": 4
+  },
+  {
+    "displayName": "Takehiro Tomiyasu",
+    "firstName": "Takehiro",
+    "lastName": "Tomiyasu",
+    "position": "Defender",
+    "nationality": "Japan",
+    "seasons": {
+      "2021/22": {
+        "appearances": 21,
+        "goals": 0,
+        "assists": 1
+      },
+      "2022/23": {
+        "appearances": 21,
+        "goals": 0,
+        "assists": 1
+      },
+      "2023/24": {
+        "appearances": 22,
+        "goals": 2,
+        "assists": 1
+      },
+      "2024/25": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 65,
+    "totalGoals": 2,
+    "totalAssists": 3
+  },
+  {
+    "displayName": "Héctor Bellerín",
+    "firstName": "Héctor",
+    "lastName": "Bellerín",
+    "position": "Right Full Back",
+    "nationality": "Spain",
+    "seasons": {
+      "2019/20": {
+        "appearances": 15,
+        "goals": 1,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 25,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 40,
+    "totalGoals": 2,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Cédric Soares",
+    "firstName": "Cédric Ricardo",
+    "lastName": "Alves Soares",
+    "position": "Right Full Back",
+    "nationality": "Portugal",
+    "seasons": {
+      "2019/20": {
+        "appearances": 5,
+        "goals": 1,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 10,
+        "goals": 0,
+        "assists": 1
+      },
+      "2021/22": {
+        "appearances": 21,
+        "goals": 1,
+        "assists": 1
+      },
+      "2022/23": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 41,
+    "totalGoals": 2,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Rob Holding",
+    "firstName": "Rob",
+    "lastName": "Holding",
+    "position": "Central Defender",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 8,
+        "goals": 0,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 30,
+        "goals": 0,
+        "assists": 1
+      },
+      "2021/22": {
+        "appearances": 15,
+        "goals": 1,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 14,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 67,
+    "totalGoals": 2,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Noni Madueke",
+    "firstName": "Noni",
+    "lastName": "Madueke",
+    "position": "Right Winger",
+    "nationality": "England",
+    "seasons": {
+      "2025/26": {
+        "appearances": 25,
+        "goals": 2,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 25,
+    "totalGoals": 2,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Sokratis Papastathopoulos",
+    "firstName": "Sokratis",
+    "lastName": "Papastathopoulos",
+    "position": "Centre Central Defender",
+    "nationality": "Greece",
+    "seasons": {
+      "2019/20": {
+        "appearances": 19,
+        "goals": 2,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 19,
+    "totalGoals": 2,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Willian",
+    "firstName": "Willian",
+    "lastName": "Borges da Silva",
+    "position": "Left/Right Winger",
+    "nationality": "Brazil",
+    "seasons": {
+      "2020/21": {
+        "appearances": 25,
+        "goals": 1,
+        "assists": 5
+      }
+    },
+    "totalAppearances": 25,
+    "totalGoals": 1,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Calum Chambers",
+    "firstName": "Calum",
+    "lastName": "Chambers",
+    "position": "Defender",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 14,
+        "goals": 1,
+        "assists": 1
+      },
+      "2020/21": {
+        "appearances": 10,
+        "goals": 0,
+        "assists": 2
+      },
+      "2021/22": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 26,
+    "totalGoals": 1,
+    "totalAssists": 3
+  },
+  {
+    "displayName": "Mesut Özil",
+    "firstName": "Mesut",
+    "lastName": "Özil",
+    "position": "Centre Attacking Midfielder",
+    "nationality": "Germany",
+    "seasons": {
+      "2019/20": {
+        "appearances": 18,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 18,
+    "totalGoals": 1,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Mohamed Elneny",
+    "firstName": "Mohamed Naser",
+    "lastName": "Elsayed Elneny",
+    "position": "Centre Defensive Midfielder",
+    "nationality": "Egypt",
+    "seasons": {
+      "2020/21": {
+        "appearances": 23,
+        "goals": 1,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 14,
+        "goals": 0,
+        "assists": 2
+      },
+      "2022/23": {
+        "appearances": 5,
+        "goals": 0,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 45,
+    "totalGoals": 1,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Piero Hincapié",
+    "firstName": "Piero",
+    "lastName": "Hincapié",
+    "position": "Central Defender",
+    "nationality": "Ecuador",
+    "seasons": {
+      "2025/26": {
+        "appearances": 24,
+        "goals": 1,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 24,
+    "totalGoals": 1,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Lucas Torreira",
+    "firstName": "Lucas",
+    "lastName": "Torreira",
+    "position": "Centre Defensive Midfielder",
+    "nationality": "Uruguay",
+    "seasons": {
+      "2019/20": {
+        "appearances": 29,
+        "goals": 1,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 29,
+    "totalGoals": 1,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Joe Willock",
+    "firstName": "Joe",
+    "lastName": "Willock",
+    "position": "Centre Attacking Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 29,
+        "goals": 1,
+        "assists": 1
+      },
+      "2020/21": {
+        "appearances": 7,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 36,
+    "totalGoals": 1,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Nuno Tavares",
+    "firstName": "Nuno Albertino",
+    "lastName": "Varela Tavares",
+    "position": "Left Full Back",
+    "nationality": "Portugal",
+    "seasons": {
+      "2021/22": {
+        "appearances": 22,
+        "goals": 1,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 22,
+    "totalGoals": 1,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Myles Lewis-Skelly",
+    "firstName": "Myles",
+    "lastName": "Lewis-Skelly",
+    "position": "Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2024/25": {
+        "appearances": 23,
+        "goals": 1,
+        "assists": 0
+      },
+      "2025/26": {
+        "appearances": 19,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 42,
+    "totalGoals": 1,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Max Dowman",
+    "firstName": "Max",
+    "lastName": "Dowman",
+    "position": "Attacking Midfielder",
+    "nationality": "England",
+    "seasons": {
+      "2025/26": {
+        "appearances": 5,
+        "goals": 1,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 5,
+    "totalGoals": 1,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Dani Ceballos",
+    "firstName": "Dani",
+    "lastName": "Ceballos",
+    "position": "Left/Centre/Right Attacking Midfielder",
+    "nationality": "Spain",
+    "seasons": {
+      "2019/20": {
+        "appearances": 24,
+        "goals": 0,
+        "assists": 2
+      },
+      "2020/21": {
+        "appearances": 25,
+        "goals": 0,
+        "assists": 3
+      }
+    },
+    "totalAppearances": 49,
+    "totalGoals": 0,
+    "totalAssists": 5
+  },
+  {
+    "displayName": "Jorginho",
+    "firstName": "Jorge Luiz",
+    "lastName": "Frello Filho",
+    "position": "Centre Central Midfielder",
+    "nationality": "Italy",
+    "seasons": {
+      "2022/23": {
+        "appearances": 14,
+        "goals": 0,
+        "assists": 1
+      },
+      "2023/24": {
+        "appearances": 24,
+        "goals": 0,
+        "assists": 2
+      },
+      "2024/25": {
+        "appearances": 15,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 53,
+    "totalGoals": 0,
+    "totalAssists": 3
+  },
+  {
+    "displayName": "Sead Kolasinac",
+    "firstName": "Sead",
+    "lastName": "Kolasinac",
+    "position": "Left Full Back",
+    "nationality": "Bosnia & Herzegovina",
+    "seasons": {
+      "2019/20": {
+        "appearances": 26,
+        "goals": 0,
+        "assists": 2
+      },
+      "2020/21": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 29,
+    "totalGoals": 0,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Ainsley Maitland-Niles",
+    "firstName": "Ainsley",
+    "lastName": "Maitland-Niles",
+    "position": "Centre/Right Wing Back",
+    "nationality": "England",
+    "seasons": {
+      "2019/20": {
+        "appearances": 20,
+        "goals": 0,
+        "assists": 2
+      },
+      "2020/21": {
+        "appearances": 11,
+        "goals": 0,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 8,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 39,
+    "totalGoals": 0,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Raheem Sterling",
+    "firstName": "Raheem",
+    "lastName": "Sterling",
+    "position": "Left/Centre/Right Second Striker",
+    "nationality": "England",
+    "seasons": {
+      "2024/25": {
+        "appearances": 17,
+        "goals": 0,
+        "assists": 2
+      }
+    },
+    "totalAppearances": 17,
+    "totalGoals": 0,
+    "totalAssists": 2
+  },
+  {
+    "displayName": "Mattéo Guendouzi",
+    "firstName": "Mattéo",
+    "lastName": "Guendouzi",
+    "position": "Central Midfielder",
+    "nationality": "France",
+    "seasons": {
+      "2019/20": {
+        "appearances": 24,
+        "goals": 0,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 24,
+    "totalGoals": 0,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Shkodran Mustafi",
+    "firstName": "Shkodran",
+    "lastName": "Mustafi",
+    "position": "Centre Central Defender",
+    "nationality": "Germany",
+    "seasons": {
+      "2019/20": {
+        "appearances": 15,
+        "goals": 0,
+        "assists": 1
+      },
+      "2020/21": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 18,
+    "totalGoals": 0,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Bernd Leno",
+    "firstName": "Bernd",
+    "lastName": "Leno",
+    "position": "Goalkeeper",
+    "nationality": "Germany",
+    "seasons": {
+      "2019/20": {
+        "appearances": 30,
+        "goals": 0,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 35,
+        "goals": 0,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 4,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 69,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Emiliano Martínez",
+    "firstName": "Emiliano",
+    "lastName": "Martínez",
+    "position": "Goalkeeper",
+    "nationality": "Argentina",
+    "seasons": {
+      "2019/20": {
+        "appearances": 9,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 9,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Henrikh Mkhitaryan",
+    "firstName": "Henrikh",
+    "lastName": "Mkhitaryan",
+    "position": "Left/Centre/Right Attacking Midfielder",
+    "nationality": "Armenia",
+    "seasons": {
+      "2019/20": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 3,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Nacho Monreal",
+    "firstName": "Ignacio",
+    "lastName": "Monreal Eraso",
+    "position": "Left Full Back",
+    "nationality": "Spain",
+    "seasons": {
+      "2019/20": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 3,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Pablo Marí",
+    "firstName": "Pablo",
+    "lastName": "Marí",
+    "position": "Central Defender",
+    "nationality": "Spain",
+    "seasons": {
+      "2019/20": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      },
+      "2020/21": {
+        "appearances": 10,
+        "goals": 0,
+        "assists": 0
+      },
+      "2021/22": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 14,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Mathew Ryan",
+    "firstName": "Mathew",
+    "lastName": "Ryan",
+    "position": "Goalkeeper",
+    "nationality": "Australia",
+    "seasons": {
+      "2020/21": {
+        "appearances": 3,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 3,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Rúnar Rúnarsson",
+    "firstName": "Rúnar",
+    "lastName": "Rúnarsson",
+    "position": "Goalkeeper",
+    "nationality": "Iceland",
+    "seasons": {
+      "2020/21": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 1,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Aaron Ramsdale",
+    "firstName": "Aaron",
+    "lastName": "Ramsdale",
+    "position": "Goalkeeper",
+    "nationality": "England",
+    "seasons": {
+      "2021/22": {
+        "appearances": 34,
+        "goals": 0,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 38,
+        "goals": 0,
+        "assists": 0
+      },
+      "2023/24": {
+        "appearances": 6,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 78,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Albert Sambi Lokonga",
+    "firstName": "Albert",
+    "lastName": "Sambi Lokonga",
+    "position": "Centre Central Midfielder",
+    "nationality": "Belgium",
+    "seasons": {
+      "2021/22": {
+        "appearances": 19,
+        "goals": 0,
+        "assists": 0
+      },
+      "2022/23": {
+        "appearances": 6,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 25,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Folarin Balogun",
+    "firstName": "Folarin",
+    "lastName": "Balogun",
+    "position": "Centre Striker",
+    "nationality": "United States",
+    "seasons": {
+      "2021/22": {
+        "appearances": 2,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 2,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Marquinhos",
+    "firstName": "Marcus Vinicius",
+    "lastName": "Oliveira Alencar",
+    "position": "Right Winger",
+    "nationality": "Brazil",
+    "seasons": {
+      "2022/23": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 1,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "David Raya",
+    "firstName": "David",
+    "lastName": "Raya",
+    "position": "Goalkeeper",
+    "nationality": "Spain",
+    "seasons": {
+      "2023/24": {
+        "appearances": 32,
+        "goals": 0,
+        "assists": 0
+      },
+      "2024/25": {
+        "appearances": 38,
+        "goals": 0,
+        "assists": 0
+      },
+      "2025/26": {
+        "appearances": 37,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 107,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Nathan Butler-Oyedeji",
+    "firstName": "Nathan",
+    "lastName": "Butler-Oyedeji",
+    "position": "Forward",
+    "nationality": "England",
+    "seasons": {
+      "2024/25": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 1,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Cristhian Mosquera",
+    "firstName": "Cristhian",
+    "lastName": "Mosquera",
+    "position": "Central Defender",
+    "nationality": "Spain",
+    "seasons": {
+      "2025/26": {
+        "appearances": 19,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 19,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Christian Nørgaard",
+    "firstName": "Christian",
+    "lastName": "Nørgaard",
+    "position": "Defensive Midfielder",
+    "nationality": "Denmark",
+    "seasons": {
+      "2025/26": {
+        "appearances": 6,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 6,
+    "totalGoals": 0,
+    "totalAssists": 0
+  }
+]
