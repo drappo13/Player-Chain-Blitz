@@ -164,7 +164,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "2025/26 — the numbers behind the title"  
 **Format:** 10 multiple-choice stats questions about the 2025-26 PL season specifically  
 **Points:** 10 per correct answer  
-**Status:** 🔴 Content needed — needs building. Numbers need verification before going live.
+**Status:** ✅ Built and live. Q7 and Q8 verified against official sources.
 
 | # | Question | Answer | Options | Reveal context |
 |---|----------|--------|---------|----------------|
@@ -174,12 +174,12 @@ These narratives make the round more resonant — each quote can be prefaced wit
 | 4 | Which two Arsenal players shared the most yellow cards (5 each)? | **Calafiori & Timber** | Calafiori & Timber / Zubimendi & Gabriel / Mosquera & Gabriel / Rice & Zubimendi | Calafiori and Timber — 5 yellows each. Some things never change. |
 | 5 | How many Arsenal players made more PL assists than Trossard? | **0** | 0, 1, 2, 3 | Trossard finished joint-top with Ødegaard on 6 assists. Zero players made more. Still underrated. |
 | 6 | What was Arsenal's longest unbeaten run in the league this season? | **11** | 7, 9, 11, 13 | 11 games unbeaten — the run that put the title beyond doubt. |
-| 7 | How many times did Arsenal score 5+ goals in a PL game this season? | **1** | 0, 1, 2, 3 | Once — 5-1 vs Man City at the Emirates, February 2025. They only needed to do it once. |
-| 8 | How many times did Arsenal concede more than 2 goals in a PL game? | **1** | 0, 1, 2, 3 | Just once all season. The defence was almost flawless. |
+| 7 | How many times did Arsenal score 5+ goals in a PL game this season? | **1** | 0, 1, 2, 3 | Once — 5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club. |
+| 8 | How many times did Arsenal concede more than 2 goals in a PL game? | **1** | 0, 1, 2, 3 | Just once all season — and the only time Arsenal conceded more than 2 in a league game since 2023. |
 | 9 | Which outfield player logged the most PL minutes for Arsenal? | **Declan Rice** *(3,094)* | Rice, Zubimendi, Gabriel, Saliba | Declan Rice: 3,094 minutes — 4 goals, 5 assists, and barely off the pitch all season. |
 | 10 | How many Arsenal players scored a PL penalty this season? | **2** | 1, 2, 3, 4 | Gyökeres and Saka. Two penalties, both scored, both mattered. |
 
-**⚠️ All numbers need verification from official sources before building**
+**⚠️ Remaining unverified: Q1 (clean sheets), Q2 (Spurs vs City goals), Q4 (yellows), Q5 (Trossard assists), Q6 (unbeaten run), Q9 (Rice minutes), Q10 (penalties). Q7 (5-0 Leeds) and Q8 (conceded 2+) confirmed.**
 
 ---
 
