@@ -91,20 +91,22 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 | 9 | *"It's going to come on full blast now, being bottle jobs, melting."* | Paul Merson | Feb 2026 | [Sky Sports](https://www.skysports.com/football/news/11670/13509316/paul-merson-slams-slow-and-lazy-arsenal-after-wolves-draw-and-expects-bottle-jobs-talk-to-ramp-up) | Merson, Keane, Neville, Souness |
 | 10 | *"It's only natural that they would man up a little bit and start challenging for titles, even though they haven't still reached that level."* [said 2 games before Arsenal clinched it] | Bernardo Silva | May 2026 | [ESPN](https://www.espn.com/soccer/story/_/id/48776772/bernardo-silva-only-natural-arsenal-man-challenge-titles) | Bernardo Silva, Rodri, Haaland, De Bruyne |
 
-### Confirmed final 10 quotes (in display order)
+### Confirmed final 10 quotes (in display order) ✅ LIVE
 
 | # | Person | Quote (display text) | When | Options |
 |---|--------|----------------------|------|---------|
-| 1 | Gary Neville | "That's in some ways as good as it gets [for Arsenal under Arteta]" | Apr 2022 | Neville / Carragher / Merson / Shearer |
-| 2 | Graeme Souness | "Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline." | Feb 2023 | Souness / Keane / Merson / Neville |
+| 1 | Gary Neville | "That's in some ways as good as it gets" | Apr 2022 | Neville / Merson / Tim Sherwood / Carragher |
+| 2 | Graeme Souness | "Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline." | Feb 2023 | Souness / Keane / Redknapp / Jermaine Jenas |
 | 3 | Rodri | "When they came here I thought: these guys do not want to beat us. They just want to draw." | May 2024 | Rodri / Bernardo Silva / De Bruyne / Haaland |
-| 4 | Roy Keane | "They were just booting it, like a small team with a small mentality." | Sep 2024 | Keane / Souness / Neville / Carragher |
-| 5 | Patrice Evra | "Watching Arsenal is like watching Netflix. You always have to wait for the next season!" | Oct 2024 | Evra / Neville / Scholes / Simon Jordan |
+| 4 | Roy Keane | "They were just booting it, like a small team with a small mentality." | Sep 2024 | Keane / Souness / Alan Shearer / Gabriel Agbonlahor |
+| 5 | Patrice Evra | "Watching Arsenal is like watching Netflix. You always have to wait for the next season!" | Oct 2024 | Evra / Gary Neville / Joe Hart / Jermaine Jenas |
 | 6 | Erling Haaland | "Stay humble, eh. Stay humble, eh." [said directly to Arteta pitchside] | Sep 2024 | Haaland / Rodri / De Bruyne / Bernardo Silva |
-| 7 | Pep Guardiola | "The day my friend Mikel Arteta wins the title, it will only be because of what he's spent, not because of his work." | Sep 2025 | Guardiola / Klopp / Mourinho / Ten Hag |
-| 8 | Paul Merson | "He's got to be in the top two by Christmas or they'll go for someone else." | May 2025 | Merson / Souness / Shearer / Carragher |
-| 9 | Paul Merson | "It's going to come on full blast now, being bottle jobs, melting." | Feb 2026 | Merson / Keane / Neville / Souness |
-| 10 | Peter Schmeichel | "We can't have all these games and the championship decided on corner kicks. We just can't." | Mar 2026 | Schmeichel / Souness / Neville / Keane |
+| 7 | John Obi Mikel | "They've cheated their way to winning the Premier League. I wouldn't recognise them as winners — for me, it's illegal the way they win games." | Mar 11 2026 (talkSPORT) | Mikel / Rooney / Schmeichel / Tim Sherwood |
+| 8 | Gabriel Agbonlahor | "He has to walk! Mikel Arteta should resign if Arsenal fails to win the league." | May 2025 (talkSPORT) | Agbonlahor / Alan Shearer / Merson / Jermaine Jenas |
+| 9 | Paul Merson | "It's going to come on full blast now, being bottle jobs, melting." | Feb 2026 | Merson / Keane / Wayne Rooney / Paul Scholes |
+| 10 | Peter Schmeichel | "We can't have all these games and the championship decided on corner kicks. We just can't." | Mar 2026 | Schmeichel / Wayne Rooney / Gary Neville / Souness |
+
+**Options shuffle on mount** — correct answer position is randomised each play.
 
 **After reveal, show for each:** Person, role/club, date/context. E.g. "Peter Schmeichel — Man Utd legend & pundit. Said after Arsenal 2-1 Chelsea (both goals from corners), March 2026. Irony: Schmeichel's own 1999 UCL win ended with two late corners."
 
@@ -291,13 +293,17 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 ---
 
 ### Round 9 — Build the XI
-**Subtitle:** "Arteta named his side for the title-clinching match at home to Burnley. Can you remember who started?"  
-**Format:** Show a 4-3-3 formation. Positions are blank. A pool of ~25 Arsenal players is shown below. Player drags or taps players into the correct positions. On mobile: tap a position, then tap a player from the pool.  
-**Points:** 10 per correctly placed player (position must match — e.g. Saka in RW, not LW)  
-**Status:** 🔴 Need confirmed starting XI from the title-clinching Burnley match
+**Subtitle:** "Arteta's very first Arsenal starting XI. Boxing Day, Bournemouth, 2019. Name all ten outfield starters."  
+**Format:** Pool of ~25 players (from 2019/20 squad). Player taps to assign across 3 screens: Defenders (4) → Midfield (3) → Attackers (3). GK (Leno) excluded. Players committed on a previous screen are dimmed.  
+**Points:** 10 per correctly placed player  
+**Status:** ✅ Built and live
 
-**TODO:** Confirm the exact starting XI and formation from Arsenal vs Burnley (title clincher, May 2026)  
-**Player pool:** The correct 11 + 14 plausible but wrong Arsenal players
+**Correct answer:**
+- Defenders: Maitland-Niles, Sokratis, David Luiz, Saka (LB — aged 18, the twist)
+- Midfield: Torreira, Xhaka, Özil
+- Attack: Nelson, Aubameyang, Lacazette
+
+**Pool:** Above 10 + Kolašinac, Pépé, Mustafi, Bellerín, Holding, Guendouzi, Ceballos, Mkhitaryan, Martinelli, Nketiah, Chambers, Tierney, Willock, Elneny (no recent signings like Gyökeres, Eze, Zubimendi, Madueke)
 
 ---
 
@@ -429,32 +435,43 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 
 ### What's built and live
 - ✅ Full shell: intro, between-rounds, results
-- ✅ **Round 1** — Trust the Process: 4-option score picker, home/away format (Man City 1-0 Arsenal etc), Arsenal highlighted red
-- ✅ **Round 2** — Who Doubted Us?: 10 quotes, 4-option MC, reveal context, clean `"..."` quote format
-- ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal
-- Rounds 3–9: placeholders
+- ✅ **Round 1** — Trust the Process: ▲▼ number pickers (same as Round 10), home/away format, Arsenal highlighted red. "Leicester" label fix applied.
+- ✅ **Round 2** — Who Doubted Us?: 10 quotes, 4-option MC, options shuffle on mount, reveal context. Q7 = John Obi Mikel (talkSPORT, 11 Mar 2026), Q8 = Gabriel Agbonlahor (talkSPORT, May 2025).
+- ✅ **Round 3** — Arteta Speaks: 10 Arteta press conference quotes, 4-option MC, options shuffle on mount. ⚠️ Quotes need user verification before going live.
+- ✅ **Round 4** — The Season That Won It: 10 MC stats questions. ⚠️ All numbers need user verification before going live.
+- ✅ **Round 5** — Corner Kings: 10 corner goal questions with photo slots. CornerPhotoSlot component shows placeholder until real images added. ⚠️ User to source photos → `public/arsenal-quiz/corners/`.
+- ✅ **Round 6** — Top Scorers: full player pool from arteta-arsenal-stats.json, select-10 mechanic, gold/red/faded reveal.
+- ✅ **Round 7** — Assist Masters: same mechanic as Round 6, assist data.
+- ✅ **Round 8** — Memory Lane: placeholder (needs photos).
+- ✅ **Round 9** — Build the XI: **Arteta's debut XI, Boxing Day 2019 vs Bournemouth** (changed from Burnley title-clincher). 3 screens: Defenders → Midfield → Attackers. Pool = 2019/20 squad, recent signings excluded.
+- ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal.
+
+### Round 9 — Arteta Debut XI (confirmed)
+**Match:** Bournemouth 1-1 Arsenal, Boxing Day 26 Dec 2019  
+**Formation:** 4-3-3 (GK Leno excluded from quiz)  
+- **Defenders (4):** Maitland-Niles, Sokratis, David Luiz, Saka (at LB, aged 18)  
+- **Midfield (3):** Torreira, Xhaka, Özil  
+- **Attack (3):** Nelson, Aubameyang, Lacazette  
+**Pool also includes:** Kolašinac, Pépé, Mustafi, Bellerín, Holding, Guendouzi, Ceballos, Mkhitaryan, Martinelli, Nketiah, Chambers, Tierney, Willock, Elneny
 
 ### Key implementation notes
 - All buttons are plain `<button>` (no shadcn) — avoids global green focus ring
 - Bebas Neue loaded via Google Fonts in index.html
 - Commit + push = live in ~1 min (GitHub Actions). No local npm builds (Kandji MDM blocks)
-- Round 1 uses `homeTeam/awayTeam/homeScore/awayScore` — correct answer is `"${homeScore}-${awayScore}"`
-- Round 9: agreed to **drop GK**, 10 outfield players across 3 screens (Defenders → Midfield → Attackers), tap-to-assign UX
+- Round 1 uses `homeTeam/awayTeam/homeScore/awayScore` — ▲▼ pickers, correct on submit
+- Rounds 2 + 3: `useState(() => quotes.map(q => ({...q, options: shuffle})))` for stable per-session shuffle
 
-### Confirmed Burnley XI for Round 9
-Formation 4-3-3: **Raya** (GK, not scored); **Saliba, Mosquera, Gabriel, Calafiori** (defenders); **Rice, Eze, Ødegaard** (midfield); **Saka, Trossard, Havertz** (attack)
-
-### Round build priority
+### Round build status
 1. ✅ Round 1 — Trust the Process
 2. ✅ Round 2 — Who Doubted Us?
-3. ✅ Round 10 — Guess the Score
-4. 🟡 Round 9 — Build the XI (data ready, needs building — see above)
-5. 🟡 Round 6 — Top Scorers (data in arteta-arsenal-stats.json, needs building)
-6. 🟡 Round 7 — Assist Masters (data ready, needs building)
-7. 🔴 Round 3 — Arteta Speaks (research needed — 20 quotes being sourced)
-8. 🔴 Round 4 — Season Stats (draft questions in doc, numbers need user verification)
-9. 🔴 Round 5 — Corner Kings (user to provide photos — list of moments in doc)
-10. 🔴 Round 8 — Memory Lane (user to provide photos)
+3. ✅ Round 3 — Arteta Speaks ⚠️ verify quotes
+4. ✅ Round 4 — The Season That Won It ⚠️ verify stats
+5. ✅ Round 5 — Corner Kings ⚠️ needs photos
+6. ✅ Round 6 — Top Scorers
+7. ✅ Round 7 — Assist Masters
+8. 🔴 Round 8 — Memory Lane (needs photos)
+9. ✅ Round 9 — Build the XI (Arteta debut)
+10. ✅ Round 10 — Guess the Score
 
 ### Corrections (important)
 - Sep 2024 Man City game was **2-2**, not 2-1 (Stones 98th min equaliser)
