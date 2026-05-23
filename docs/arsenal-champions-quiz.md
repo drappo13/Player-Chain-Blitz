@@ -301,7 +301,8 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 
 ---
 
-### Round 10 — The Transfer Window
+### Round 10 — The Transfer Window ⚠️ LIKELY TO BE REPLACED
+**Note:** User expects to swap this round for something else. Keep as placeholder for now.  
 **Subtitle:** "The squad wasn't built overnight. How much did Arsenal pay?"  
 **Format:** Show a player's name + the club they joined from. Player picks the transfer fee from 4 options.  
 **Points:** 10 per correct fee  
