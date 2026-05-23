@@ -100,8 +100,18 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 Scholes branded Arsenal "boring" and said if they won the league they "could be the worst team to win the league" — claiming none of their front four would make a team of the season. He later apologised publicly to Ian Wright on the Stick to Football podcast, saying he meant boring but *effective*. This apology is actually a great story arc. Source: Stick to Football podcast — **needs exact date + URL**.  
 Options: Scholes, Neville, Keane, Carragher
 
-**Peter Schmeichel — anti-Arsenal bias accusation**  
-Following a match against West Ham, fans accused Schmeichel (and Shay Given) of blatant anti-Arsenal bias on TV — specifically spending the analysis trying to discredit an Arsenal VAR decision due to his Man City ties. A Schmeichel quote dismissing Arsenal is needed here. **Research agent running.**
+**Peter Schmeichel — multiple verified quotes (Viaplay punditry)**  
+Four strong options — pick the best 1–2 for the quiz:
+
+| Quote | Context | Source |
+|-------|---------|--------|
+| *"Arsenal bring an ugly brand of football to our game. Arteta… let your team play football! Let them loose!"* | After Arsenal 0-1 Liverpool, 31 Aug 2025 | [Goal.com](https://www.goal.com/en-us/lists/arsenal-ugly-brand-of-football-slammed-peter-schmeichel-man-utd-legend-urges-mikel-arteta-let-players-loose/blt703d32b0cd138a7c) / [Sport Bible](https://www.sportbible.com/football/football-news/arsenal/arsenal-liverpool-peter-schmeichel-mikel-arteta-102468-20250831) |
+| *"Arteta is a control freak. He wants his players to play how he wants… that would confuse the hell out of me as a football player."* | After Liverpool 2-2 Arsenal, 12 May 2025 | [Goal.com](https://www.goal.com/en/lists/mikel-arteta-control-freak-man-utd-legend-peter-schmeichel-arsenal-boss-confusing-making-worse/blte962a9d896fc479c) / [GiveMeSport](https://www.givemesport.com/peter-schmeichel-bizarre-rant-mikel-arteta-liverpool-arsenal/) |
+| *"Arsenal would never be top of the league if that's a free-kick… I just don't understand why all of a sudden that's a free-kick."* | After Arsenal 1-0 West Ham (VAR controversy), 10 May 2026 | [ESPN](https://www.espn.com/soccer/story/_/id/48739301/peter-schmeichel-arsenal-free-kick-decision-wrong-levels-west-ham) / [Goal.com](https://www.goal.com/en/lists/arsenal-would-never-be-top-if-that-s-a-free-kick-furious-peter-schmeichel-blasts-officials-over-so-wrong-decision-disallow-west-ham-equaliser/bltadaf4464bebb7809) |
+| *"We can't have all these games and the championship decided on corner kicks. We just can't."* | After Arsenal 2-1 Chelsea (both goals from set pieces), 2 Mar 2026 — Arsenal fans noted Man Utd's 1999 UCL win was settled by two late corners | [GiveMeSport](https://www.givemesport.com/peter-schmeichel-slammed-arsenal-fans-laughable-comments-win-chelsea/) / [Sportskeeda](https://www.sportskeeda.com/football/news-we-championship-decided-corner-kicks-manchester-united-legend-reacts-arsenal-win-vs-chelsea) |
+
+**⭐ Recommended for quiz:** The corner kicks quote (Mar 2026) — perfect cross-reference with the Corner Kings round. The "ugly brand of football" (Aug 2025) is also very quotable.  
+Options for both: Schmeichel, Neville, Souness, Keane
 
 **Wayne Rooney — "Celebrate when you win"**  
 *"The celebrations are a little bit too much. Celebrate when you win."* — said after Arsenal reached the CL final. Arteta laughed it off. Source: [Goal.com](https://www.goal.com/en-us/lists/laughing-mikel-arteta-responds-wayne-rooney-arsenal-celebrations/bltfaed964bda17b129). Could replace a weaker entry.  
