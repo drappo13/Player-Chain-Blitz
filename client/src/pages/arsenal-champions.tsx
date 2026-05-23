@@ -1258,70 +1258,70 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "You don't really see that at 21 years old — a debut in the Premier League against this opponent, and resolve the situation with that composure, that calmness and that presence.",
     player: "William Saliba",
-    context: "August 2022 — after a young centre-back made his Arsenal debut",
+    context: "August 2022",
     options: ["William Saliba", "Gabriel Magalhães", "Ben White", "Jurrien Timber"],
     reveal: "Saliba had spent three seasons on loan in France before returning. Arteta was blown away on debut. He went on to become one of the best defenders in the world.",
   },
   {
     quote: "By a mile. By 100 miles. Everybody chose the same person — which is the most clear sign you can have of how they feel about who has to lead them.",
     player: "Martin Ødegaard",
-    context: "After Arsenal players voted unanimously on their preferred captain, August 2025",
+    context: "August 2025 — on one of his players' leadership",
     options: ["Martin Ødegaard", "Declan Rice", "William Saliba", "Bukayo Saka"],
     reveal: "The vote came after pundits questioned the captaincy following difficult results. The squad was unanimous. Ødegaard went on to lift the Premier League trophy.",
   },
   {
     quote: "I loved it. It's about taking initiative, making things happen and believing that you can actually win the game by yourself sometimes. I was really impressed.",
     player: "Declan Rice",
-    context: "April 2025 — after a player ignored set-piece coach Nicolas Jover's signals and scored two free-kicks vs Real Madrid in the Champions League",
+    context: "April 2025 — after a Champions League match",
     options: ["Declan Rice", "Bukayo Saka", "Martin Ødegaard", "Gabriel Martinelli"],
     reveal: "Rice stepped up despite Jover's signals — and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
   },
   {
     quote: "He destroyed all the metrics we had in the gym for the last ten years. Power, acceleration, muscle mass — the transformation has been incredible.",
     player: "Kai Havertz",
-    context: "November 2024 — before a player's return from injury, after completely overhauling his physique during rehab",
+    context: "November 2024 — on a player returning from injury",
     options: ["Kai Havertz", "Jurrien Timber", "Viktor Gyökeres", "Declan Rice"],
     reveal: "Havertz arrived with doubts about his physicality. He returned a different player and became Arsenal's title-winning number nine.",
   },
   {
     quote: "He is a leader. He loves to be on show and a big presence in everything we do. He is very vocal and extremely gifted technically.",
     player: "Jurrien Timber",
-    context: "July 2024 — on a player's return to fitness after missing his entire first season with an ACL injury",
+    context: "July 2024 — pre-season, on a player returning to fitness",
     options: ["Jurrien Timber", "Riccardo Calafiori", "Kai Havertz", "Ben White"],
     reveal: "Timber tore his ACL on the opening day of his debut season. A year of rehab later, he became a cornerstone of Arsenal's title-winning defence.",
   },
   {
     quote: "He really glues the team together and that's a quality that is not easy for a striker. He's got it.",
     player: "Alexandre Lacazette",
-    context: "2021 — on a player who was crucial to Arteta's pressing system despite not always being the leading scorer",
+    context: "2021 — on a striker's role in the team",
     options: ["Alexandre Lacazette", "Pierre-Emerick Aubameyang", "Gabriel Martinelli", "Martin Ødegaard"],
     reveal: "Lacazette was selfless in a way rare for a striker. He left as a free agent in 2022 but Arteta praised him for making the whole team function.",
   },
   {
     quote: "He's so physical, he opens spaces for everybody. The way he presses the ball, holds the ball — he's just phenomenal.",
     player: "Viktor Gyökeres",
-    context: "November 2025 — after a summer signing scored vs Atlético Madrid in the Champions League",
+    context: "November 2025 — after a Champions League match",
     options: ["Viktor Gyökeres", "Kai Havertz", "Alexandre Lacazette", "Gabriel Martinelli"],
     reveal: "Gyökeres signed from Sporting in the summer of 2025. He went on to become Arsenal's top PL scorer with 14 goals — the final piece of the puzzle.",
   },
   {
     quote: "What he actually transmits is such security, calmness and composure in every situation on the field. He brings something unique and very powerful for the team.",
     player: "Eberechi Eze",
-    context: "May 2026, on a player who chose Arsenal over Tottenham and repaid the faith immediately",
+    context: "May 2026 — on a player's impact during the title-winning season",
     options: ["Eberechi Eze", "Martin Ødegaard", "Kai Havertz", "Gabriel Martinelli"],
     reveal: "Eze chose Arsenal over Spurs in summer 2025. He scored a hat-trick against them in November. Arteta described his on-field calmness as uniquely powerful.",
   },
   {
     quote: "When we have to make that decision, it's because that's the right one to defend the interests of the club. It was really hurting — and it still is. It needs a little bit of time to heal.",
     player: "Pierre-Emerick Aubameyang",
-    context: "December 2021, after publicly stripping the captaincy from the club's leading scorer",
+    context: "December 2021 — after a difficult decision involving a senior player",
     options: ["Pierre-Emerick Aubameyang", "Alexandre Lacazette", "Granit Xhaka", "Nicolas Pépé"],
     reveal: "Aubameyang broke a pre-match curfew rule. Arteta dropped him from the squad and stripped the armband publicly. One of the defining cultural moments of the rebuild.",
   },
   {
     quote: "His reaction after scoring was to say thank you to all the sports scientists and physios who participated in his recovery. It tells you who he is as a person. It's impossible not to love him.",
     player: "Bukayo Saka",
-    context: "March 2025 — after a player scored on his return from a 101-day hamstring injury",
+    context: "March 2025 — after a player returned from a long injury",
     options: ["Bukayo Saka", "Gabriel Martinelli", "Jurrien Timber", "Kai Havertz"],
     reveal: "Saka missed nearly four months. His first thought on returning was to thank the backroom staff. Arteta consistently praises his character as much as his talent.",
   },
@@ -1393,7 +1393,7 @@ function Round3ArtetaSpeaks({ onComplete }: { onComplete: (score: number) => voi
 
       <div className="rounded-2xl p-5 mb-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}>
         <div className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>
-          Arteta said, about a [PLAYER REDACTED]:
+          Arteta said this about which player?
         </div>
         <p className="text-xl sm:text-2xl text-white leading-snug italic" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
           &ldquo;{q.quote}&rdquo;
