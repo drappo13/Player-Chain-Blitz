@@ -79,7 +79,7 @@ function PlaceholderRound({
   onComplete: (score: number) => void;
 }) {
   function handleComplete() {
-    const score = Math.floor(Math.random() * 41) + 60; // 60–100
+    const score = Math.floor(Math.random() * 5) + 6; // 6–10 out of 10
     onComplete(score);
   }
 
@@ -134,7 +134,7 @@ function RoundProgressBar({ current, total }: { current: number; total: number }
 // ─── Score stars (confetti-ish result display) ────────────────────────────────
 
 function ScoreRings({ total }: { total: number }) {
-  const pct = total / 1000;
+  const pct = total / 100;
   const color =
     pct >= 0.85
       ? "from-amber-400 to-yellow-300"
@@ -154,7 +154,7 @@ function ScoreRings({ total }: { total: number }) {
         <div className="w-full h-full rounded-full bg-[#0a0a0f] flex flex-col items-center justify-center">
           <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 mb-1" />
           <span className="text-3xl sm:text-4xl font-black text-white leading-none">{total}</span>
-          <span className="text-xs text-gray-400 mt-0.5">/ 1000</span>
+          <span className="text-xs text-gray-400 mt-0.5">/ 100</span>
         </div>
       </div>
     </motion.div>
@@ -187,6 +187,7 @@ export default function ArsenalChampions() {
   }
 
   function handleRoundComplete(score: number) {
+    // score is 0–10 (1 point per question, 10 questions per round)
     const newScores = [...roundScores, score];
     setRoundScores(newScores);
     const nextIndex = currentRound + 1;
@@ -205,7 +206,7 @@ export default function ArsenalChampions() {
   }
 
   function handleShare() {
-    const text = `I scored ${totalScore}/1000 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`;
+    const text = `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -236,7 +237,7 @@ export default function ArsenalChampions() {
               <RoundProgressBar current={roundScores.length} total={ROUNDS.length} />
             </div>
             <span className="text-xs font-bold text-amber-400 flex-shrink-0">
-              {totalScore} pts
+              {totalScore}/100
             </span>
           </div>
         </div>
@@ -434,9 +435,9 @@ export default function ArsenalChampions() {
                   Quiz Complete
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                  {totalScore >= 800
+                  {totalScore >= 80
                     ? "Gunner Through & Through! 🔴"
-                    : totalScore >= 600
+                    : totalScore >= 60
                     ? "Solid Gooner Knowledge 💪"
                     : "Room to Improve, Goonette"}
                 </h2>
@@ -467,17 +468,17 @@ export default function ArsenalChampions() {
                     </span>
                     <span
                       className={`text-xs font-bold flex-shrink-0 ${
-                        score >= 80 ? "text-amber-400" : "text-gray-400"
+                        score >= 8 ? "text-amber-400" : "text-gray-400"
                       }`}
                     >
-                      {score}/100
+                      {score}/10
                     </span>
                     <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden flex-shrink-0">
                       <div
                         className={`h-full rounded-full ${
-                          score >= 80 ? "bg-amber-400" : "bg-red-600"
+                          score >= 8 ? "bg-amber-400" : "bg-red-600"
                         }`}
-                        style={{ width: `${score}%` }}
+                        style={{ width: `${score * 10}%` }}
                       />
                     </div>
                   </div>
