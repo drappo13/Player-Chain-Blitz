@@ -79,7 +79,7 @@ const ROUNDS: RoundDef[] = [
     number: 9,
     name: "Build the XI",
     emoji: "🗺️",
-    description: "Construct Arteta's preferred title-winning starting XI. Can you name all eleven?",
+    description: "Arteta's very first Arsenal starting XI. Boxing Day, Bournemouth, 2019. Name all ten outfield starters.",
   },
   {
     number: 10,
@@ -295,14 +295,14 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
   {
     quote: "That's in some ways as good as it gets",
     context: "April 2022 — implying Arsenal would never win the title, only finish 4th",
-    options: ["Gary Neville", "Jamie Carragher", "Paul Merson", "Alan Shearer"],
+    options: ["Gary Neville", "Paul Merson", "Tim Sherwood", "Jamie Carragher"],
     correct: "Gary Neville",
     reveal: "Said on The Overlap, suggesting Arteta's ceiling was a top-four finish. Arteta did go on to win the league.",
   },
   {
     quote: "Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline.",
     context: "February 2023 — Arsenal's title challenge begins to wobble",
-    options: ["Graeme Souness", "Roy Keane", "Harry Redknapp", "Paul Scholes"],
+    options: ["Graeme Souness", "Roy Keane", "Harry Redknapp", "Jermaine Jenas"],
     correct: "Graeme Souness",
     reveal: "Said on Sky Sports as Arsenal surrendered a 7-point lead to Man City.",
   },
@@ -316,14 +316,14 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
   {
     quote: "They were just booting it, like a small team with a small mentality.",
     context: "September 2024 — after Arsenal conceded a 98th-minute equaliser having led 2-1 at the Etihad",
-    options: ["Roy Keane", "Graeme Souness", "Alan Shearer", "Micah Richards"],
+    options: ["Roy Keane", "Graeme Souness", "Alan Shearer", "Gabriel Agbonlahor"],
     correct: "Roy Keane",
     reveal: "Said on Sky Sports. Arsenal went on to win the league.",
   },
   {
     quote: "Watching Arsenal is like watching Netflix. You always have to wait for the next season!",
-    context: "October 2024 — after Arsenal's third consecutive near-miss",
-    options: ["Patrice Evra", "Gary Neville", "Paul Scholes", "Simon Jordan"],
+    context: "October 2024 — after another Arsenal near-miss",
+    options: ["Patrice Evra", "Gary Neville", "Joe Hart", "Jermaine Jenas"],
     correct: "Patrice Evra",
     reveal: "The line became one of the most-shared Arsenal memes of the era. Arsenal made it worth the wait.",
   },
@@ -335,18 +335,18 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
     reveal: 'Arteta said he found it "funny". Who\'s laughing now?',
   },
   {
-    quote: "The day my friend Mikel Arteta wins the title, it will only be because of what he's spent, not because of his work.",
-    context: "September 2025 — said at the start of the season Arsenal won the title",
-    options: ["Pep Guardiola", "Jürgen Klopp", "José Mourinho", "Erik ten Hag"],
-    correct: "Pep Guardiola",
-    reveal: "Arteta was Guardiola's assistant at Man City before taking the Arsenal job. Arsenal won it anyway.",
+    quote: "It's a form of cheating. They impede goalkeepers and hold players... I would not recognise Arsenal as Premier League champions if they continue to win in this manner.",
+    context: "March 2026 — after Arsenal scored two more corner-kick goals to beat Leicester",
+    options: ["John Obi Mikel", "Wayne Rooney", "Gabriel Agbonlahor", "Tim Sherwood"],
+    correct: "John Obi Mikel",
+    reveal: "The former Chelsea and Nigeria midfielder became the most vocal critic of Arsenal's corner routines. Arsenal were recognised as champions regardless.",
   },
   {
-    quote: "He's got to be in the top two by Christmas or they'll go for someone else.",
-    context: "May 2025 — calling for Arteta to be replaced",
-    options: ["Paul Merson", "Alan Shearer", "Jamie Carragher", "Harry Redknapp"],
-    correct: "Paul Merson",
-    reveal: "Arteta was still in the dugout when Arsenal lifted the trophy.",
+    quote: "He has to walk! Mikel Arteta should resign if Arsenal fails to win the league. Failing to win a trophy after being in contention necessitates his departure.",
+    context: "May 2025 — after Arsenal finished second again",
+    options: ["Alan Shearer", "Paul Merson", "Jermaine Jenas", "Tim Sherwood"],
+    correct: "Alan Shearer",
+    reveal: "Shearer demanded Arteta's head after a second consecutive near-miss. Arteta stayed, and Arsenal won the league the following season.",
   },
   {
     quote: "It's going to come on full blast now, being bottle jobs, melting.",
@@ -358,7 +358,7 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
   {
     quote: "We can't have all these games and the championship decided on corner kicks. We just can't.",
     context: "March 2026 — after Arsenal beat Chelsea 2-1 with both goals from corners",
-    options: ["Peter Schmeichel", "Rio Ferdinand", "Gary Neville", "Graeme Souness"],
+    options: ["Peter Schmeichel", "Wayne Rooney", "Gary Neville", "Graeme Souness"],
     correct: "Peter Schmeichel",
     reveal: "Schmeichel's own 1999 Champions League final win was decided by two late corner routines.",
   },
@@ -371,8 +371,11 @@ function Round2WhoDoubtedUs({ onComplete }: { onComplete: (score: number) => voi
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
+  const [shuffledQuotes] = useState(() =>
+    ROUND2_QUOTES.map(q => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) }))
+  );
 
-  const q = ROUND2_QUOTES[qIndex];
+  const q = shuffledQuotes[qIndex];
   const revealed = selected !== null;
   const isCorrect = selected === q.correct;
 
@@ -592,7 +595,7 @@ const ROUND1_GAMES: HorrorGame[] = [
     homeTeam: "Manchester United", awayTeam: "Arsenal", date: "1 Nov 2020",
     homeScore: 0, awayScore: 1, result: "W",
     options: ["0-1", "1-0", "1-1", "0-0"],
-    reveal: "Aubameyang converted a penalty — Arsenal's first win at Old Trafford in 14 years.",
+    reveal: "Aubameyang converted a penalty — Arsenal's first win at Old Trafford in 14 years. Even at their absolute lowest, Arsenal could still go to Old Trafford and win.",
   },
   {
     homeTeam: "Arsenal", awayTeam: "Aston Villa", date: "8 Nov 2020",
@@ -651,8 +654,16 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
   const isCorrect = submitted && homeInput === g.homeScore && awayInput === g.awayScore;
   const resultColor = g.result === "W" ? GOLD : g.result === "D" ? "#aaa" : RED;
   const resultLabel = g.result === "W" ? "WIN" : g.result === "D" ? "DRAW" : "LOSS";
-  const homeLabel = g.homeTeam.length > 10 ? g.homeTeam.split(" ").pop()! : g.homeTeam;
-  const awayLabel = g.awayTeam.length > 10 ? g.awayTeam.split(" ").pop()! : g.awayTeam;
+  const teamShort = (name: string) => {
+    const map: Record<string, string> = {
+      "Manchester City": "Man City", "Manchester United": "Man Utd",
+      "Leicester City": "Leicester", "Leeds United": "Leeds",
+      "Aston Villa": "Villa", "Tottenham": "Spurs",
+    };
+    return map[name] ?? (name.length > 10 ? name.split(" ")[0] : name);
+  };
+  const homeLabel = teamShort(g.homeTeam);
+  const awayLabel = teamShort(g.awayTeam);
 
   function handleSubmit() {
     if (submitted) return;
@@ -1232,21 +1243,659 @@ function Round10GuessTheScore({ onComplete }: { onComplete: (score: number) => v
   );
 }
 
+// ─── Round 3 data ────────────────────────────────────────────────────────────
+// ⚠️ Verify all quotes + sources before going live — see docs/arsenal-champions-quiz.md
+
+interface ArtetaQuote {
+  quote: string;
+  player: string;
+  context: string;
+  options: string[];
+  reveal: string;
+}
+
+const ROUND3_QUOTES: ArtetaQuote[] = [
+  {
+    quote: "You don't really see that at 21 years old — a debut in the Premier League against this opponent, and resolve the situation with that composure, that calmness and that presence.",
+    player: "William Saliba",
+    context: "After Saliba's Arsenal debut vs Crystal Palace, August 2022",
+    options: ["William Saliba", "Gabriel Magalhães", "Ben White", "Jurrien Timber"],
+    reveal: "Saliba had spent three seasons on loan in France before returning. Arteta was blown away on debut. He went on to become one of the best defenders in the world.",
+  },
+  {
+    quote: "By a mile. By 100 miles. Everybody chose the same person — which is the most clear sign you can have of how they feel about who has to lead them.",
+    player: "Martin Ødegaard",
+    context: "After Arsenal players voted unanimously on their preferred captain, August 2025",
+    options: ["Martin Ødegaard", "Declan Rice", "William Saliba", "Bukayo Saka"],
+    reveal: "The vote came after pundits questioned the captaincy following difficult results. The squad was unanimous. Ødegaard went on to lift the Premier League trophy.",
+  },
+  {
+    quote: "I loved it. It's about taking initiative, making things happen and believing that you can actually win the game by yourself sometimes. I was really impressed.",
+    player: "Declan Rice",
+    context: "After Rice ignored set-piece coach Nicolas Jover and scored two free-kicks vs Real Madrid in the Champions League, April 2025",
+    options: ["Declan Rice", "Bukayo Saka", "Martin Ødegaard", "Gabriel Martinelli"],
+    reveal: "Rice stepped up despite Jover's signals — and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
+  },
+  {
+    quote: "He destroyed all the metrics we had in the gym for the last ten years. Power, acceleration, muscle mass — the transformation has been incredible.",
+    player: "Kai Havertz",
+    context: "November 2024 — before Havertz's return from injury, after he overhauled his physique during rehab",
+    options: ["Kai Havertz", "Jurrien Timber", "Viktor Gyökeres", "Declan Rice"],
+    reveal: "Havertz arrived with doubts about his physicality. He returned a different player and became Arsenal's title-winning number nine.",
+  },
+  {
+    quote: "He is a leader. He loves to be on show and a big presence in everything we do. He is very vocal and extremely gifted technically.",
+    player: "Jurrien Timber",
+    context: "July 2024, on Timber's return to fitness after missing his entire first season with an ACL injury",
+    options: ["Jurrien Timber", "Riccardo Calafiori", "Kai Havertz", "Ben White"],
+    reveal: "Timber tore his ACL on the opening day of his debut season. A year of rehab later, he became a cornerstone of Arsenal's title-winning defence.",
+  },
+  {
+    quote: "He really glues the team together and that's a quality that is not easy for a striker. He's got it.",
+    player: "Alexandre Lacazette",
+    context: "2021 — on a player who was crucial to Arteta's pressing system despite not always being the leading scorer",
+    options: ["Alexandre Lacazette", "Pierre-Emerick Aubameyang", "Gabriel Martinelli", "Martin Ødegaard"],
+    reveal: "Lacazette was selfless in a way rare for a striker. He left as a free agent in 2022 but Arteta praised him for making the whole team function.",
+  },
+  {
+    quote: "He's so physical, he opens spaces for everybody. The way he presses the ball, holds the ball — he's just phenomenal.",
+    player: "Viktor Gyökeres",
+    context: "November 2025, after Gyökeres scored vs Atlético Madrid in the Champions League",
+    options: ["Viktor Gyökeres", "Kai Havertz", "Alexandre Lacazette", "Gabriel Martinelli"],
+    reveal: "Gyökeres signed from Sporting in the summer of 2025. He went on to become Arsenal's top PL scorer with 14 goals — the final piece of the puzzle.",
+  },
+  {
+    quote: "What he actually transmits is such security, calmness and composure in every situation on the field. He brings something unique and very powerful for the team.",
+    player: "Eberechi Eze",
+    context: "May 2026, on a player who chose Arsenal over Tottenham and repaid the faith immediately",
+    options: ["Eberechi Eze", "Martin Ødegaard", "Kai Havertz", "Gabriel Martinelli"],
+    reveal: "Eze chose Arsenal over Spurs in summer 2025. He scored a hat-trick against them in November. Arteta described his on-field calmness as uniquely powerful.",
+  },
+  {
+    quote: "When we have to make that decision, it's because that's the right one to defend the interests of the club. It was really hurting — and it still is. It needs a little bit of time to heal.",
+    player: "Pierre-Emerick Aubameyang",
+    context: "December 2021, after publicly stripping the captaincy from the club's leading scorer",
+    options: ["Pierre-Emerick Aubameyang", "Alexandre Lacazette", "Granit Xhaka", "Nicolas Pépé"],
+    reveal: "Aubameyang broke a pre-match curfew rule. Arteta dropped him from the squad and stripped the armband publicly. One of the defining cultural moments of the rebuild.",
+  },
+  {
+    quote: "His reaction after scoring was to say thank you to all the sports scientists and physios who participated in his recovery. It tells you who he is as a person. It's impossible not to love him.",
+    player: "Bukayo Saka",
+    context: "March 2025, after Saka scored on his return from a 101-day hamstring injury",
+    options: ["Bukayo Saka", "Gabriel Martinelli", "Jurrien Timber", "Kai Havertz"],
+    reveal: "Saka missed nearly four months. His first thought on returning was to thank the backroom staff. Arteta consistently praises his character as much as his talent.",
+  },
+];
+
+// ─── Round 3: Arteta Speaks ───────────────────────────────────────────────────
+
+function Round3ArtetaSpeaks({ onComplete }: { onComplete: (score: number) => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<boolean[]>([]);
+  const [shuffledQuotes] = useState(() =>
+    ROUND3_QUOTES.map(q => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) }))
+  );
+
+  const q = shuffledQuotes[qIndex];
+  const revealed = selected !== null;
+  const isCorrect = selected === q.player;
+
+  function handleSelect(opt: string) {
+    if (revealed) return;
+    setSelected(opt);
+  }
+
+  function handleNext() {
+    const newAnswers = [...answers, selected === q.player];
+    if (qIndex + 1 >= ROUND3_QUOTES.length) {
+      onComplete(newAnswers.filter(Boolean).length);
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(i => i + 1);
+      setSelected(null);
+    }
+  }
+
+  return (
+    <motion.div
+      key={qIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Arteta Speaks</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>He talks about his players every week. But who?</div>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 10</span>
+        </div>
+      </div>
+
+      <div className="flex gap-1 mb-6">
+        {ROUND3_QUOTES.map((_, i) => (
+          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300" style={{
+            background: i < answers.length ? (answers[i] ? GOLD : RED) : i === qIndex ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.08)",
+          }} />
+        ))}
+      </div>
+
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-5" style={{
+        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)",
+      }}>
+        🎙️ {q.context}
+      </div>
+
+      <div className="rounded-2xl p-5 mb-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}>
+        <div className="text-[10px] font-bold tracking-widest uppercase mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>
+          Arteta said, about a [PLAYER REDACTED]:
+        </div>
+        <p className="text-xl sm:text-2xl text-white leading-snug italic" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+          &ldquo;{q.quote}&rdquo;
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        {q.options.map(opt => {
+          const isSelected = selected === opt;
+          const isCorrectOpt = opt === q.player;
+          let btnStyle: React.CSSProperties = { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white" };
+          if (revealed) {
+            if (isCorrectOpt) btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+            else if (isSelected) btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
+            else btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.25)" };
+          }
+          return (
+            <button key={opt} onClick={() => handleSelect(opt)} disabled={revealed}
+              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-sm font-semibold text-center leading-tight transition-all duration-200 active:scale-95 disabled:cursor-default"
+              style={btnStyle}>
+              {opt}
+              {revealed && isCorrectOpt && <span className="ml-1 opacity-80">✓</span>}
+              {revealed && isSelected && !isCorrectOpt && <span className="ml-1 opacity-80">✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {revealed && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="rounded-xl p-4 mb-4" style={{
+              background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+              border: isCorrect ? `1px solid rgba(200,150,12,0.35)` : "1px solid rgba(255,255,255,0.1)",
+            }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
+                <span className="font-bold text-sm" style={{ color: isCorrect ? GOLD_LIGHT : "white" }}>
+                  {isCorrect ? "Correct!" : `It was ${q.player}`}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{q.reveal}</p>
+            </div>
+            <GoldButton onClick={handleNext} className="w-full py-3.5 flex items-center justify-center gap-2">
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {qIndex + 1 >= ROUND3_QUOTES.length ? "FINISH ROUND" : "NEXT QUESTION"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Round 4 data ────────────────────────────────────────────────────────────
+// ⚠️ Verify all stats before going live — see docs/arsenal-champions-quiz.md
+
+interface SeasonStatQ {
+  question: string;
+  options: string[];
+  correct: string;
+  reveal: string;
+}
+
+const ROUND4_QUESTIONS: SeasonStatQ[] = [
+  {
+    question: "How many Premier League clean sheets did Arsenal keep in their title-winning 2025/26 season?",
+    options: ["14", "17", "19", "22"],
+    correct: "19",
+    reveal: "19 clean sheets — more than any other team. David Raya was imperious, conceding just 24 goals all season.",
+  },
+  {
+    question: "How many points did Arsenal finish on in 2025/26?",
+    options: ["78", "82", "85", "89"],
+    correct: "82",
+    reveal: "82 points — enough to end the 22-year wait. Arsenal finished with the joint-second highest points total in the Premier League era.",
+  },
+  {
+    question: "David Raya won the Golden Glove in 2025/26. Which consecutive season was that?",
+    options: ["1st", "2nd", "3rd", "4th"],
+    correct: "3rd",
+    reveal: "Raya won the Golden Glove for the third consecutive season — an unprecedented run under Arteta's goalkeeper-dominant system.",
+  },
+  {
+    question: "How many Premier League goals did Arsenal concede in 2025/26 — fewer than the Invincibles?",
+    options: ["21", "24", "28", "31"],
+    correct: "24",
+    reveal: "Arsenal conceded just 24 goals — matching the 2003/04 Invincibles' defensive record. The Jover set-piece system contributed on both ends.",
+  },
+  {
+    question: "Who was Arsenal's top Premier League scorer in 2025/26?",
+    options: ["Bukayo Saka", "Viktor Gyökeres", "Kai Havertz", "Eberechi Eze"],
+    correct: "Viktor Gyökeres",
+    reveal: "Gyökeres scored 14 Premier League goals in his debut season — signed from Sporting in the summer of 2025, he was the final piece of the puzzle.",
+  },
+  {
+    question: "Arsenal were confirmed Premier League champions when which result came in elsewhere?",
+    options: ["Man City lost at Brighton", "Man City drew at Bournemouth", "Liverpool drew at Chelsea", "Tottenham lost at Brentford"],
+    correct: "Man City drew at Bournemouth",
+    reveal: "The night after Arsenal beat Burnley 1-0, Man City drew 1-1 at Bournemouth. The title was confirmed. 22 years.",
+  },
+  {
+    question: "How many Premier League games were still to play when Arsenal were confirmed champions?",
+    options: ["0", "1", "2", "3"],
+    correct: "1",
+    reveal: "Arsenal were confirmed with one game to spare — after their win vs Burnley and City's dropped points the following night.",
+  },
+  {
+    question: "Who was Arsenal's captain for the 2025/26 title-winning season?",
+    options: ["Martin Ødegaard", "Declan Rice", "William Saliba", "Bukayo Saka"],
+    correct: "Martin Ødegaard",
+    reveal: "Ødegaard had been captain since 2022, when Arteta said the player vote was unanimous — 'by 100 miles.' He lifted the Premier League trophy in May 2026.",
+  },
+  {
+    question: "Which Champions League holders did Arsenal defeat in the quarter-finals on their way to the final?",
+    options: ["Real Madrid", "PSG", "Bayern Munich", "Inter Milan"],
+    correct: "Real Madrid",
+    reveal: "Arsenal beat Real Madrid over two legs — with Declan Rice scoring two famous free-kicks in the second leg despite set-piece coach Jover's instructions.",
+  },
+  {
+    question: "How many corner goals did Arsenal score in 2025/26 — a new all-time Premier League record?",
+    options: ["14", "15", "16", "17"],
+    correct: "17",
+    reveal: "Arsenal's 17 corner goals in 2025/26 broke the all-time PL record. Nicolas Jover's set-piece system had delivered 50+ corner goals since 2022/23.",
+  },
+];
+
+// ─── Round 4: The Season That Won It ─────────────────────────────────────────
+
+function Round4SeasonStats({ onComplete }: { onComplete: (score: number) => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<boolean[]>([]);
+
+  const q = ROUND4_QUESTIONS[qIndex];
+  const revealed = selected !== null;
+  const isCorrect = selected === q.correct;
+
+  function handleSelect(opt: string) {
+    if (revealed) return;
+    setSelected(opt);
+  }
+
+  function handleNext() {
+    const newAnswers = [...answers, selected === q.correct];
+    if (qIndex + 1 >= ROUND4_QUESTIONS.length) {
+      onComplete(newAnswers.filter(Boolean).length);
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(i => i + 1);
+      setSelected(null);
+    }
+  }
+
+  return (
+    <motion.div
+      key={qIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>The Season That Won It</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>2025/26 — the numbers behind the title</div>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 10</span>
+        </div>
+      </div>
+
+      <div className="flex gap-1 mb-6">
+        {ROUND4_QUESTIONS.map((_, i) => (
+          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300" style={{
+            background: i < answers.length ? (answers[i] ? GOLD : RED) : i === qIndex ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.08)",
+          }} />
+        ))}
+      </div>
+
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-5" style={{
+        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)",
+      }}>
+        📊 2025/26 Premier League season
+      </div>
+
+      <div className="rounded-2xl p-5 mb-6" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}>
+        <p className="text-xl sm:text-2xl font-bold text-white leading-snug" style={{ fontFamily: BEBAS, letterSpacing: "0.03em" }}>
+          {q.question}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        {q.options.map(opt => {
+          const isSelected = selected === opt;
+          const isCorrectOpt = opt === q.correct;
+          let btnStyle: React.CSSProperties = { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white" };
+          if (revealed) {
+            if (isCorrectOpt) btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+            else if (isSelected) btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
+            else btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.25)" };
+          }
+          return (
+            <button key={opt} onClick={() => handleSelect(opt)} disabled={revealed}
+              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-sm font-semibold text-center leading-tight transition-all duration-200 active:scale-95 disabled:cursor-default"
+              style={btnStyle}>
+              {opt}
+              {revealed && isCorrectOpt && <span className="ml-1 opacity-80">✓</span>}
+              {revealed && isSelected && !isCorrectOpt && <span className="ml-1 opacity-80">✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {revealed && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="rounded-xl p-4 mb-4" style={{
+              background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+              border: isCorrect ? `1px solid rgba(200,150,12,0.35)` : "1px solid rgba(255,255,255,0.1)",
+            }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
+                <span className="font-bold text-sm" style={{ color: isCorrect ? GOLD_LIGHT : "white" }}>
+                  {isCorrect ? "Correct!" : `It was ${q.correct}`}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{q.reveal}</p>
+            </div>
+            <GoldButton onClick={handleNext} className="w-full py-3.5 flex items-center justify-center gap-2">
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {qIndex + 1 >= ROUND4_QUESTIONS.length ? "FINISH ROUND" : "NEXT QUESTION"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Round 5 data ────────────────────────────────────────────────────────────
+// ⚠️ Photos needed — add to public/arsenal-quiz/corners/ before going live
+// ⚠️ See docs/arsenal-champions-quiz.md for photo sourcing guide (Getty/PA Images)
+
+interface CornerGoal {
+  scorer: string;
+  opponent: string;
+  date: string;
+  imagePath: string; // relative to /public, e.g. "arsenal-quiz/corners/01-gabriel-chelsea.jpg"
+  imageHint: string; // shown as placeholder text while photo is missing
+  options: string[];
+  reveal: string;
+}
+
+const ROUND5_CORNERS: CornerGoal[] = [
+  {
+    scorer: "Gabriel Magalhães",
+    opponent: "Chelsea (away)", date: "6 Nov 2022",
+    imagePath: "arsenal-quiz/corners/01-gabriel-chelsea-2022.jpg",
+    imageHint: "Gabriel pokes home — Stamford Bridge, Nov 2022",
+    options: ["Gabriel Magalhães", "William Saliba", "Ben White", "Granit Xhaka"],
+    reveal: "Saka's inswinging corner, Gabriel poked home through a crowd. Arsenal won 1-0 — one of the defining moments of the 2022/23 title race.",
+  },
+  {
+    scorer: "Leandro Trossard",
+    opponent: "Everton", date: "17 Sep 2023",
+    imagePath: "arsenal-quiz/corners/02-trossard-everton-2023.jpg",
+    imageHint: "Short corner switch — Saka to Trossard, Goodison Park, Sep 2023",
+    options: ["Leandro Trossard", "Bukayo Saka", "Gabriel Martinelli", "Gabriel Magalhães"],
+    reveal: "The most viral Arsenal corner moment — Saka played short, Trossard cut inside and hit the post-net junction first time. A Jover masterclass.",
+  },
+  {
+    scorer: "Oleksandr Zinchenko",
+    opponent: "Burnley", date: "11 Nov 2023",
+    imagePath: "arsenal-quiz/corners/03-zinchenko-burnley-2023.jpg",
+    imageHint: "Zinchenko scissor volley — Emirates, Nov 2023",
+    options: ["Oleksandr Zinchenko", "Thomas Partey", "Granit Xhaka", "Declan Rice"],
+    reveal: "Zinchenko's acrobatic scissor volley after a corner rebounded off the bar. Won Arsenal Goal of the Month. The left-back scoring like a forward.",
+  },
+  {
+    scorer: "Kai Havertz",
+    opponent: "Tottenham", date: "28 Apr 2024",
+    imagePath: "arsenal-quiz/corners/04-havertz-tottenham-2024.jpg",
+    imageHint: "Havertz heads home from Rice corner — NLD, April 2024",
+    options: ["Kai Havertz", "Gabriel Magalhães", "William Saliba", "Declan Rice"],
+    reveal: "Rice's delivery, Havertz headed home. Part of Arsenal's 3-2 comeback NLD win — Arteta's 100th Premier League victory as manager.",
+  },
+  {
+    scorer: "Gabriel Magalhães",
+    opponent: "Manchester City (away)", date: "22 Sep 2024",
+    imagePath: "arsenal-quiz/corners/05-gabriel-city-away-2024.jpg",
+    imageHint: "Gabriel header at the Etihad with 10 men — Sep 2024",
+    options: ["Gabriel Magalhães", "William Saliba", "Jurrien Timber", "Riccardo Calafiori"],
+    reveal: "Arsenal were down to 10 men when Gabriel headed home. Set-piece coach Nicolas Jover's ecstatic celebration on the touchline was widely shared. Arsenal still drew 2-2 after a 98th-minute Stones equaliser.",
+  },
+  {
+    scorer: "Gabriel Magalhães",
+    opponent: "Tottenham", date: "15 Sep 2024",
+    imagePath: "arsenal-quiz/corners/06-gabriel-tottenham-2024.jpg",
+    imageHint: "Gabriel's 64th-minute winner — NLD, September 2024",
+    options: ["Gabriel Magalhães", "Kai Havertz", "William Saliba", "Jurrien Timber"],
+    reveal: "The only goal of the game. Gabriel's near-post header from a corner — Arsenal won 1-0. Consecutive North London Derby wins.",
+  },
+  {
+    scorer: "Jurrien Timber",
+    opponent: "Manchester United", date: "4 Dec 2024",
+    imagePath: "arsenal-quiz/corners/07-timber-man-utd-2024.jpg",
+    imageHint: "Timber near-post flick from Rice corner — Dec 2024",
+    options: ["Jurrien Timber", "Gabriel Magalhães", "William Saliba", "Riccardo Calafiori"],
+    reveal: "Rice's corner, Timber flicked home at the near post. Arsenal won 2-0 — one of their most complete performances of the season.",
+  },
+  {
+    scorer: "Gabriel Magalhães",
+    opponent: "Newcastle", date: "28 Sep 2025",
+    imagePath: "arsenal-quiz/corners/08-gabriel-newcastle-2025.jpg",
+    imageHint: "Gabriel 96th-minute winner — Emirates comeback, Sep 2025",
+    options: ["Gabriel Magalhães", "William Saliba", "Martin Ødegaard", "Jurrien Timber"],
+    reveal: "Arsenal were 1-0 down. Gabriel headed home in the 96th minute to win it 2-1. The Emirates erupted. Three points that proved crucial in the title race.",
+  },
+  {
+    scorer: "William Saliba",
+    opponent: "Chelsea", date: "1 Mar 2026",
+    imagePath: "arsenal-quiz/corners/09-saliba-chelsea-2026.jpg",
+    imageHint: "Saliba corner goal as Arsenal break the PL record — Mar 2026",
+    options: ["William Saliba", "Gabriel Magalhães", "Jurrien Timber", "Riccardo Calafiori"],
+    reveal: "Saliba scored from a corner as Arsenal equalled the all-time PL record. Peter Schmeichel complained about 'the championship being decided on corner kicks.' His own 1999 UCL win ended with two late corners.",
+  },
+  {
+    scorer: "Eberechi Eze",
+    opponent: "Newcastle", date: "Apr 2026",
+    imagePath: "arsenal-quiz/corners/10-eze-newcastle-2026.jpg",
+    imageHint: "Eze short corner routine — record-breaking 17th corner goal, Apr 2026",
+    options: ["Eberechi Eze", "Bukayo Saka", "Kai Havertz", "Gabriel Magalhães"],
+    reveal: "Arsenal's 17th corner goal of the season — a new all-time Premier League record. Eze finished from a short corner routine, breaking the record Arteta's side had set two seasons earlier.",
+  },
+];
+
+// ─── Photo slot (shows placeholder until image is present) ───────────────────
+
+function CornerPhotoSlot({ src, hint }: { src: string; hint: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        className="rounded-2xl flex flex-col items-center justify-center mb-5"
+        style={{ height: 180, background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.15)" }}
+      >
+        <div className="text-3xl mb-2">📸</div>
+        <div className="text-xs text-center px-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.35)" }}>{hint}</div>
+        <div className="text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.15)" }}>public/arsenal-quiz/corners/</div>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={`/${src}`}
+      alt={hint}
+      onError={() => setFailed(true)}
+      className="w-full rounded-2xl object-cover object-top mb-5"
+      style={{ height: 220 }}
+    />
+  );
+}
+
+// ─── Round 5: Corner Kings ────────────────────────────────────────────────────
+
+function Round5CornerKings({ onComplete }: { onComplete: (score: number) => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<boolean[]>([]);
+
+  const g = ROUND5_CORNERS[qIndex];
+  const revealed = selected !== null;
+  const isCorrect = selected === g.scorer;
+
+  function handleSelect(opt: string) {
+    if (revealed) return;
+    setSelected(opt);
+  }
+
+  function handleNext() {
+    const newAnswers = [...answers, selected === g.scorer];
+    if (qIndex + 1 >= ROUND5_CORNERS.length) {
+      onComplete(newAnswers.filter(Boolean).length);
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(i => i + 1);
+      setSelected(null);
+    }
+  }
+
+  return (
+    <motion.div
+      key={qIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Corner Kings</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal broke PL records scoring from corners</div>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 10</span>
+        </div>
+      </div>
+
+      <div className="flex gap-1 mb-6">
+        {ROUND5_CORNERS.map((_, i) => (
+          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300" style={{
+            background: i < answers.length ? (answers[i] ? GOLD : RED) : i === qIndex ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.08)",
+          }} />
+        ))}
+      </div>
+
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-4" style={{
+        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)",
+      }}>
+        🚩 {g.opponent} · {g.date}
+      </div>
+
+      <CornerPhotoSlot src={g.imagePath} hint={g.imageHint} />
+
+      <div className="text-sm font-semibold text-white mb-4">Who scored from the corner?</div>
+
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        {g.options.map(opt => {
+          const isSelected = selected === opt;
+          const isCorrectOpt = opt === g.scorer;
+          let btnStyle: React.CSSProperties = { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white" };
+          if (revealed) {
+            if (isCorrectOpt) btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+            else if (isSelected) btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
+            else btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.25)" };
+          }
+          return (
+            <button key={opt} onClick={() => handleSelect(opt)} disabled={revealed}
+              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-sm font-semibold text-center leading-tight transition-all duration-200 active:scale-95 disabled:cursor-default"
+              style={btnStyle}>
+              {opt}
+              {revealed && isCorrectOpt && <span className="ml-1 opacity-80">✓</span>}
+              {revealed && isSelected && !isCorrectOpt && <span className="ml-1 opacity-80">✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {revealed && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <div className="rounded-xl p-4 mb-4" style={{
+              background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+              border: isCorrect ? `1px solid rgba(200,150,12,0.35)` : "1px solid rgba(255,255,255,0.1)",
+            }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
+                <span className="font-bold text-sm" style={{ color: isCorrect ? GOLD_LIGHT : "white" }}>
+                  {isCorrect ? "Correct!" : `It was ${g.scorer}`}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{g.reveal}</p>
+            </div>
+            <GoldButton onClick={handleNext} className="w-full py-3.5 flex items-center justify-center gap-2">
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {qIndex + 1 >= ROUND5_CORNERS.length ? "FINISH ROUND" : "NEXT QUESTION"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ─── Round 9 data ────────────────────────────────────────────────────────────
 
 const ROUND9_CORRECT = {
-  defenders: ["Saliba", "Mosquera", "Gabriel", "Calafiori"],
-  midfield: ["Rice", "Eze", "Ødegaard"],
-  attackers: ["Saka", "Trossard", "Havertz"],
+  defenders: ["Maitland-Niles", "Sokratis", "David Luiz", "Saka"],
+  midfield: ["Torreira", "Xhaka", "Özil"],
+  attackers: ["Nelson", "Aubameyang", "Lacazette"],
 };
 
 const ROUND9_POOL_BASE = [
-  "Saliba", "Mosquera", "Gabriel", "Calafiori",
-  "Rice", "Eze", "Ødegaard",
-  "Saka", "Trossard", "Havertz",
-  "Timber", "White", "Lewis-Skelly", "Hincapié", "Zinchenko",
-  "Partey", "Zubimendi", "Merino", "Jorginho",
-  "Martinelli", "Gyökeres", "Madueke", "Nwaneri", "Gabriel Jesus",
+  // correct 10
+  "Maitland-Niles", "Sokratis", "David Luiz", "Saka",
+  "Torreira", "Xhaka", "Özil",
+  "Nelson", "Aubameyang", "Lacazette",
+  // 14 plausible decoys from the 2019/20 squad
+  "Kolašinac", "Pépé", "Mustafi", "Bellerín", "Holding",
+  "Guendouzi", "Ceballos", "Mkhitaryan",
+  "Martinelli", "Nketiah", "Chambers", "Tierney", "Willock", "Elneny",
 ];
 
 type R9Category = "defenders" | "midfield" | "attackers";
@@ -1385,7 +2034,7 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
       <div className="flex items-center justify-between mb-5">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Build the XI</div>
-          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal vs Burnley · 18 May 2026</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arteta's debut · Bournemouth · 26 Dec 2019</div>
         </div>
         <div className="text-right">
           <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>
