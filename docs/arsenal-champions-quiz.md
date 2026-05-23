@@ -427,33 +427,39 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 
 ## Session State (as of May 23 2026)
 
-### What's built and live at drapk.in/arsenal-pl-champions-2026
-- Full quiz shell: intro screen, between-rounds, placeholder rounds (all 10), results screen
-- Intro: vivid Arsenal red (#DB0007) full-screen, Bebas Neue font, metallic gold CHAMPIONS, crown + trophy, gold sparkles
-- Routing: `/arsenal-pl-champions-2026` in App.tsx; card on home page
-- Scoring: 1pt per question, 10 per round, 100 total
-- No timer, no wrong-answer penalty
-- Bebas Neue font loaded via Google Fonts in index.html
-- All buttons are plain `<button>` (no shadcn) to avoid global green focus ring
-- Data: `arteta-arsenal-stats.json` live with all 7 Arteta PL seasons
+### What's built and live
+- ✅ Full shell: intro, between-rounds, results
+- ✅ **Round 1** — Trust the Process: 4-option score picker, home/away format (Man City 1-0 Arsenal etc), Arsenal highlighted red
+- ✅ **Round 2** — Who Doubted Us?: 10 quotes, 4-option MC, reveal context, clean `"..."` quote format
+- ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal
+- Rounds 3–9: placeholders
 
-### Next thing to build (user requested, not yet started)
-**Round 2 — "Who Doubted Us?"** — sequential questions, each shows a quote, player picks from 4 options, after selection reveals who said it + date + context. Round title stays visible throughout. Q1/Q2 etc. shown. Context shown on reveal regardless of right/wrong answer. Don't hook up to scoring yet, just get the UX right.
+### Key implementation notes
+- All buttons are plain `<button>` (no shadcn) — avoids global green focus ring
+- Bebas Neue loaded via Google Fonts in index.html
+- Commit + push = live in ~1 min (GitHub Actions). No local npm builds (Kandji MDM blocks)
+- Round 1 uses `homeTeam/awayTeam/homeScore/awayScore` — correct answer is `"${homeScore}-${awayScore}"`
+- Round 9: agreed to **drop GK**, 10 outfield players across 3 screens (Defenders → Midfield → Attackers), tap-to-assign UX
 
-All 10 quotes are in the table above. Each needs: quote, person, 4 options, reveal context text.
+### Confirmed Burnley XI for Round 9
+Formation 4-3-3: **Raya** (GK, not scored); **Saliba, Mosquera, Gabriel, Calafiori** (defenders); **Rice, Eze, Ødegaard** (midfield); **Saka, Trossard, Havertz** (attack)
 
-### Round build priority order
-1. ✅ Shell (built)
-2. 🔴 Round 2: Who Doubted Us? (next)
-3. 🔴 Round 1: Trust the Process (scores data ready — see table in Round 1 section)
-4. 🔴 Round 6: Top Scorers (data ready in arteta-arsenal-stats.json)
-5. 🔴 Round 7: Assist Masters (data ready)
-6. 🔴 Round 4: Season stats (need verified numbers)
-7. 🔴 Round 5: Corner Kings (need user photos)
-8. 🔴 Round 8: Memory Lane (need user photos)
-9. 🔴 Round 9: Build the XI (need confirmed starting XI)
-10. 🔴 Round 3: Arteta Speaks (need quotes sourced)
-11. 🔴 Round 10: Transfer Window (need fees verified)
+### Round build priority
+1. ✅ Round 1 — Trust the Process
+2. ✅ Round 2 — Who Doubted Us?
+3. ✅ Round 10 — Guess the Score
+4. 🟡 Round 9 — Build the XI (data ready, needs building — see above)
+5. 🟡 Round 6 — Top Scorers (data in arteta-arsenal-stats.json, needs building)
+6. 🟡 Round 7 — Assist Masters (data ready, needs building)
+7. 🔴 Round 3 — Arteta Speaks (research needed — 20 quotes being sourced)
+8. 🔴 Round 4 — Season Stats (draft questions in doc, numbers need user verification)
+9. 🔴 Round 5 — Corner Kings (user to provide photos — list of moments in doc)
+10. 🔴 Round 8 — Memory Lane (user to provide photos)
+
+### Corrections (important)
+- Sep 2024 Man City game was **2-2**, not 2-1 (Stones 98th min equaliser)
+- Mar 2026 Chelsea goalkeeper was **Robert Sanchez**, not Schmeichel (Schmeichel was pundit on TV)
+- Title confirmed when **Man City drew 1-1 at Bournemouth** the night AFTER the Burnley win
 
 ## Open Questions / TODOs
 
