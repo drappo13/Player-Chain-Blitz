@@ -268,6 +268,41 @@ export default function Home() {
         </motion.div>
 
         <div className="space-y-6 sm:space-y-8 text-left">
+          {/* ── Arsenal Champions 2026 featured card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+          >
+            <Link href="/arsenal-pl-champions-2026" data-testid="link-arsenal-champions">
+              <div className="group cursor-pointer rounded-md border border-red-700/40 bg-gradient-to-br from-red-950/60 via-[#1a0a0a] to-[#0a0a0f] p-4 sm:p-6 text-left hover-elevate transition-all duration-200 relative overflow-hidden">
+                {/* Glow layer */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-700/10 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-red-600/30 to-amber-500/10 border border-red-600/30 flex items-center justify-center">
+                    <span className="text-xl sm:text-2xl">🏆</span>
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
+                    Special
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground">
+                    <span className="text-red-500">Champions</span>
+                    <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent"> Quiz</span>
+                  </h2>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
+                  Relive Arsenal's title-winning journey. 10 rounds, 100 questions.
+                </p>
+                <div className="flex items-center gap-1 text-xs font-medium text-amber-400">
+                  Play
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+
           <GameSection label="Football" emoji="⚽" games={footballGames} baseDelay={0.3} allStats={stats} />
           <GameSection label="Tennis" emoji="🎾" games={tennisGames} baseDelay={0.55} allStats={stats} />
           <GameSection label="Formula 1" emoji="🏎️" games={f1Games} baseDelay={0.65} allStats={stats} />

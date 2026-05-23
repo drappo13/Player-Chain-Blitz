@@ -18,6 +18,7 @@ const Overlap = lazy(() => import("@/pages/overlap"));
 const ClubLadder = lazy(() => import("@/pages/club-ladder"));
 const Griddle = lazy(() => import("@/pages/griddle"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
+const ArsenalChampions = lazy(() => import("@/pages/arsenal-champions"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Error boundary — catches crashes and shows refresh button instead of blank screen
@@ -118,6 +119,7 @@ function Router() {
         <Route path="/clubladder" component={ClubLadder} />
         <Route path="/griddle" component={Griddle} />
         <Route path="/leaderboard" component={Leaderboard} />
+        <Route path="/arsenal-pl-champions-2026" component={ArsenalChampions} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
