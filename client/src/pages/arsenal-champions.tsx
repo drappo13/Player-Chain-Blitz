@@ -1519,7 +1519,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "How many Arsenal players scored a Premier League penalty in 2025/26?",
     options: ["1", "2", "3", "4"],
     correct: "2",
-    reveal: "Gyökeres and Saka. Two penalties, both scored, both mattered.",
+    reveal: "Gyökeres and Saka — Gyökeres scored 3, Saka 1. All four converted.",
   },
 ];
 
