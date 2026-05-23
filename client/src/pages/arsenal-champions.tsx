@@ -2592,6 +2592,12 @@ export default function ArsenalChampions() {
                     <Round1TrustTheProcess onComplete={handleRoundComplete} />
                   ) : currentRound === 1 ? (
                     <Round2WhoDoubtedUs onComplete={handleRoundComplete} />
+                  ) : currentRound === 2 ? (
+                    <Round3ArtetaSpeaks onComplete={handleRoundComplete} />
+                  ) : currentRound === 3 ? (
+                    <Round4SeasonStats onComplete={handleRoundComplete} />
+                  ) : currentRound === 4 ? (
+                    <Round5CornerKings onComplete={handleRoundComplete} />
                   ) : currentRound === 5 ? (
                     <Round6TopScorers onComplete={handleRoundComplete} />
                   ) : currentRound === 6 ? (
