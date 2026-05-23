@@ -301,28 +301,107 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 
 ---
 
-### Round 10 — The Transfer Window ⚠️ LIKELY TO BE REPLACED
-**Note:** User expects to swap this round for something else. Keep as placeholder for now.  
-**Subtitle:** "The squad wasn't built overnight. How much did Arsenal pay?"  
-**Format:** Show a player's name + the club they joined from. Player picks the transfer fee from 4 options.  
-**Points:** 10 per correct fee  
-**Status:** 🔴 Content needed — fees to be verified from official/widely-reported sources
+### Round 10 — Guess the Score
+**Subtitle:** "How well do you know the Arteta era?"  
+**Format:** Show match date, venue, context, and starting XIs for both teams. Player picks the correct final score from 4 options.  
+**Points:** 10 per correct score  
+**Status:** ⏳ 10 games confirmed and researched — needs building  
+**Tone:** Pro-Arsenal throughout. Celebratory context. Careful not to say "running away with it" in seasons Arsenal didn't win.
 
-**Draft player list:**
-| Player | From | Fee | Tricky aspect |
-|--------|------|-----|---------------|
-| Declan Rice | West Ham | ~£105m | Was then-record English fee |
-| Viktor Gyökeres | Sporting CP | ~€73m | Big bet, paid off |
-| Gabriel Martinelli | Ituano | ~£6m | Biggest bargain |
-| Kai Havertz | Chelsea | ~£65m | Doubted initially |
-| William Saliba | Saint-Étienne | ~£27m | Seemed expensive, proved cheap |
-| Jurriën Timber | Ajax | ~£34m | Injury first season |
-| Leandro Trossard | Brighton | ~£27m | Underrated deal |
-| Riccardo Calafiori | Bologna | ~£42m | Recent addition |
-| Eberechi Eze | Crystal Palace | TBC | Verify fee |
-| Martin Ødegaard | Real Madrid | ~£30m | Permanent after loan |
+**⚠️ Correction:** The Man City game in Sep 2024 was **2-2** (not 2-1 as previously noted in this doc). Arsenal led 2-1 with 10 men before Stones equalized in the 98th minute.  
+**⚠️ Correction:** Chelsea's goalkeeper in the Mar 2026 game was Robert Sanchez, not Schmeichel (who was on TV being furious). Doesn't affect any round content.
 
-**⚠️ All fees must be verified before building — use reliable transfer reports (Fabrizio Romano, BBC Sport)**
+---
+
+**The 10 confirmed games (in display order):**
+
+#### Game 1 — Arsenal 2-0 Manchester United
+**Date:** 1 January 2020 | **Venue:** Emirates Stadium
+**Context:** Arteta's first Premier League win as manager. New Year's Day. Arsenal were transformed.
+**Arsenal XI:** Leno; Maitland-Niles, Sokratis, David Luiz, Kolasinac; Torreira, Xhaka; Pepe, Özil, Aubameyang; Lacazette
+**Man Utd XI:** De Gea; Wan-Bissaka, Lindelöf, Maguire, Shaw; Fred, Matic; James, Lingard, Rashford; Martial
+**Plausible wrong scores:** 1-0, 1-1, 3-0
+
+---
+
+#### Game 2 — Arsenal 3-2 Liverpool
+**Date:** 9 October 2022 | **Venue:** Emirates Stadium
+**Context:** Martinelli opened after 58 seconds — Arsenal's quickest-ever PL goal against Liverpool. Arsenal came from 1-1 and 2-2 to win. Arsenal were top of the league.
+**Arsenal XI:** Ramsdale; White, Saliba, Gabriel, Tomiyasu; Partey, Xhaka; Saka, Ødegaard, Martinelli; Jesus
+**Liverpool XI:** Alisson; Alexander-Arnold, Matip, Van Dijk, Tsimikas; Henderson, Thiago; Salah, Jota, Díaz; Núñez
+**Plausible wrong scores:** 2-1, 1-0, 2-2
+
+---
+
+#### Game 3 — Arsenal 1-0 Manchester City
+**Date:** 8 October 2023 | **Venue:** Emirates Stadium
+**Context:** Ended a run of 12 consecutive PL defeats to City. Martinelli 86th min. Saka absent. A statement win.
+**Arsenal XI:** Raya; White, Saliba, Gabriel, Zinchenko; Rice, Jorginho, Ødegaard; Jesus, Nketiah, Trossard
+**Man City XI:** Ederson; Walker, Dias, Aké, Gvardiol; Kovačić, Bernardo Silva, Rico Lewis; Álvarez, Haaland, Foden
+**Plausible wrong scores:** 0-0, 2-0, 2-1
+
+---
+
+#### Game 4 — Arsenal 3-1 Liverpool
+**Date:** 4 February 2024 | **Venue:** Emirates Stadium
+**Context:** Arsenal sliced the gap to 2 points at the top. Trossard 90+2'. Konaté red card. Alisson errors influential.
+**Arsenal XI:** Raya; White, Saliba, Gabriel, Zinchenko; Ødegaard, Rice, Jorginho; Saka, Havertz, Martinelli
+**Liverpool XI:** Alisson; Alexander-Arnold, Konaté, Van Dijk, Gomez; Gravenberch, Mac Allister, Curtis Jones; Gakpo, Jota, Díaz
+**Plausible wrong scores:** 2-0, 2-1, 1-1
+
+---
+
+#### Game 5 — Arsenal 5-0 Chelsea
+**Date:** 23 April 2024 | **Venue:** Emirates Stadium
+**Context:** Chelsea's heaviest ever defeat by Arsenal. Ben White and Havertz each scored twice in a 20-minute spell. Arsenal went three points clear at the top.
+**Arsenal XI:** Raya; Tomiyasu, Saliba, Gabriel, White; Partey, Rice, Ødegaard; Trossard, Havertz, Saka
+**Chelsea XI:** Petrovic; Disasi, Badiashile, Cucurella, Gilchrist; Caicedo, Enzo Fernández; Mudryk, Gallagher, Madueke; Jackson
+**Plausible wrong scores:** 3-0, 4-0, 3-1
+
+---
+
+#### Game 6 — Manchester City 2-2 Arsenal
+**Date:** 22 September 2024 | **Venue:** Etihad Stadium
+**Context:** Trossard off for kicking ball away (10 men from HT). Arsenal still led 2-1 heading into injury time. Stones equalized in the 98th minute. Haaland walked over to Arteta: "Stay humble, eh." Rodri went off injured.
+**Man City XI:** Ederson; Walker, Dias, Akanji, Gvardiol; Rodri, Gündogan; Savinho, Bernardo Silva, Doku; Haaland
+**Arsenal XI:** Raya; Timber, Saliba, Gabriel, Calafiori; Partey, Rice; Saka, Trossard, Martinelli; Havertz
+**Plausible wrong scores:** 1-1, 2-1 Arsenal, 3-2 City
+
+---
+
+#### Game 7 — Arsenal 5-1 Manchester City
+**Date:** 2 February 2025 | **Venue:** Emirates Stadium
+**Context:** Ødegaard scored after 2 minutes. City briefly equalized through Haaland, then Arsenal scored four more. Nwaneri came off the bench for the fifth. A statement result in a tight title race.
+**Arsenal XI:** Raya; Timber, Saliba, Gabriel, Lewis-Skelly; Ødegaard, Partey, Rice; Trossard, Havertz, Martinelli
+**Man City XI:** Ortega; Nunes, Akanji, Stones, Gvardiol; Bernardo Silva, Kovačić; Savinho, Foden, Marmoush; Haaland
+**Plausible wrong scores:** 3-1, 4-1, 2-0
+
+---
+
+#### Game 8 — Bournemouth 2-3 Arsenal (comeback)
+**Date:** 3 January 2026 | **Venue:** Vitality Stadium
+**Context:** Arsenal went behind early, levelled quickly through Gabriel, then Rice's brace turned it around. Bournemouth pulled one back late. Arsenal held on — six-point lead at the top.
+**Bournemouth XI:** Petrovic; Jiménez, Hill, Senesi, Truffert; Scott, Tavernier, Brooks; Semenyo, Evanilson, Kluivert
+**Arsenal XI:** Raya; Timber, Saliba, Gabriel, Hincapié; Ødegaard, Zubimendi, Rice; Madueke, Gyökeres, Martinelli
+**Plausible wrong scores:** 1-2, 1-1, 2-2
+
+---
+
+#### Game 9 — Arsenal 4-1 Tottenham
+**Date:** 23 November 2025 | **Venue:** Emirates Stadium
+**Context:** Eze — who had snubbed Spurs to join Arsenal that summer — scored a hat-trick against his former club. Only the fourth player in history to score an NLD hat-trick. Arsenal went six points clear at the top.
+**Arsenal XI:** Raya; Timber, Saliba, Hincapié, Calafiori; Zubimendi, Rice; Saka, Eze, Trossard; Merino
+**Tottenham XI:** Vicario; Danso, Romero, van de Ven; Udogie, Bentancur, Palhinha, Spence; Simons, Kudus; Richarlison
+**Plausible wrong scores:** 3-1, 2-0, 3-0
+
+---
+
+#### Game 10 — Arsenal 1-0 Burnley
+**Date:** 18 May 2026 | **Venue:** Emirates Stadium
+**Context:** Havertz headed in from a corner. Saka's 50th PL assist. Man City drew 1-1 at Bournemouth the following night — Arsenal were champions. The title was 22 years in the making.
+**Arsenal XI:** Raya; Saliba, Mosquera, Gabriel, Calafiori; Rice, Eze; Ødegaard, Trossard, Saka; Havertz
+**Burnley XI:** Weiss; Walker, Estève, Tuanzebe, Pires; Ugochukwu, Florentino; Anthony, Mejbri, Tchaouna; Flemming
+**Plausible wrong scores:** 2-0, 1-1, 0-0
 
 ---
 
