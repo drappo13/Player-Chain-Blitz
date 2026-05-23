@@ -2309,6 +2309,7 @@ export default function ArsenalChampions() {
   const [currentRound, setCurrentRound] = useState(0);
   const [roundScores, setRoundScores] = useState<number[]>([]);
   const [copied, setCopied] = useState(false);
+  const [devOpen, setDevOpen] = useState(false);
 
   const totalScore = roundScores.reduce((a, b) => a + b, 0);
   const activeRound = ROUNDS[currentRound];
@@ -2476,6 +2477,66 @@ export default function ArsenalChampions() {
                   <ChevronRight className="w-5 h-5" />
                 </GoldButton>
               </motion.div>
+
+              {/* ── DEV: jump to round ── */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.1 }}
+                className="mt-10 w-full max-w-xs"
+              >
+                <button
+                  onClick={() => setDevOpen(v => !v)}
+                  className="outline-none focus:outline-none text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full transition-all"
+                  style={{
+                    background: "rgba(0,0,0,0.25)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "rgba(255,255,255,0.35)",
+                  }}
+                >
+                  {devOpen ? "▲ DEV" : "▼ DEV"}
+                </button>
+
+                <AnimatePresence>
+                  {devOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div
+                        className="rounded-2xl p-3"
+                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.12)" }}
+                      >
+                        <div className="text-[10px] font-bold tracking-widest uppercase mb-2.5 text-center" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          Jump to round
+                        </div>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {ROUNDS.map((r, i) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                setRoundScores([]);
+                                setCurrentRound(i);
+                                setPhase("playing");
+                                setDevOpen(false);
+                              }}
+                              className="outline-none focus:outline-none rounded-xl py-2 flex flex-col items-center gap-0.5 transition-all active:scale-95"
+                              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
+                            >
+                              <span className="text-sm">{r.emoji}</span>
+                              <span className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>R{i + 1}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
             </div>
           </motion.div>
         )}
