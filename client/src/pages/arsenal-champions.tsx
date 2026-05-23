@@ -92,8 +92,8 @@ function PlaceholderRound({
       transition={{ duration: 0.35 }}
       className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center"
     >
-      <div className="mb-4 w-14 h-14 rounded-full bg-red-600/20 border border-red-600/40 flex items-center justify-center">
-        <span className="text-2xl font-black text-red-500">{round.number}</span>
+      <div className="mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(219,0,7,0.15)", border: "1px solid rgba(219,0,7,0.4)" }}>
+        <span className="text-2xl font-black" style={{ color: "#DB0007" }}>{round.number}</span>
       </div>
       <h2 className="text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
         {round.name}
@@ -101,12 +101,13 @@ function PlaceholderRound({
       <p className="text-sm text-gray-400 max-w-sm leading-relaxed mb-8">
         {round.description}
       </p>
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 text-xs font-semibold mb-8">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ background: "rgba(200,150,12,0.1)", border: "1px solid rgba(200,150,12,0.3)", color: "#C8960C" }}>
         Round content coming soon
       </div>
       <Button
         onClick={handleComplete}
-        className="bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-3 text-base rounded-lg"
+        className="font-bold px-8 py-3 text-base rounded-lg text-[#1a0000]"
+        style={{ background: "linear-gradient(135deg, #F5D078, #C8960C)" }}
       >
         Complete Round (placeholder)
         <ChevronRight className="w-4 h-4 ml-1" />
@@ -122,7 +123,8 @@ function RoundProgressBar({ current, total }: { current: number; total: number }
   return (
     <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
       <motion.div
-        className="h-full bg-gradient-to-r from-red-600 to-amber-400 rounded-full"
+        className="h-full rounded-full"
+        style={{ background: "linear-gradient(90deg, #DB0007, #C8960C)" }}
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -216,16 +218,28 @@ export default function ArsenalChampions() {
   // ── render ──
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white relative overflow-x-hidden">
-      {/* Ambient glow */}
+    <div className="min-h-screen text-white relative overflow-x-hidden"
+      style={{ background: phase === "intro" ? "#DB0007" : "#0f0205" }}
+    >
+      {/* Ambient overlays */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-red-700/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 bg-amber-500/6 rounded-full blur-3xl" />
+        {phase === "intro" ? (
+          <>
+            {/* Red intro: dark vignette at bottom, gold glow centre */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#C8960C]/20 rounded-full blur-3xl" />
+          </>
+        ) : (
+          <>
+            <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-red-900/30 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#C8960C]/8 rounded-full blur-3xl" />
+          </>
+        )}
       </div>
 
       {/* Persistent top bar (not shown on intro) */}
       {phase !== "intro" && (
-        <div className="sticky top-0 z-20 bg-[#0a0a0f]/90 backdrop-blur border-b border-white/5 px-4 py-3">
+        <div className="sticky top-0 z-20 bg-[#0f0205]/90 backdrop-blur border-b border-white/5 px-4 py-3">
           <div className="max-w-lg mx-auto flex items-center gap-3">
             <button
               onClick={() => setLocation("/")}
@@ -236,7 +250,7 @@ export default function ArsenalChampions() {
             <div className="flex-1">
               <RoundProgressBar current={roundScores.length} total={ROUNDS.length} />
             </div>
-            <span className="text-xs font-bold text-amber-400 flex-shrink-0">
+            <span className="text-xs font-bold text-[#C8960C] flex-shrink-0">
               {totalScore}/100
             </span>
           </div>
@@ -253,53 +267,83 @@ export default function ArsenalChampions() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="flex flex-col items-center text-center pt-16 sm:pt-24 pb-16"
+              className="flex flex-col items-center text-center pt-12 sm:pt-20 pb-16"
             >
               {/* Home link */}
               <button
                 onClick={() => setLocation("/")}
-                className="absolute top-6 left-4 text-gray-500 hover:text-gray-300 transition-colors"
+                className="absolute top-6 left-4 text-white/50 hover:text-white transition-colors"
               >
                 <Home className="w-4 h-4" />
               </button>
 
-              {/* Cannon badge */}
+              {/* Trophy / badge */}
               <motion.div
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 180, damping: 12, delay: 0.2 }}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-red-700 to-red-900 border-2 border-red-500/60 flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(239,1,7,0.3)]"
+                className="mb-6"
               >
-                <span className="text-4xl sm:text-5xl">🏆</span>
+                <div
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "radial-gradient(circle at 35% 35%, #F5D078, #C8960C, #8B6508)",
+                    boxShadow: "0 0 60px rgba(200,150,12,0.5), 0 0 120px rgba(200,150,12,0.2)",
+                  }}
+                >
+                  <span className="text-5xl sm:text-6xl drop-shadow-lg">🏆</span>
+                </div>
               </motion.div>
 
-              {/* Title */}
+              {/* Title stack — matching the image */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="mb-6"
+                className="mb-2"
               >
-                <div className="text-4xl sm:text-5xl font-black tracking-tight leading-none">
-                  <span className="text-red-500">ARSENAL</span>
+                {/* ARSENAL */}
+                <div className="text-5xl sm:text-6xl font-black tracking-tight leading-none text-white drop-shadow-lg">
+                  ARSENAL
                 </div>
-                <div className="text-xl sm:text-2xl font-black tracking-widest text-amber-400 mt-1">
-                  PREMIER LEAGUE
+                {/* PREMIER LEAGUE */}
+                <div className="text-sm sm:text-base font-black tracking-[0.3em] text-white/90 mt-2 uppercase">
+                  Premier League
                 </div>
-                <div className="text-3xl sm:text-4xl font-black text-white mt-1">
-                  CHAMPIONS 🏆
+                {/* CHAMPIONS — big gold metallic */}
+                <div
+                  className="text-5xl sm:text-7xl font-black tracking-tight leading-none mt-1"
+                  style={{
+                    background: "linear-gradient(180deg, #F5D078 0%, #C8960C 45%, #8B6508 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    filter: "drop-shadow(0 2px 8px rgba(200,150,12,0.6))",
+                  }}
+                >
+                  CHAMPIONS
                 </div>
-                <div className="text-5xl sm:text-6xl font-black tracking-tight text-amber-400 mt-0.5">
-                  2026
+                {/* 2025–26 */}
+                <div className="text-2xl sm:text-3xl font-black text-white/90 mt-1 tracking-widest">
+                  2025–26
                 </div>
               </motion.div>
+
+              {/* Divider */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="w-24 h-px my-6"
+                style={{ background: "linear-gradient(90deg, transparent, #C8960C, transparent)" }}
+              />
 
               {/* Subtitle */}
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-sm text-gray-400 max-w-xs leading-relaxed mb-8"
+                transition={{ delay: 0.55 }}
+                className="text-sm text-white/70 max-w-xs leading-relaxed mb-6"
               >
                 Test your knowledge of Arteta's title-winning journey
               </motion.p>
@@ -308,24 +352,29 @@ export default function ArsenalChampions() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 font-medium mb-8"
+                transition={{ delay: 0.65 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full mb-8"
+                style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.2)" }}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
-                10 Rounds
-                <span className="text-white/20">·</span>
-                100 Questions
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "#C8960C" }} />
+                <span className="text-xs text-white/80 font-semibold">10 Rounds</span>
+                <span className="text-white/30">·</span>
+                <span className="text-xs text-white/80 font-semibold">100 Questions</span>
               </motion.div>
 
               {/* CTA */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.75 }}
               >
                 <Button
                   onClick={startQuiz}
-                  className="bg-red-600 hover:bg-red-500 text-white font-black px-10 py-4 text-lg rounded-xl shadow-[0_4px_24px_rgba(239,1,7,0.4)] hover:shadow-[0_4px_32px_rgba(239,1,7,0.6)] transition-all duration-200"
+                  className="font-black px-12 py-4 text-lg rounded-xl transition-all duration-200 text-[#1a0000]"
+                  style={{
+                    background: "linear-gradient(135deg, #F5D078, #C8960C)",
+                    boxShadow: "0 4px 24px rgba(200,150,12,0.5)",
+                  }}
                 >
                   START QUIZ
                   <ChevronRight className="w-5 h-5 ml-1" />
@@ -345,7 +394,7 @@ export default function ArsenalChampions() {
               className="flex flex-col items-center text-center pt-8 pb-16"
             >
               {/* Round number */}
-              <div className="text-xs font-bold text-red-500 tracking-widest uppercase mb-2">
+              <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "#C8960C" }}>
                 Round {activeRound.number} of {ROUNDS.length}
               </div>
 
@@ -393,7 +442,8 @@ export default function ArsenalChampions() {
 
               <Button
                 onClick={startRound}
-                className="bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-3 text-base rounded-lg"
+                className="font-bold px-8 py-3 text-base rounded-lg text-[#1a0000]"
+                style={{ background: "linear-gradient(135deg, #F5D078, #C8960C)", boxShadow: "0 4px 16px rgba(200,150,12,0.4)" }}
               >
                 START ROUND
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -431,7 +481,7 @@ export default function ArsenalChampions() {
                 transition={{ delay: 0.1 }}
                 className="mb-8"
               >
-                <div className="text-xs font-bold text-amber-400 tracking-widest uppercase mb-2">
+                <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "#C8960C" }}>
                   Quiz Complete
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
