@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import arsenalStats from "../data/arteta-arsenal-stats.json";
 import { Trophy, ChevronRight, Home, Share2, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -82,9 +83,9 @@ const ROUNDS: RoundDef[] = [
   },
   {
     number: 10,
-    name: "The Transfer Window",
-    emoji: "💰",
-    description: "Match each Arsenal player to their transfer fee. Bargains and big spends — who cost what?",
+    name: "Guess the Score",
+    emoji: "📋",
+    description: "Ten landmark Arteta-era results. Enter the exact final score for each match — no multiple choice.",
   },
 ];
 
@@ -641,32 +642,36 @@ const ROUND1_GAMES: HorrorGame[] = [
 
 function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [homeInput, setHomeInput] = useState(0);
+  const [awayInput, setAwayInput] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState<boolean[]>([]);
 
   const g = ROUND1_GAMES[qIndex];
-  const correctScore = `${g.homeScore}-${g.awayScore}`;
-  const revealed = selected !== null;
-  const isCorrect = selected === correctScore;
+  const isCorrect = submitted && homeInput === g.homeScore && awayInput === g.awayScore;
+  const resultColor = g.result === "W" ? GOLD : g.result === "D" ? "#aaa" : RED;
+  const resultLabel = g.result === "W" ? "WIN" : g.result === "D" ? "DRAW" : "LOSS";
+  const homeLabel = g.homeTeam.length > 10 ? g.homeTeam.split(" ").pop()! : g.homeTeam;
+  const awayLabel = g.awayTeam.length > 10 ? g.awayTeam.split(" ").pop()! : g.awayTeam;
 
-  function handleSelect(opt: string) {
-    if (revealed) return;
-    setSelected(opt);
+  function handleSubmit() {
+    if (submitted) return;
+    setSubmitted(true);
   }
 
   function handleNext() {
-    const newAnswers = [...answers, selected === correctScore];
+    const correct = homeInput === g.homeScore && awayInput === g.awayScore;
+    const newAnswers = [...answers, correct];
     if (qIndex + 1 >= ROUND1_GAMES.length) {
       onComplete(newAnswers.filter(Boolean).length);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
-      setSelected(null);
+      setHomeInput(0);
+      setAwayInput(0);
+      setSubmitted(false);
     }
   }
-
-  const resultColor = g.result === "W" ? GOLD : g.result === "D" ? "#aaa" : RED;
-  const resultLabel = g.result === "W" ? "WIN" : g.result === "D" ? "DRAW" : "LOSS";
 
   return (
     <motion.div
@@ -723,7 +728,7 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
 
       {/* Match card */}
       <div
-        className="rounded-2xl p-5 mb-6"
+        className="rounded-2xl p-5 mb-5"
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
       >
         <div className="flex items-start justify-between gap-3">
@@ -741,53 +746,73 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
             className="flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold"
             style={{ background: `${resultColor}18`, border: `1px solid ${resultColor}44`, color: resultColor }}
           >
-            {revealed ? resultLabel : "?"}
+            {submitted ? resultLabel : "?"}
           </div>
         </div>
-        <div className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
-          What was the final score?
+      </div>
+
+      {/* Score pickers */}
+      {!submitted && (
+        <div
+          className="rounded-2xl p-5 mb-5 flex items-center gap-3"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
+        >
+          <ScorePicker
+            value={homeInput}
+            onChange={setHomeInput}
+            label={homeLabel}
+            color={g.homeTeam === "Arsenal" ? RED : "rgba(255,255,255,0.5)"}
+          />
+          <div className="text-3xl font-bold" style={{ fontFamily: BEBAS, color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>—</div>
+          <ScorePicker
+            value={awayInput}
+            onChange={setAwayInput}
+            label={awayLabel}
+            color={g.awayTeam === "Arsenal" ? RED : "rgba(255,255,255,0.5)"}
+          />
         </div>
-      </div>
+      )}
 
-      {/* Score options */}
-      <div className="grid grid-cols-2 gap-2.5 mb-5">
-        {g.options.map((opt) => {
-          const isSelected = selected === opt;
-          const isCorrectOpt = opt === g.score;
-          let btnStyle: React.CSSProperties = {
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            color: "white",
-          };
-          if (revealed) {
-            if (isCorrectOpt) {
-              btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
-            } else if (isSelected) {
-              btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
-            } else {
-              btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.25)" };
-            }
-          }
-          return (
-            <button
-              key={opt}
-              onClick={() => handleSelect(opt)}
-              disabled={revealed}
-              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-xl font-bold text-center transition-all duration-200 active:scale-95 disabled:cursor-default"
-              style={{ ...btnStyle, fontFamily: BEBAS, letterSpacing: "0.06em" }}
-            >
-              {opt}
-              {revealed && isCorrectOpt && <span className="ml-1 text-base opacity-80">✓</span>}
-              {revealed && isSelected && !isCorrectOpt && <span className="ml-1 text-base opacity-80">✗</span>}
-            </button>
-          );
-        })}
-      </div>
+      {/* Submitted score display */}
+      {submitted && (
+        <div
+          className="rounded-2xl p-5 mb-5 flex items-center justify-center gap-4"
+          style={{
+            background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+            border: isCorrect ? `1px solid rgba(200,150,12,0.35)` : "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="text-center">
+            <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: g.homeTeam === "Arsenal" ? RED : "rgba(255,255,255,0.4)" }}>
+              {homeLabel}
+            </div>
+            <div className="text-5xl font-bold" style={{ fontFamily: BEBAS, color: isCorrect ? GOLD_LIGHT : "white" }}>
+              {homeInput}
+            </div>
+          </div>
+          <div className="text-3xl" style={{ fontFamily: BEBAS, color: "rgba(255,255,255,0.2)" }}>—</div>
+          <div className="text-center">
+            <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: g.awayTeam === "Arsenal" ? RED : "rgba(255,255,255,0.4)" }}>
+              {awayLabel}
+            </div>
+            <div className="text-5xl font-bold" style={{ fontFamily: BEBAS, color: isCorrect ? GOLD_LIGHT : "white" }}>
+              {awayInput}
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Reveal */}
-      <AnimatePresence>
-        {revealed && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      {/* Submit / reveal / next */}
+      <AnimatePresence mode="wait">
+        {!submitted ? (
+          <motion.div key="submit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <GoldButton onClick={handleSubmit} className="w-full py-3.5 flex items-center justify-center gap-2">
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>LOCK IN SCORE</span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        ) : (
+          <motion.div key="reveal" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <div
               className="rounded-xl p-4 mb-4"
               style={{
@@ -798,7 +823,7 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
                 <span className="font-bold text-sm" style={{ color: isCorrect ? GOLD_LIGHT : "white" }}>
-                  {isCorrect ? "Correct!" : `It was ${correctScore}`}
+                  {isCorrect ? "Correct!" : `It was ${g.homeScore}–${g.awayScore}`}
                 </span>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{g.reveal}</p>
@@ -1207,6 +1232,426 @@ function Round10GuessTheScore({ onComplete }: { onComplete: (score: number) => v
   );
 }
 
+// ─── Round 9 data ────────────────────────────────────────────────────────────
+
+const ROUND9_CORRECT = {
+  defenders: ["Saliba", "Mosquera", "Gabriel", "Calafiori"],
+  midfield: ["Rice", "Eze", "Ødegaard"],
+  attackers: ["Saka", "Trossard", "Havertz"],
+};
+
+const ROUND9_POOL_BASE = [
+  "Saliba", "Mosquera", "Gabriel", "Calafiori",
+  "Rice", "Eze", "Ødegaard",
+  "Saka", "Trossard", "Havertz",
+  "Timber", "White", "Lewis-Skelly", "Hincapié", "Zinchenko",
+  "Partey", "Zubimendi", "Merino", "Jorginho",
+  "Martinelli", "Gyökeres", "Madueke", "Nwaneri", "Gabriel Jesus",
+];
+
+type R9Category = "defenders" | "midfield" | "attackers";
+type R9Screen = R9Category | "results";
+
+const R9_SCREENS: R9Category[] = ["defenders", "midfield", "attackers"];
+const R9_CONFIG: Record<R9Category, { label: string; subtitle: string; slots: number }> = {
+  defenders: { label: "DEFENDERS", subtitle: "Pick 4 defenders", slots: 4 },
+  midfield: { label: "MIDFIELD", subtitle: "Pick 3 midfielders", slots: 3 },
+  attackers: { label: "ATTACKERS", subtitle: "Pick 3 attackers", slots: 3 },
+};
+
+function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void }) {
+  const [pool] = useState<string[]>(() => [...ROUND9_POOL_BASE].sort(() => Math.random() - 0.5));
+  const [screen, setScreen] = useState<R9Screen>("defenders");
+  const [picks, setPicks] = useState<Record<R9Category, string[]>>({
+    defenders: [], midfield: [], attackers: [],
+  });
+
+  const screenIdx = screen === "results" ? 3 : R9_SCREENS.indexOf(screen as R9Category);
+  const config = screen !== "results" ? R9_CONFIG[screen as R9Category] : null;
+  const currentPicks = screen !== "results" ? picks[screen as R9Category] : [];
+  const isFull = config ? currentPicks.length >= config.slots : false;
+
+  const usedInPrior = new Set<string>([
+    ...(screenIdx >= 1 ? picks.defenders : []),
+    ...(screenIdx >= 2 ? picks.midfield : []),
+  ]);
+
+  function togglePlayer(name: string) {
+    if (screen === "results") return;
+    const cat = screen as R9Category;
+    if (usedInPrior.has(name)) return;
+    setPicks(prev => {
+      const cur = prev[cat];
+      if (cur.includes(name)) return { ...prev, [cat]: cur.filter(n => n !== name) };
+      if (cur.length >= R9_CONFIG[cat].slots) return prev;
+      return { ...prev, [cat]: [...cur, name] };
+    });
+  }
+
+  function handleNext() {
+    if (screen === "defenders") setScreen("midfield");
+    else if (screen === "midfield") setScreen("attackers");
+    else if (screen === "attackers") setScreen("results");
+  }
+
+  function handleFinish() {
+    const score =
+      picks.defenders.filter(n => ROUND9_CORRECT.defenders.includes(n)).length +
+      picks.midfield.filter(n => ROUND9_CORRECT.midfield.includes(n)).length +
+      picks.attackers.filter(n => ROUND9_CORRECT.attackers.includes(n)).length;
+    onComplete(score);
+  }
+
+  if (screen === "results") {
+    const total =
+      picks.defenders.filter(n => ROUND9_CORRECT.defenders.includes(n)).length +
+      picks.midfield.filter(n => ROUND9_CORRECT.midfield.includes(n)).length +
+      picks.attackers.filter(n => ROUND9_CORRECT.attackers.includes(n)).length;
+
+    return (
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="pb-16">
+        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Build the XI — Results</div>
+        <div className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal vs Burnley · 18 May 2026</div>
+
+        {(["defenders", "midfield", "attackers"] as R9Category[]).map(cat => {
+          const correct = ROUND9_CORRECT[cat];
+          const chosen = picks[cat];
+          const catScore = chosen.filter(n => correct.includes(n)).length;
+          return (
+            <div key={cat} className="mb-5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-xs font-bold tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  {cat.toUpperCase()}
+                </div>
+                <div className="text-xs font-bold" style={{ color: catScore === correct.length ? GOLD : "rgba(255,255,255,0.5)" }}>
+                  {catScore}/{correct.length}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {chosen.map(name => {
+                  const ok = correct.includes(name);
+                  return (
+                    <div key={name} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{
+                      background: ok ? "rgba(200,150,12,0.15)" : "rgba(219,0,7,0.15)",
+                      border: `1px solid ${ok ? GOLD + "88" : RED + "88"}`,
+                      color: ok ? GOLD_LIGHT : "#ff8888",
+                    }}>
+                      {name} {ok ? "✓" : "✗"}
+                    </div>
+                  );
+                })}
+                {correct.filter(n => !chosen.includes(n)).map(name => (
+                  <div key={name} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{
+                    background: "rgba(200,150,12,0.05)",
+                    border: "1px solid rgba(200,150,12,0.25)",
+                    color: "rgba(200,150,12,0.55)",
+                  }}>
+                    {name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        <div
+          className="rounded-xl p-4 mb-5 text-center"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
+        >
+          <div className="text-3xl font-bold mb-0.5" style={{ fontFamily: BEBAS, color: GOLD, letterSpacing: "0.04em" }}>
+            {total} / 10
+          </div>
+          <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>players correctly placed</div>
+        </div>
+
+        <GoldButton onClick={handleFinish} className="w-full py-3.5 flex items-center justify-center gap-2">
+          <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>FINISH ROUND</span>
+          <ChevronRight className="w-4 h-4" />
+        </GoldButton>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      key={screen}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      {/* Round header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Build the XI</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal vs Burnley · 18 May 2026</div>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>
+            {screenIdx + 1}
+          </span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 3</span>
+        </div>
+      </div>
+
+      {/* Screen progress */}
+      <div className="flex gap-1.5 mb-5">
+        {R9_SCREENS.map((s, i) => (
+          <div key={s} className="flex-1 h-1 rounded-full transition-all duration-300" style={{
+            background: i < screenIdx ? GOLD : i === screenIdx ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.08)",
+          }} />
+        ))}
+      </div>
+
+      {/* Category + slots */}
+      <div className="rounded-2xl p-4 mb-5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}>
+        <div className="text-xs font-bold tracking-widest uppercase mb-0.5" style={{ color: GOLD }}>{config!.label}</div>
+        <div className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.45)" }}>{config!.subtitle}</div>
+        <div className="flex gap-2">
+          {Array.from({ length: config!.slots }).map((_, i) => (
+            <div key={i} className="flex-1 py-2 rounded-lg text-center truncate" style={{
+              background: i < currentPicks.length ? "rgba(200,150,12,0.12)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${i < currentPicks.length ? GOLD + "55" : "rgba(255,255,255,0.1)"}`,
+              color: i < currentPicks.length ? GOLD_LIGHT : "rgba(255,255,255,0.18)",
+              fontSize: "0.65rem",
+              fontWeight: 600,
+            }}>
+              {currentPicks[i] || "—"}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Player pool */}
+      <div className="text-xs font-bold tracking-widest uppercase mb-2.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+        SELECT {config!.slots} PLAYERS · {currentPicks.length}/{config!.slots} chosen
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        {pool.map(name => {
+          const isUsed = usedInPrior.has(name);
+          const isSelected = currentPicks.includes(name);
+          const isDisabled = isUsed || (!isSelected && isFull);
+          return (
+            <button
+              key={name}
+              onClick={() => togglePlayer(name)}
+              disabled={isDisabled}
+              className="outline-none focus:outline-none rounded-xl py-2.5 px-2 text-xs font-semibold text-center transition-all duration-150 active:scale-95 disabled:cursor-default leading-tight"
+              style={
+                isUsed
+                  ? { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.12)" }
+                  : isSelected
+                  ? { background: "rgba(200,150,12,0.2)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT }
+                  : isDisabled
+                  ? { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.18)" }
+                  : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "white" }
+              }
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {isFull && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <GoldButton onClick={handleNext} className="w-full py-3.5 flex items-center justify-center gap-2">
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {screen === "attackers" ? "SUBMIT XI" : "NEXT →"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── Rounds 6 & 7 data ───────────────────────────────────────────────────────
+
+const TOP10_SCORERS_SET = new Set([
+  "Bukayo Saka", "Gabriel Martinelli", "Pierre-Emerick Aubameyang",
+  "Martin Ødegaard", "Leandro Trossard", "Alexandre Lacazette",
+  "Kai Havertz", "Gabriel Jesus", "Gabriel Magalhães", "Eddie Nketiah",
+]);
+
+const TOP10_ASSISTERS_SET = new Set([
+  "Bukayo Saka", "Martin Ødegaard", "Leandro Trossard",
+  "Gabriel Martinelli", "Declan Rice", "Alexandre Lacazette",
+  "Granit Xhaka", "Kai Havertz", "Ben White", "Gabriel Jesus",
+]);
+
+// ─── Shared Select-Top-10 mechanic ───────────────────────────────────────────
+
+function SelectTopTenRound({
+  topSet,
+  roundName,
+  subtitle,
+  onComplete,
+}: {
+  topSet: Set<string>;
+  roundName: string;
+  subtitle: string;
+  onComplete: (score: number) => void;
+}) {
+  const [allPlayers] = useState<string[]>(() =>
+    arsenalStats.map(p => p.displayName).sort(() => Math.random() - 0.5)
+  );
+  const [selected, setSelected] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState(false);
+
+  const isFull = selected.length >= 10;
+
+  function togglePlayer(name: string) {
+    if (submitted) return;
+    setSelected(prev => {
+      if (prev.includes(name)) return prev.filter(n => n !== name);
+      if (prev.length >= 10) return prev;
+      return [...prev, name];
+    });
+  }
+
+  function handleSubmit() {
+    setSubmitted(true);
+  }
+
+  function handleFinish() {
+    onComplete(selected.filter(n => topSet.has(n)).length);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>{roundName}</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{subtitle}</div>
+        </div>
+        <div
+          className="px-3 py-1 rounded-full text-sm font-bold"
+          style={{
+            background: isFull ? "rgba(200,150,12,0.2)" : "rgba(255,255,255,0.06)",
+            border: `1px solid ${isFull ? GOLD : "rgba(255,255,255,0.12)"}`,
+            color: isFull ? GOLD_LIGHT : "rgba(255,255,255,0.5)",
+          }}
+        >
+          {selected.length}/10
+        </div>
+      </div>
+
+      <div
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-5"
+        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}
+      >
+        All Arteta-era PL appearances · select exactly 10 · order doesn't matter
+      </div>
+
+      {/* Player grid */}
+      <div className="grid grid-cols-3 gap-1.5 mb-6">
+        {allPlayers.map(name => {
+          const isSelected = selected.includes(name);
+          const isCorrect = topSet.has(name);
+          const isDisabled = !isSelected && isFull && !submitted;
+
+          let btnStyle: React.CSSProperties;
+          if (submitted) {
+            if (isSelected && isCorrect) {
+              btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+            } else if (isSelected && !isCorrect) {
+              btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
+            } else if (!isSelected && isCorrect) {
+              btnStyle = { background: "rgba(200,150,12,0.05)", border: "1px solid rgba(200,150,12,0.28)", color: "rgba(200,150,12,0.55)" };
+            } else {
+              btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.15)" };
+            }
+          } else if (isSelected) {
+            btnStyle = { background: "rgba(200,150,12,0.2)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+          } else if (isDisabled) {
+            btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.18)" };
+          } else {
+            btnStyle = { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.11)", color: "white" };
+          }
+
+          return (
+            <button
+              key={name}
+              onClick={() => togglePlayer(name)}
+              disabled={submitted || isDisabled}
+              className="outline-none focus:outline-none rounded-xl py-2.5 px-1.5 text-center transition-all duration-150 active:scale-95 disabled:cursor-default leading-tight"
+              style={{ ...btnStyle, fontSize: "0.65rem", fontWeight: 600 }}
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Submit / reveal */}
+      {!submitted ? (
+        <AnimatePresence>
+          {isFull && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <GoldButton onClick={handleSubmit} className="w-full py-3.5 flex items-center justify-center gap-2">
+                <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>SUBMIT SELECTION</span>
+                <ChevronRight className="w-4 h-4" />
+              </GoldButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div
+            className="rounded-xl p-4 mb-4"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            <div className="font-bold text-sm text-white mb-1">
+              {selected.filter(n => topSet.has(n)).length} / 10 correct
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+              Gold = correct pick. Red = not in top 10. Faded gold outlines = ones you missed.
+            </p>
+          </div>
+          <GoldButton onClick={handleFinish} className="w-full py-3.5 flex items-center justify-center gap-2">
+            <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>FINISH ROUND</span>
+            <ChevronRight className="w-4 h-4" />
+          </GoldButton>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
+function Round6TopScorers({ onComplete }: { onComplete: (score: number) => void }) {
+  return (
+    <SelectTopTenRound
+      topSet={TOP10_SCORERS_SET}
+      roundName="Top Scorers"
+      subtitle="Select the top 10 PL goalscorers under Arteta"
+      onComplete={onComplete}
+    />
+  );
+}
+
+function Round7AssistMasters({ onComplete }: { onComplete: (score: number) => void }) {
+  return (
+    <SelectTopTenRound
+      topSet={TOP10_ASSISTERS_SET}
+      roundName="The Assist Masters"
+      subtitle="Select the top 10 PL assisters under Arteta"
+      onComplete={onComplete}
+    />
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ArsenalChampions() {
@@ -1498,6 +1943,12 @@ export default function ArsenalChampions() {
                     <Round1TrustTheProcess onComplete={handleRoundComplete} />
                   ) : currentRound === 1 ? (
                     <Round2WhoDoubtedUs onComplete={handleRoundComplete} />
+                  ) : currentRound === 5 ? (
+                    <Round6TopScorers onComplete={handleRoundComplete} />
+                  ) : currentRound === 6 ? (
+                    <Round7AssistMasters onComplete={handleRoundComplete} />
+                  ) : currentRound === 8 ? (
+                    <Round9BuildTheXI onComplete={handleRoundComplete} />
                   ) : currentRound === 9 ? (
                     <Round10GuessTheScore onComplete={handleRoundComplete} />
                   ) : (
