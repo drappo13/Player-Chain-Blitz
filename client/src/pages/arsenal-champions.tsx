@@ -280,6 +280,309 @@ function PlaceholderRound({ round, onComplete }: { round: RoundDef; onComplete: 
   );
 }
 
+// ─── Round 2 data ─────────────────────────────────────────────────────────────
+
+interface QuoteQuestion {
+  quote: string;
+  context: string;
+  options: string[];
+  correct: string;
+  reveal: string;
+}
+
+const ROUND2_QUOTES: QuoteQuestion[] = [
+  {
+    quote: `"That's in some ways as good as it gets [for Arsenal under Arteta]"`,
+    context: "April 2022 — on Arsenal's title ambitions",
+    options: ["Gary Neville", "Jamie Carragher", "Paul Merson", "Alan Shearer"],
+    correct: "Gary Neville",
+    reveal: "Said on The Overlap, implying Arsenal's ceiling was a top-four finish. Arteta did go on to win the league.",
+  },
+  {
+    quote: `"Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline."`,
+    context: "February 2023 — Arsenal's title challenge begins to wobble",
+    options: ["Graeme Souness", "Roy Keane", "Harry Redknapp", "Paul Scholes"],
+    correct: "Graeme Souness",
+    reveal: "Said on Sky Sports as Arsenal surrendered a 7-point lead to Man City.",
+  },
+  {
+    quote: `"When they came here [to the Etihad, title run-in] I thought: these guys do not want to beat us. They just want to draw."`,
+    context: "May 2024 — after Man City won their 4th consecutive title",
+    options: ["Rodri", "Bernardo Silva", "Kevin De Bruyne", "Erling Haaland"],
+    correct: "Rodri",
+    reveal: "Arsenal had played for a 0-0 at the Etihad in the run-in. Arteta did go on to win the league.",
+  },
+  {
+    quote: `"They were just booting it, like a small team with a small mentality."`,
+    context: "September 2024 — after Arsenal conceded a 98th-minute equaliser having led 2-1 at the Etihad",
+    options: ["Roy Keane", "Graeme Souness", "Alan Shearer", "Micah Richards"],
+    correct: "Roy Keane",
+    reveal: "Said on Sky Sports. Arsenal went on to win the league.",
+  },
+  {
+    quote: `"Watching Arsenal is like watching Netflix. You always have to wait for the next season!"`,
+    context: "October 2024 — after Arsenal's third consecutive near-miss",
+    options: ["Patrice Evra", "Gary Neville", "Paul Scholes", "Simon Jordan"],
+    correct: "Patrice Evra",
+    reveal: "The line became one of the most-shared Arsenal memes of the era. Arsenal made it worth the wait.",
+  },
+  {
+    quote: `"Stay humble, eh. Stay humble, eh."`,
+    context: "September 2024 — said to Arteta's face on the touchline after a 98th-minute equaliser to make it 2-2",
+    options: ["Erling Haaland", "Rodri", "Kevin De Bruyne", "Bernardo Silva"],
+    correct: "Erling Haaland",
+    reveal: `Arteta said he found it "funny". Arsenal won the league.`,
+  },
+  {
+    quote: `"The day my friend Mikel Arteta wins the title, it will only be because of what he's spent, not because of his work."`,
+    context: "September 2025 — said at the start of the season Arsenal won the title",
+    options: ["Pep Guardiola", "Jürgen Klopp", "José Mourinho", "Erik ten Hag"],
+    correct: "Pep Guardiola",
+    reveal: "Arteta was Guardiola's assistant at Man City before taking the Arsenal job. Arsenal won it anyway.",
+  },
+  {
+    quote: `"He's got to be in the top two by Christmas or they'll go for someone else."`,
+    context: "May 2025 — calling for Arteta to be replaced",
+    options: ["Paul Merson", "Alan Shearer", "Jamie Carragher", "Harry Redknapp"],
+    correct: "Paul Merson",
+    reveal: "Arteta was still in the dugout when Arsenal lifted the trophy.",
+  },
+  {
+    quote: `"It's going to come on full blast now — the 'bottle jobs' talk. Being bottle jobs, melting."`,
+    context: "February 2026 — after Arsenal dropped points at Wolves",
+    options: ["Paul Merson", "Roy Keane", "Wayne Rooney", "Paul Scholes"],
+    correct: "Paul Merson",
+    reveal: "He predicted Arsenal would choke in the run-in as they had twice before. They didn't.",
+  },
+  {
+    quote: `"We can't have all these games and the championship decided on corner kicks. We just can't."`,
+    context: "March 2026 — after Arsenal beat Chelsea 2-1 with both goals from corners",
+    options: ["Peter Schmeichel", "Rio Ferdinand", "Gary Neville", "Graeme Souness"],
+    correct: "Peter Schmeichel",
+    reveal: "Schmeichel's own 1999 Champions League final win was decided by two late corner routines.",
+  },
+];
+
+// ─── Round 2: Who Doubted Us? ──────────────────────────────────────────────────
+
+function QuoteText({ text }: { text: string }) {
+  const parts = text.split(/(\[[^\]]+\])/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith("[") && part.endsWith("]") ? (
+          <span key={i} className="not-italic text-base" style={{ color: "rgba(255,255,255,0.4)" }}>
+            {" "}{part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
+function Round2WhoDoubtedUs({ onComplete }: { onComplete: (score: number) => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<boolean[]>([]);
+
+  const q = ROUND2_QUOTES[qIndex];
+  const revealed = selected !== null;
+  const isCorrect = selected === q.correct;
+
+  function handleSelect(opt: string) {
+    if (revealed) return;
+    setSelected(opt);
+  }
+
+  function handleNext() {
+    const newAnswers = [...answers, selected === q.correct];
+    if (qIndex + 1 >= ROUND2_QUOTES.length) {
+      onComplete(newAnswers.filter(Boolean).length);
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(i => i + 1);
+      setSelected(null);
+    }
+  }
+
+  return (
+    <motion.div
+      key={qIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      {/* Round header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>
+            Who Doubted Us?
+          </div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+            They said it. But who?
+          </div>
+        </div>
+        <div className="text-right">
+          <span
+            className="text-3xl leading-none"
+            style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}
+          >
+            Q{qIndex + 1}
+          </span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 10</span>
+        </div>
+      </div>
+
+      {/* Progress dots */}
+      <div className="flex gap-1 mb-6">
+        {ROUND2_QUOTES.map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 h-1 rounded-full transition-all duration-300"
+            style={{
+              background:
+                i < answers.length
+                  ? answers[i] ? GOLD : RED
+                  : i === qIndex
+                  ? "rgba(255,255,255,0.35)"
+                  : "rgba(255,255,255,0.08)",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Context chip */}
+      <div
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-5"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          color: "rgba(255,255,255,0.45)",
+        }}
+      >
+        🗣️ {q.context}
+      </div>
+
+      {/* Quote card */}
+      <div
+        className="rounded-2xl p-5 mb-6 relative overflow-hidden"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.09)",
+        }}
+      >
+        <div
+          className="absolute top-3 left-4 text-5xl leading-none select-none pointer-events-none"
+          style={{ color: `${RED}30`, fontFamily: "Georgia, serif" }}
+        >
+          "
+        </div>
+        <p
+          className="text-xl sm:text-2xl text-white leading-snug italic relative z-10 pt-2"
+          style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+        >
+          <QuoteText text={q.quote} />
+        </p>
+      </div>
+
+      {/* Options */}
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        {q.options.map((opt) => {
+          const isSelected = selected === opt;
+          const isCorrectOpt = opt === q.correct;
+          let btnStyle: React.CSSProperties = {
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            color: "white",
+          };
+          if (revealed) {
+            if (isCorrectOpt) {
+              btnStyle = {
+                background: `rgba(200,150,12,0.18)`,
+                border: `2px solid ${GOLD}`,
+                color: GOLD_LIGHT,
+              };
+            } else if (isSelected) {
+              btnStyle = {
+                background: "rgba(219,0,7,0.15)",
+                border: `2px solid ${RED}`,
+                color: "#ff8888",
+              };
+            } else {
+              btnStyle = {
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                color: "rgba(255,255,255,0.25)",
+              };
+            }
+          }
+          return (
+            <button
+              key={opt}
+              onClick={() => handleSelect(opt)}
+              disabled={revealed}
+              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-sm font-semibold text-center leading-tight transition-all duration-200 active:scale-95 disabled:cursor-default"
+              style={btnStyle}
+            >
+              {opt}
+              {revealed && isCorrectOpt && <span className="ml-1 opacity-80">✓</span>}
+              {revealed && isSelected && !isCorrectOpt && <span className="ml-1 opacity-80">✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Reveal panel */}
+      <AnimatePresence>
+        {revealed && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{
+                background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+                border: isCorrect
+                  ? `1px solid rgba(200,150,12,0.35)`
+                  : "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
+                <span
+                  className="font-bold text-sm"
+                  style={{ color: isCorrect ? GOLD_LIGHT : "white" }}
+                >
+                  {isCorrect ? "Correct!" : `It was ${q.correct}`}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {q.reveal}
+              </p>
+            </div>
+
+            <GoldButton
+              onClick={handleNext}
+              className="w-full py-3.5 flex items-center justify-center gap-2"
+            >
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {qIndex + 1 >= ROUND2_QUOTES.length ? "FINISH ROUND" : "NEXT QUESTION"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ArsenalChampions() {
@@ -567,7 +870,11 @@ export default function ArsenalChampions() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <PlaceholderRound round={activeRound} onComplete={handleRoundComplete} />
+                  {currentRound === 1 ? (
+                    <Round2WhoDoubtedUs onComplete={handleRoundComplete} />
+                  ) : (
+                    <PlaceholderRound round={activeRound} onComplete={handleRoundComplete} />
+                  )}
                 </motion.div>
               )}
 
