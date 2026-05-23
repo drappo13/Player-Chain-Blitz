@@ -154,9 +154,20 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "He talks about his players every week. But who is he talking about?"  
 **Format:** Show an Arteta press conference quote about a player (name redacted). Player picks from 4 options.  
 **Points:** 10 per correct answer  
-**Status:** 🔴 Content needed — requires sourcing 10 Arteta quotes about specific players  
-**Suggested players to target:** Saka, Ødegaard, Saliba, Rice, Martinelli, Havertz, Gabriel, Timber, Raya, White  
-**TODO:** Research 10 quotes from Arteta press conferences attributing specific qualities to specific players. Each should be identifiable but not trivially obvious.
+**Status:** ✅ Complete — 10 questions live
+
+| # | Player | Context shown to user | Options |
+|---|--------|-----------------------|---------|
+| 1 | William Saliba | August 2022 | Saliba, Gabriel, Ben White, Timber |
+| 2 | Martin Ødegaard | August 2025 — on one of his players' leadership | Ødegaard, Rice, Saliba, Saka |
+| 3 | Declan Rice | April 2025 — on ignoring their set piece coach in a Champions League match | Rice, Saka, Ødegaard, Martinelli |
+| 4 | Kai Havertz | November 2024 — on a player returning from injury | Havertz, Timber, Gyökeres, Rice |
+| 5 | Jurrien Timber | July 2024 — pre-season, on a player returning to fitness | Timber, Calafiori, Havertz, Ben White |
+| 6 | Alexandre Lacazette | 2021 — on a striker's role in the team | Lacazette, Aubameyang, Martinelli, Ødegaard |
+| 7 | Viktor Gyökeres | November 2025 — after a Champions League match | Gyökeres, Havertz, Lacazette, Martinelli |
+| 8 | Eberechi Eze | May 2026 — on a player's impact during the title-winning season | Eze, Ødegaard, Havertz, Martinelli |
+| 9 | Pierre-Emerick Aubameyang | December 2021 — after a difficult decision involving a senior player | Aubameyang, Lacazette, Xhaka, Pépé |
+| 10 | Bukayo Saka | March 2025 — after a player returned from a long injury | Saka, Martinelli, Timber, Havertz |
 
 ---
 
@@ -439,7 +450,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - ✅ **Round 1** — Trust the Process: ▲▼ number pickers (same as Round 10), home/away format, Arsenal highlighted red. "Leicester" label fix applied.
 - ✅ **Round 2** — Who Doubted Us?: 10 quotes, 4-option MC, options shuffle on mount, reveal context. Q7 = John Obi Mikel (talkSPORT, 11 Mar 2026), Q8 = Gabriel Agbonlahor (talkSPORT, May 2025).
 - ✅ **Round 3** — Arteta Speaks: 10 Arteta press conference quotes, 4-option MC, options shuffle on mount. ⚠️ Quotes need user verification before going live.
-- ✅ **Round 4** — The Season That Won It: 10 MC stats questions. ⚠️ All numbers need user verification before going live.
+- ✅ **Round 4** — The Season That Won It: 10 MC stats questions. Q7 (5-0 Leeds), Q8 (conceded 2+), Q10 (penalties: Gyök 3, Saka 1) verified. Remaining Qs need user verification.
 - ✅ **Round 5** — Corner Kings: 10 corner goal questions with photo slots. CornerPhotoSlot component shows placeholder until real images added. ⚠️ User to source photos → `public/arsenal-quiz/corners/`.
 - ✅ **Round 6** — Top Scorers: full player pool from arteta-arsenal-stats.json, select-10 mechanic, gold/red/faded reveal.
 - ✅ **Round 7** — Assist Masters: same mechanic as Round 6, assist data.
@@ -481,13 +492,12 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 
 ## Open Questions / TODOs
 
-- [ ] **Scoring format confirmed:** No timer. +10 per correct, 0 wrong. 1000 total.
-- [ ] **Round 3 (Arteta Speaks):** Source 10 press conference quotes — user or research agent
-- [ ] **Round 4 (Season stats):** Verify all numbers, add 2-3 more questions
-- [ ] **Round 5 (Corner Kings):** Await corner goal research; user to source photos
-- [ ] **Round 8 (Memory Lane):** User to source 10 photos + confirm dates
-- [ ] **Round 9 (Build the XI):** Confirm title-clinching starting XI vs Burnley
-- [ ] **Round 10 (Transfer Window):** Verify all fees; confirm Eze and any other 2025 additions
+- [x] **Scoring format:** No timer. +10 per correct, 0 wrong. 100 total (10 per round).
+- [x] **Round 3 (Arteta Speaks):** Built and live. ⚠️ User to verify quotes before sharing.
+- [ ] **Round 4 (Season stats):** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources.
+- [ ] **Round 5 (Corner Kings):** User to source 10 photos → `public/arsenal-quiz/corners/`
+- [ ] **Round 8 (Memory Lane):** User to source 10 photos + confirm dates → `public/arsenal-quiz/memory-lane/`
+- [ ] **Round 10 (Guess the Score):** Verify all starting XIs and match details.
 - [ ] **Firebase leaderboard:** Add `arsenal-champions-2026` game to Firebase rules + leaderboard page
 - [ ] **Home page card:** Add to drapk.in home page with Arsenal red/gold branding
 - [ ] **Quotes verification:** User to check all source URLs in Round 2 before going live
