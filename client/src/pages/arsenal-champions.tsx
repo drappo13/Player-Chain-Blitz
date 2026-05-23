@@ -339,7 +339,7 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
     context: "March 2026 — said on talkSPORT as Arsenal led the title race on the back of a record corner-kick season",
     options: ["John Obi Mikel", "Wayne Rooney", "Peter Schmeichel", "Tim Sherwood"],
     correct: "John Obi Mikel",
-    reveal: "Former Chelsea and Nigeria midfielder, said on talkSPORT, 11 March 2026. Arsenal were recognised as champions regardless — and Mikel Obi was reminded he played for a club whose corner routine won the 2012 FA Cup final.",
+    reveal: "Former Chelsea midfielder, said on talkSPORT, 11 March 2026. Mikel was always known for his explosive attacking style, wasn't he? Arsenal were recognised as champions regardless.",
   },
   {
     quote: "He has to walk! Mikel Arteta should resign if Arsenal fails to win the league. Failing to win a trophy after being in contention necessitates his departure.",
@@ -1258,7 +1258,7 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "You don't really see that at 21 years old — a debut in the Premier League against this opponent, and resolve the situation with that composure, that calmness and that presence.",
     player: "William Saliba",
-    context: "After Saliba's Arsenal debut vs Crystal Palace, August 2022",
+    context: "August 2022 — after a young centre-back made his Arsenal debut",
     options: ["William Saliba", "Gabriel Magalhães", "Ben White", "Jurrien Timber"],
     reveal: "Saliba had spent three seasons on loan in France before returning. Arteta was blown away on debut. He went on to become one of the best defenders in the world.",
   },
@@ -1272,21 +1272,21 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "I loved it. It's about taking initiative, making things happen and believing that you can actually win the game by yourself sometimes. I was really impressed.",
     player: "Declan Rice",
-    context: "After Rice ignored set-piece coach Nicolas Jover and scored two free-kicks vs Real Madrid in the Champions League, April 2025",
+    context: "April 2025 — after a player ignored set-piece coach Nicolas Jover's signals and scored two free-kicks vs Real Madrid in the Champions League",
     options: ["Declan Rice", "Bukayo Saka", "Martin Ødegaard", "Gabriel Martinelli"],
     reveal: "Rice stepped up despite Jover's signals — and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
   },
   {
     quote: "He destroyed all the metrics we had in the gym for the last ten years. Power, acceleration, muscle mass — the transformation has been incredible.",
     player: "Kai Havertz",
-    context: "November 2024 — before Havertz's return from injury, after he overhauled his physique during rehab",
+    context: "November 2024 — before a player's return from injury, after completely overhauling his physique during rehab",
     options: ["Kai Havertz", "Jurrien Timber", "Viktor Gyökeres", "Declan Rice"],
     reveal: "Havertz arrived with doubts about his physicality. He returned a different player and became Arsenal's title-winning number nine.",
   },
   {
     quote: "He is a leader. He loves to be on show and a big presence in everything we do. He is very vocal and extremely gifted technically.",
     player: "Jurrien Timber",
-    context: "July 2024, on Timber's return to fitness after missing his entire first season with an ACL injury",
+    context: "July 2024 — on a player's return to fitness after missing his entire first season with an ACL injury",
     options: ["Jurrien Timber", "Riccardo Calafiori", "Kai Havertz", "Ben White"],
     reveal: "Timber tore his ACL on the opening day of his debut season. A year of rehab later, he became a cornerstone of Arsenal's title-winning defence.",
   },
@@ -1300,7 +1300,7 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "He's so physical, he opens spaces for everybody. The way he presses the ball, holds the ball — he's just phenomenal.",
     player: "Viktor Gyökeres",
-    context: "November 2025, after Gyökeres scored vs Atlético Madrid in the Champions League",
+    context: "November 2025 — after a summer signing scored vs Atlético Madrid in the Champions League",
     options: ["Viktor Gyökeres", "Kai Havertz", "Alexandre Lacazette", "Gabriel Martinelli"],
     reveal: "Gyökeres signed from Sporting in the summer of 2025. He went on to become Arsenal's top PL scorer with 14 goals — the final piece of the puzzle.",
   },
@@ -1321,7 +1321,7 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "His reaction after scoring was to say thank you to all the sports scientists and physios who participated in his recovery. It tells you who he is as a person. It's impossible not to love him.",
     player: "Bukayo Saka",
-    context: "March 2025, after Saka scored on his return from a 101-day hamstring injury",
+    context: "March 2025 — after a player scored on his return from a 101-day hamstring injury",
     options: ["Bukayo Saka", "Gabriel Martinelli", "Jurrien Timber", "Kai Havertz"],
     reveal: "Saka missed nearly four months. His first thought on returning was to thank the backroom staff. Arteta consistently praises his character as much as his talent.",
   },
