@@ -1507,7 +1507,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "How many times did Arsenal concede more than 2 goals in a Premier League game in 2025/26?",
     options: ["0", "1", "2", "3"],
     correct: "1",
-    reveal: "Just once all season. The defence was almost flawless.",
+    reveal: "Just once all season — and the only time Arsenal conceded more than 2 in a league game since 2023.",
   },
   {
     question: "Which outfield player logged the most Premier League minutes for Arsenal in 2025/26?",
