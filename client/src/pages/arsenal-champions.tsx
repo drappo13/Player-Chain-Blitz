@@ -1501,7 +1501,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "How many times did Arsenal score 5 or more goals in a Premier League game in 2025/26?",
     options: ["0", "1", "2", "3"],
     correct: "1",
-    reveal: "Once — 5-1 vs Man City at the Emirates, February 2025. They only needed to do it once.",
+    reveal: "Once — 5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club.",
   },
   {
     question: "How many times did Arsenal concede more than 2 goals in a Premier League game in 2025/26?",
