@@ -1665,11 +1665,11 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Kai Havertz",
-    opponent: "Burnley", date: "4 May 2024",
-    imagePath: "arsenal-quiz/corners/02-havertz-burnley-2024.jpg",
-    imageHint: "Havertz header — Arsenal 1-0 Burnley, May 2024",
+    opponent: "Burnley", date: "18 May 2026",
+    imagePath: "arsenal-quiz/corners/02-havertz-burnley-2026.jpg",
+    imageHint: "Havertz header — Arsenal 1-0 Burnley, 18 May 2026",
     options: ["Kai Havertz", "Gabriel Magalhães", "William Saliba", "Declan Rice"],
-    reveal: "Havertz towered to head home from Saka's corner. The win put Arsenal one result away from the title — they didn't get it that year, but the moment stung City.",
+    reveal: "The title-winning goal. Havertz headed home from Saka's corner — Arsenal's 18th of the season, a new PL record. Man City drew at Bournemouth the next night. Arsenal were champions.",
   },
   {
     scorer: "Gabriel Magalhães",
