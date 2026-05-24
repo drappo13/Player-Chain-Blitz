@@ -2135,6 +2135,32 @@ const TOP10_ASSISTERS_SET = new Set([
 
 // ─── Shared Select-Top-10 mechanic ───────────────────────────────────────────
 
+type PositionGroup = "Defenders" | "Midfielders" | "Attackers";
+
+function getPositionGroup(position: string): PositionGroup {
+  const def = ["goalkeeper", "defender", "back", "wing back"];
+  const att = ["winger", "striker", "forward", "second striker"];
+  const p = position.toLowerCase();
+  if (def.some(k => p.includes(k))) return "Defenders";
+  if (att.some(k => p.includes(k))) return "Attackers";
+  return "Midfielders";
+}
+
+const POSITION_GROUPS: PositionGroup[] = ["Defenders", "Midfielders", "Attackers"];
+
+type GroupedPlayers = Record<PositionGroup, string[]>;
+
+function buildGroupedPlayers(): GroupedPlayers {
+  const groups: GroupedPlayers = { Defenders: [], Midfielders: [], Attackers: [] };
+  const sorted = [...arsenalStats].sort((a, b) => a.lastName.localeCompare(b.lastName));
+  for (const p of sorted) {
+    groups[getPositionGroup(p.position)].push(p.displayName);
+  }
+  return groups;
+}
+
+const GROUPED_PLAYERS = buildGroupedPlayers();
+
 function SelectTopTenRound({
   topSet,
   roundName,
@@ -2146,9 +2172,6 @@ function SelectTopTenRound({
   subtitle: string;
   onComplete: (score: number) => void;
 }) {
-  const [allPlayers] = useState<string[]>(() =>
-    arsenalStats.map(p => p.displayName).sort(() => Math.random() - 0.5)
-  );
   const [selected, setSelected] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
@@ -2163,12 +2186,22 @@ function SelectTopTenRound({
     });
   }
 
-  function handleSubmit() {
-    setSubmitted(true);
-  }
+  function handleSubmit() { setSubmitted(true); }
+  function handleFinish() { onComplete(selected.filter(n => topSet.has(n)).length); }
 
-  function handleFinish() {
-    onComplete(selected.filter(n => topSet.has(n)).length);
+  function playerStyle(name: string): React.CSSProperties {
+    const isSelected = selected.includes(name);
+    const isCorrect = topSet.has(name);
+    const isDisabled = !isSelected && isFull && !submitted;
+    if (submitted) {
+      if (isSelected && isCorrect) return { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+      if (isSelected && !isCorrect) return { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
+      if (!isSelected && isCorrect) return { background: "rgba(200,150,12,0.05)", border: "1px solid rgba(200,150,12,0.28)", color: "rgba(200,150,12,0.55)" };
+      return { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.15)" };
+    }
+    if (isSelected) return { background: "rgba(200,150,12,0.2)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
+    if (isDisabled) return { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.18)" };
+    return { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.11)", color: "white" };
   }
 
   return (
@@ -2180,13 +2213,13 @@ function SelectTopTenRound({
       className="pb-16"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>{roundName}</div>
           <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{subtitle}</div>
         </div>
         <div
-          className="px-3 py-1 rounded-full text-sm font-bold"
+          className="px-3 py-1 rounded-full text-sm font-bold flex-shrink-0"
           style={{
             background: isFull ? "rgba(200,150,12,0.2)" : "rgba(255,255,255,0.06)",
             border: `1px solid ${isFull ? GOLD : "rgba(255,255,255,0.12)"}`,
@@ -2204,45 +2237,33 @@ function SelectTopTenRound({
         All Arteta-era PL appearances · select exactly 10 · order doesn't matter
       </div>
 
-      {/* Player grid */}
-      <div className="grid grid-cols-3 gap-1.5 mb-6">
-        {allPlayers.map(name => {
-          const isSelected = selected.includes(name);
-          const isCorrect = topSet.has(name);
-          const isDisabled = !isSelected && isFull && !submitted;
-
-          let btnStyle: React.CSSProperties;
-          if (submitted) {
-            if (isSelected && isCorrect) {
-              btnStyle = { background: "rgba(200,150,12,0.18)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
-            } else if (isSelected && !isCorrect) {
-              btnStyle = { background: "rgba(219,0,7,0.15)", border: `2px solid ${RED}`, color: "#ff8888" };
-            } else if (!isSelected && isCorrect) {
-              btnStyle = { background: "rgba(200,150,12,0.05)", border: "1px solid rgba(200,150,12,0.28)", color: "rgba(200,150,12,0.55)" };
-            } else {
-              btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.15)" };
-            }
-          } else if (isSelected) {
-            btnStyle = { background: "rgba(200,150,12,0.2)", border: `2px solid ${GOLD}`, color: GOLD_LIGHT };
-          } else if (isDisabled) {
-            btnStyle = { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.18)" };
-          } else {
-            btnStyle = { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.11)", color: "white" };
-          }
-
-          return (
-            <button
-              key={name}
-              onClick={() => togglePlayer(name)}
-              disabled={submitted || isDisabled}
-              className="outline-none focus:outline-none rounded-xl py-2.5 px-1.5 text-center transition-all duration-150 active:scale-95 disabled:cursor-default leading-tight"
-              style={{ ...btnStyle, fontSize: "0.65rem", fontWeight: 600 }}
-            >
-              {name}
-            </button>
-          );
-        })}
-      </div>
+      {/* Grouped player grid */}
+      {POSITION_GROUPS.map(group => (
+        <div key={group} className="mb-5">
+          <div
+            className="text-[10px] font-bold tracking-widest uppercase mb-2"
+            style={{ color: "rgba(255,255,255,0.28)" }}
+          >
+            {group}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {GROUPED_PLAYERS[group].map(name => {
+              const isDisabled = !selected.includes(name) && isFull && !submitted;
+              return (
+                <button
+                  key={name}
+                  onClick={() => togglePlayer(name)}
+                  disabled={submitted || isDisabled}
+                  className="outline-none focus:outline-none rounded-xl py-2.5 px-1.5 text-center transition-all duration-150 active:scale-95 disabled:cursor-default leading-tight"
+                  style={{ ...playerStyle(name), fontSize: "0.65rem", fontWeight: 600 }}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       {/* Submit / reveal */}
       {!submitted ? (
