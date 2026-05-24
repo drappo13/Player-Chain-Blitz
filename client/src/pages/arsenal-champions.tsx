@@ -55,7 +55,7 @@ const ROUNDS: RoundDef[] = [
     number: 5,
     name: "Corner Kings",
     emoji: "🚩",
-    description: "Arsenal broke PL records scoring from corners. Guess the scorer from each famous goal.",
+    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026 — who got on the end of each one?",
   },
   {
     number: 6,
@@ -1272,7 +1272,7 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
   {
     quote: "I loved it. It's about taking initiative, making things happen and believing that you can actually win the game by yourself sometimes. I was really impressed.",
     player: "Declan Rice",
-    context: "April 2025 — after a Champions League match",
+    context: "April 2025 — on ignoring their set piece coach in a Champions League match",
     options: ["Declan Rice", "Bukayo Saka", "Martin Ødegaard", "Gabriel Martinelli"],
     reveal: "Rice stepped up despite Jover's signals — and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
   },
@@ -1803,7 +1803,7 @@ function Round5CornerKings({ onComplete }: { onComplete: (score: number) => void
       <div className="flex items-center justify-between mb-5">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Corner Kings</div>
-          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal broke PL records scoring from corners</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>The set-piece that made rivals furious — 2019 to 2026</div>
         </div>
         <div className="text-right">
           <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
