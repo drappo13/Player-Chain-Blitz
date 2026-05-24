@@ -249,9 +249,9 @@ These narratives make the round more resonant — each quote can be prefaced wit
 | 9 | Gabriel Magalhães | 20 |
 | 10 | Eddie Nketiah | 18 |
 
-**Pool shown to player:** All 68 players from arteta-arsenal-stats.json, sorted alphabetically or randomly  
+**Pool shown to player:** All players from arteta-arsenal-stats.json, grouped by position (Defenders → Midfielders → Attackers), sorted A–Z by surname within each group. GKs fall under Defenders.  
 **Tricky traps:** Pépé (16g), Emile Smith Rowe (12g), Rice (15g) — close but outside top 10  
-**UX note:** Show a "selected X/10" counter; disable further selection once 10 chosen
+**UX note:** Selected X/10 counter top-right; submit button appears once 10 chosen
 
 ---
 
@@ -275,6 +275,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 | 9 | Ben White | 12 |
 | 10 | Gabriel Jesus | 11 |
 
+**Pool shown to player:** Same mechanic as Round 6 — grouped by position, A–Z by surname  
 **Tricky traps:** Xhaka (13a) — many fans forget how many assists he had; Ben White (12a) as right-back surprises people
 
 ---
