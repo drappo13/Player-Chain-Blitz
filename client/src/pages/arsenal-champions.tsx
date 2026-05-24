@@ -883,7 +883,7 @@ const ROUND10_GAMES: ScoreGame[] = [
   },
   {
     matchTitle: "Arsenal vs Bournemouth",
-    date: "26 November 2022",
+    date: "4 March 2023",
     venue: "Emirates Stadium",
     context: "In the 97th minute...",
     isArsenalHome: true,
@@ -891,7 +891,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 3, opponentGoals: 2,
     arsenalXI: "Ramsdale; White, Saliba, Gabriel, Tierney; Partey, Xhaka; Saka, Ødegaard, Martinelli; Jesus",
     opponentXI: "Neto; Smith, Mepham, Senesi, Zemura; Cook, Lerma; Billing, Tavernier, Moore; Solanke",
-    reveal: "Reiss Nelson came on as a substitute and scored with virtually the last touch of the game. The Emirates erupted. Arsenal were top of the league.",
+    reveal: "Bournemouth led 2-0 — Billing scored after just 9 seconds. Partey and White equalised. Nelson came off the bench and scored in the 97th minute. Pandemonium at the Emirates.",
   },
   {
     matchTitle: "Arsenal vs Manchester United",
@@ -901,9 +901,9 @@ const ROUND10_GAMES: ScoreGame[] = [
     isArsenalHome: true,
     opponentName: "Manchester United",
     arsenalGoals: 3, opponentGoals: 1,
-    arsenalXI: "Raya; White, Saliba, Gabriel, Zinchenko; Rice, Partey; Saka, Ødegaard, Martinelli; Havertz",
-    opponentXI: "Onana; Wan-Bissaka, Lindelöf, Maguire, Shaw; Casemiro, Eriksen; Antony, Rashford, Sancho; Højlund",
-    reveal: "Gabriel crouched to let a United player run offside — it went viral. Rice scored his first Arsenal goal. £100m well spent.",
+    arsenalXI: "Ramsdale; White, Saliba, Gabriel, Zinchenko; Rice, Ødegaard; Saka, Havertz, Martinelli; Nketiah",
+    opponentXI: "Onana; Wan-Bissaka, Lindelöf, Martínez, Dalot; Casemiro, Eriksen; Antony, Rashford, Fernandes; Martial",
+    reveal: "Gabriel crouched to let a United player run offside — it went viral. Rice scored his first Arsenal goal on 90+6'. Jesus came off the bench to make it three.",
   },
   {
     matchTitle: "Arsenal vs Manchester City",
@@ -919,14 +919,14 @@ const ROUND10_GAMES: ScoreGame[] = [
   },
   {
     matchTitle: "West Ham vs Arsenal",
-    date: "7 April 2024",
+    date: "11 February 2024",
     venue: "London Stadium",
     context: "Radioactive zebra, raining goals — Rice on return",
     isArsenalHome: false,
     opponentName: "West Ham",
     arsenalGoals: 6, opponentGoals: 0,
-    arsenalXI: "Raya; White, Saliba, Gabriel, Zinchenko; Rice, Partey; Saka, Ødegaard, Martinelli; Havertz",
-    opponentXI: "Fabianski; Coufal, Zouma, Aguerd, Emerson; Ward-Prowse, Soucek; Kudus, Paquetá, Bowen; Antonio",
+    arsenalXI: "Raya; White, Saliba, Gabriel, Kiwior; Rice, Ødegaard, Havertz; Saka, Jesus, Martinelli",
+    opponentXI: "Areola; Coufal, Zouma, Aguerd, Emerson; Ward-Prowse, Soucek; Kudus, Álvarez, Bowen; Johnson",
     reveal: "Arsenal's biggest Premier League win under Arteta — the most goals in a single PL game of the Arteta era. Rice returned to his old ground and got six. West Ham's radioactive zebra kit was the only thing more embarrassing than the scoreline.",
   },
   {
@@ -950,7 +950,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     opponentName: "Manchester City",
     arsenalGoals: 2, opponentGoals: 2,
     arsenalXI: "Raya; Timber, Saliba, Gabriel, Calafiori; Partey, Rice; Saka, Trossard, Martinelli; Havertz",
-    opponentXI: "Ederson; Walker, Dias, Akanji, Gvardiol; Rodri, Gündogan; Savinho, Bernardo Silva, Doku; Haaland",
+    opponentXI: "Ederson; Walker, Akanji, Dias, Gvardiol; Rodri, Gündogan; Savinho, Bernardo Silva, Doku; Haaland",
     reveal: "Trossard was shown a second yellow for kicking the ball away. Arsenal still led 2-1 heading into the 98th minute. Stones equalized. Haaland walked over to Arteta: \"Stay humble, eh.\"",
   },
   {
@@ -974,7 +974,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     opponentName: "Tottenham",
     arsenalGoals: 4, opponentGoals: 1,
     arsenalXI: "Raya; Timber, Saliba, Hincapié, Calafiori; Zubimendi, Rice; Saka, Eze, Trossard; Merino",
-    opponentXI: "Vicario; Danso, Romero, van de Ven; Udogie, Bentancur, Palhinha, Spence; Simons, Kudus; Richarlison",
+    opponentXI: "Vicario; Danso, Romero, van de Ven; Udogie, Bentancur, Palhinha, Spence; Odobert, Kudus; Richarlison",
     reveal: "Eze scored a hat-trick. Only the fourth player in history to score an NLD hat-trick — and he'd snubbed Spurs to make it happen.",
   },
   {
@@ -985,8 +985,8 @@ const ROUND10_GAMES: ScoreGame[] = [
     isArsenalHome: true,
     opponentName: "Burnley",
     arsenalGoals: 1, opponentGoals: 0,
-    arsenalXI: "Raya; Saliba, Mosquera, Gabriel, Calafiori; Rice, Eze; Ødegaard, Trossard, Saka; Havertz",
-    opponentXI: "Weiss; Walker, Estève, Tuanzebe, Pires; Ugochukwu, Florentino; Anthony, Mejbri, Tchaouna; Flemming",
+    arsenalXI: "Raya; Mosquera, Saliba, Gabriel, Calafiori; Rice, Ødegaard; Eze, Trossard, Saka; Havertz",
+    opponentXI: "Weiss; Walker, Estève, Tuanzebe, Pires; Ugochukwu, Florentino; Anthony, Hannibal, Tchaouna; Flemming",
     reveal: "Havertz headed in from a corner — Arsenal's 18th corner goal of the season. Man City drew 1-1 at Bournemouth the next night. Arsenal were champions. Twenty-two years.",
   },
 ];
