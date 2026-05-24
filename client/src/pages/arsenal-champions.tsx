@@ -294,7 +294,7 @@ interface QuoteQuestion {
 const ROUND2_QUOTES: QuoteQuestion[] = [
   {
     quote: "That's in some ways as good as it gets",
-    context: "April 2022 — implying Arsenal would never win the title, only finish 4th",
+    context: "On Arsenal finishing 4th, implying they will never win the title",
     options: ["Gary Neville", "Paul Merson", "Tim Sherwood", "Jamie Carragher"],
     correct: "Gary Neville",
     reveal: "Said on The Overlap, suggesting Arteta's ceiling was a top-four finish. Arteta did go on to win the league.",
