@@ -1471,7 +1471,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "How many goals did Spurs score against Man City across both Premier League fixtures in 2025/26?",
     options: ["2", "3", "4", "5"],
     correct: "4",
-    reveal: "Four goals against City across the two fixtures. Spurs couldn't win a trophy all season — but they did win us the league.",
+    reveal: "Four goals against City across the two fixtures. Spurs could barely win a game all season — but they did win us the league.",
   },
   {
     question: "How many Premier League goals did Arsenal's top scorer Viktor Gyökeres score in 2025/26?",
