@@ -3,7 +3,7 @@
 **Route:** `/arsenal-pl-champions-2026`  
 **File:** `client/src/pages/arsenal-champions.tsx`  
 **Data:** `client/src/data/arteta-arsenal-stats.json` (Arteta-era PL stats, from official PL API)  
-**Status:** Core shell building/deploying
+**Status:** ✅ All 10 rounds built and live — pending photos (Rounds 5 & 8) and stat/quote verification
 
 ---
 
@@ -50,7 +50,7 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 **Subtitle:** "How bad did it get?"  
 **Format:** 10 games from Arsenal's 2020/21 horror run (image provided by user). For each game show: opponent, date, home/away. Player selects the correct final score from 4 options.  
 **Points:** 10 per correct score  
-**Status:** ⏳ Data ready (from image), needs building
+**Status:** ✅ Built and live
 
 **The 10 games (from user-provided screenshot):**
 | Opponent | Date | H/A | Score | Result |
@@ -74,7 +74,7 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 **Subtitle:** "They said it. But who?"  
 **Format:** Show a quote on screen. Player picks who said it from 4 options.  
 **Points:** 10 per correct attribution  
-**Status:** ⏳ Quotes verified, needs building. User to verify all source URLs personally.
+**Status:** ✅ Built and live. ⚠️ User to verify all source URLs personally.
 
 **The 10 quotes (in display order — spread across the timeline for variety):**
 
@@ -175,7 +175,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "2025/26 — the numbers behind the title"  
 **Format:** 10 multiple-choice stats questions about the 2025-26 PL season specifically  
 **Points:** 10 per correct answer  
-**Status:** ✅ Built and live. Q7 and Q8 verified against official sources.
+**Status:** ✅ Built and live. ⚠️ The table below shows a revised set of questions that have NOT yet been coded — the live version still uses the original questions (clean sheets, points, Raya Golden Glove, goals conceded, top scorer, clinching result, games to spare, captain, CL quarter-final, corner goals). The table below is the target — needs to be swapped in and verified before going live.
 
 | # | Question | Answer | Options | Reveal context |
 |---|----------|--------|---------|----------------|
@@ -198,36 +198,34 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "Arsenal broke records scoring from corners. Who got on the end of this one?"  
 **Format:** Show a photo of an Arsenal corner goal. Player picks the goalscorer from 4 options.  
 **Points:** 10 per correct answer  
-**Status:** 🔴 Corner goal list pending (research agent running) — user to source 10 photos  
-**Photos:** Stored in `public/arsenal-quiz/corners/` in the repo  
-**Key context:** Set-piece coach Nicolas Jover designed Arsenal's famous corner routines. Arsenal broke PL records for corner goals under Arteta. Gabriel Magalhães is the primary beneficiary but many others scored.
+**Status:** ✅ Built and live — 5 of 10 photos in place, 5 placeholders remaining  
+**Photos:** `client/public/arsenal-quiz/corners/` (⚠️ must be in `client/public/`, not `public/`)
 
-### Corner Goals Research (from research agent, May 2026)
+**Current question list (live in code):**
 
-Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 2022-23 they've scored 50+ from corners — at least 11 more than any other team. Nicolas Jover (set-piece coach, from Man City) reportedly gets a bonus per Arsenal corner goal.
+| Q | Scorer | Opponent | Date | Photo |
+|---|--------|----------|------|-------|
+| 1 | Martín Zubimendi | Nottingham Forest | 13 Sep 2025 | ✅ `01-zubimendi-forest-2025.jpg` |
+| 2 | Kai Havertz | Burnley | 18 May 2026 | ✅ `02-havertz-burnley-2024.jpg` |
+| 3 | Gabriel Magalhães | Newcastle (away) | 28 Sep 2025 | ✅ `03-gabriel-newcastle-2025.jpg` |
+| 4 | Oleksandr Zinchenko | Burnley | 11 Nov 2023 | ✅ `04-zinchenko-burnley-2023.jpg` |
+| 5 | Jurrien Timber | Chelsea | 1 Mar 2026 | ✅ `05-timber-chelsea-2026.jpg` |
+| 6 | TBD | — | — | ❌ placeholder |
+| 7 | TBD | — | — | ❌ placeholder |
+| 8 | TBD | — | — | ❌ placeholder |
+| 9 | TBD | — | — | ❌ placeholder |
+| 10 | Eberechi Eze | Newcastle | Apr 2026 | ✅ `10-eze-newcastle-2026.jpg` |
 
-**10 best photo moments for the quiz (pick these 10):**
+**Remaining candidates for Q6–Q9:**
+- Gabriel vs Chelsea (away) — Nov 2022
+- Trossard vs Everton — Sep 2023 (short corner, most viral)
+- Havertz vs Tottenham (away) — Apr 2024 (NLD, Arteta's 100th PL win)
+- Gabriel vs Man City (away) — Sep 2024 (10 men, Jover celebration)
+- Gabriel vs Tottenham (home) — Sep 2024 (1-0 NLD winner)
+- Timber vs Man Utd (home) — Dec 2024 (near-post flick)
+- Saliba vs Chelsea (home) — Mar 2026 (record-equalling 15th)
 
-| # | Scorer | Opponent | Date | Key detail | Source |
-|---|--------|----------|------|-----------|--------|
-| 1 | Gabriel | Chelsea (Stamford Bridge) | 6 Nov 2022 | Saka inswinger, Gabriel poked through crowd; 1-0 win in title race | Sky Sports |
-| 2 | Trossard | Everton | 17 Sep 2023 | Short corner switch — Saka to Trossard, first-time shot off post. Most viral corner moment | [Sky Sports](https://www.skysports.com/football/news/11095/12961166/) |
-| 3 | Zinchenko | Burnley | 11 Nov 2023 | Acrobatic scissor volley after corner hit bar. Won Arsenal Goal of Month | various |
-| 4 | Havertz | Tottenham | 28 Apr 2024 | Ben White barged Vicario; Rice delivery; part of 3-2 NLD win (Arteta's 100th PL win) | [Arsenal.com](https://www.arsenal.com/fixture/arsenal/2024-Apr-28/tottenham-hotspur-2-3-arsenal-match-report) |
-| 5 | Gabriel | Man City (Etihad) | 22 Sep 2024 | Header while Arsenal down to 10 men; Nicolas Jover's ecstatic celebration widely shared | [Tribuna](https://tribuna.com/en/news/arsenal-2024-09-22-spotted-nicolas-jovers-reaction-to-gabriel-scoring-from-corner/) |
-| 6 | Gabriel | Tottenham | 15 Sep 2024 | 64th min header; sole goal in 1-0 NLD win | [Sky Sports](https://www.skysports.com/football/news/12309/13213070/) |
-| 7 | Timber | Man Utd | 4 Dec 2024 | Near-post flick from Rice corner; 2-0 win | [Sky Sports](https://www.skysports.com/football/news/11661/13265256/) |
-| 8 | Gabriel | Newcastle | 28 Sep 2025 | 96th-minute winner header; comeback from 1 down | [Sky Sports](https://www.skysports.com/football/news/12040/13438480/) |
-| 9 | Saliba + Timber | Chelsea | 1 Mar 2026 | Both scored from corners in same match as Arsenal equalled then broke record | [Sky Sports](https://www.skysports.com/football/news/11095/13512600/) |
-| 10 | Eze | Newcastle | ~Apr 2026 | Short corner routine; record-breaking 17th corner goal of the season | PL.com |
-
-**Records:**
-- 2023-24: 16 corner goals = joint PL record (matched Oldham 1992-93, WBA 2016-17)
-- 2025-26: **17 corner goals = new all-time PL record**
-- Ødegaard used a subtle hand signal to indicate which routine
-- Gabriel's technique: always starts outside box, sprints late; almost all delivered by Saka
-
-**TODO:** User to source and compress photos for each of the 10 above → `public/arsenal-quiz/corners/`
+**Key context:** Nicolas Jover (set-piece coach, from Man City) designed the routines. Arsenal broke the all-time PL record with 17 corner goals in 2025-26 (previous record: 16, shared by Oldham 1992-93, WBA 2016-17, Arsenal 2023-24).
 
 ---
 
@@ -235,7 +233,7 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 **Subtitle:** "From the full list of Arsenal players under Arteta — select the top 10 PL goalscorers"  
 **Format:** Show all ~68 Arsenal PL players under Arteta. Player taps/clicks to select exactly 10. Submit when done.  
 **Points:** 10 per correct player in the top 10 (100 max), 0 per wrong selection  
-**Status:** ✅ Data ready (`arteta-arsenal-stats.json`)
+**Status:** ✅ Built and live
 
 **The correct answer (from official PL API, all 7 Arteta seasons):**
 | Rank | Player | PL Goals |
@@ -261,7 +259,7 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 **Subtitle:** "From the full list — select the top 10 PL assisters under Arteta"  
 **Format:** Same mechanic as Round 6 but for assists  
 **Points:** 10 per correct player in the top 10  
-**Status:** ✅ Data ready (`arteta-arsenal-stats.json`)
+**Status:** ✅ Built and live
 
 **The correct answer:**
 | Rank | Player | PL Assists |
@@ -323,7 +321,7 @@ Arsenal set a new all-time PL record in 2025-26 with **17 corner goals**. Since 
 **Subtitle:** "How well do you know the Arteta era?"  
 **Format:** Show match date, venue, context, and starting XIs for both teams. Player picks the correct final score from 4 options.  
 **Points:** 10 per correct score  
-**Status:** ⏳ 10 games confirmed and researched — needs building  
+**Status:** ✅ Built and live  
 **Tone:** Pro-Arsenal throughout. Celebratory context. Careful not to say "running away with it" in seasons Arsenal didn't win.
 
 **⚠️ Correction:** The Man City game in Sep 2024 was **2-2** (not 2-1 as previously noted in this doc). Arsenal led 2-1 with 10 men before Stones equalized in the 98th minute.  
@@ -443,7 +441,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 
 ---
 
-## Session State (as of May 23 2026)
+## Session State (as of May 24 2026)
 
 ### What's built and live
 - ✅ Full shell: intro, between-rounds, results
