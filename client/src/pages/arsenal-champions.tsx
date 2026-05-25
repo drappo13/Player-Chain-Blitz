@@ -2346,12 +2346,12 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
     stat: "PL appearances under Arteta",
     options: [
       { name: "Fábio Vieira", value: 33 },
-      { name: "Eberechi Eze", value: 31 },
-      { name: "Lucas Torreira", value: 29 },
-      { name: "Sead Kolasinac", value: 29 },
+      { name: "Eberechi Eze", value: 32 },
+      { name: "Ainsley Maitland-Niles", value: 30 },
+      { name: "Willian", value: 25 },
     ],
     correct: "Fábio Vieira",
-    reveal: "Vieira played 33 PL games across 2022-24 before heading back to Porto. Eze feels like he's been everywhere this season but only joined in summer 2025, he'd need another year to catch up.",
+    reveal: "Vieira: 33 PL appearances across 2022-24 before heading back to Porto. Eze close behind on 32 from one title-winning season. Maitland-Niles 30, Willian 25, both cult-era cameos.",
   },
   {
     stat: "PL goals in a single season under Arteta",
@@ -2367,24 +2367,24 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
   {
     stat: "PL yellow cards under Arteta",
     options: [
-      { name: "Bukayo Saka", value: 28 },
+      { name: "Bukayo Saka", value: 26 },
       { name: "Gabriel Magalhães", value: 25 },
       { name: "Thomas Partey", value: 22 },
       { name: "Ben White", value: 18 },
     ],
     correct: "Bukayo Saka",
-    reveal: "Saka: 28 yellows, more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 32, but isn't on the board here.)",
+    reveal: "Saka: 26 yellows, more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 28, but isn't on the board here.)",
   },
   {
     stat: "PL goals under Arteta",
     options: [
       { name: "Kai Havertz", value: 24 },
-      { name: "Gabriel Jesus", value: 20 },
+      { name: "Gabriel Jesus", value: 21 },
       { name: "Gabriel Magalhães", value: 20 },
       { name: "Eddie Nketiah", value: 18 },
     ],
     correct: "Kai Havertz",
-    reveal: "Havertz: 24 goals. The 'flop' label aged badly, he's outscored every centre-forward signed under Arteta. Gabriel the defender tied with Jesus the striker on 20.",
+    reveal: "Havertz: 24 goals. The 'flop' label aged badly, he's outscored every centre-forward signed under Arteta. Jesus on 21, Gabriel the defender just behind on 20.",
   },
   {
     stat: "PL assists under Arteta",
@@ -2425,7 +2425,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Mikel Merino", value: 7 },
       { name: "Kai Havertz", value: 5 },
       { name: "William Saliba", value: 4 },
-      { name: "Alexandre Lacazette", value: 3 },
+      { name: "Alexandre Lacazette", value: 2 },
     ],
     correct: "Mikel Merino",
     reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13, the corner king, but isn't on the board.)",
@@ -2444,13 +2444,13 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
   {
     stat: "PL minutes played under Arteta (the cameo edition)",
     options: [
+      { name: "Marquinhos", value: 1, unit: "min" },
       { name: "Folarin Balogun", value: 70, unit: "min" },
       { name: "Kepa Arrizabalaga", value: 90, unit: "min" },
       { name: "Christian Nørgaard", value: 101, unit: "min" },
-      { name: "Henrikh Mkhitaryan", value: 111, unit: "min" },
     ],
-    correct: "Henrikh Mkhitaryan",
-    reveal: "Mkhitaryan 'wins' with 111 PL minutes, about one Carabao Cup round of football. He was an Arsenal player for four seasons but Arteta barely used him. Every player here played for Arsenal in the Arteta era, and not one of them broke two hours.",
+    correct: "Christian Nørgaard",
+    reveal: "Nørgaard 'wins' with 101 PL minutes, barely more than a single game. The Denmark international signed on summer 2025 deadline day but never broke into the title-winning XI. Marquinhos famously got 1 PL minute before being shipped to Norwich. Every player here played for Arsenal under Arteta, none broke two hours.",
   },
 ];
 
