@@ -2482,7 +2482,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Fábio Vieira", value: 1 },
     ],
     correct: "Nicolas Pépé",
-    reveal: "Pépé: 2 PL penalties. Even Vieira got one, vs Brighton, May 2023. Saka would run away with this 12-0 if he were on the board, but here Pépé is the cult answer.",
+    reveal: "Saka leads the era with 12. Havertz scored only his first confidence-boosting goal from the spot.",
   },
   {
     stat: "PL goals from outside the box under Arteta",
