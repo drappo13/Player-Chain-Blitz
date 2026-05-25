@@ -5,14 +5,12 @@ import { getAnalytics, isSupported, logEvent, type Analytics } from "firebase/an
 const firebaseConfig = {
   apiKey: "AIzaSyDgg5sd6bAQAMo2ENtdZJV-lP6ytduPbj4",
   authDomain: "drapk-in.firebaseapp.com",
+  databaseURL: "https://drapk-in-default-rtdb.firebaseio.com",
   projectId: "drapk-in",
   storageBucket: "drapk-in.firebasestorage.app",
   messagingSenderId: "262094095705",
   appId: "1:262094095705:web:086cc2a3af9e0cd64c7848",
-  // Paste the measurementId from the Firebase Console here once Analytics is
-  // enabled (Console → Project Settings → Integrations → Google Analytics).
-  // Looks like "G-XXXXXXXXXX". Once present, page_view events start firing.
-  // measurementId: "G-XXXXXXXXXX",
+  measurementId: "G-GNCMCQRCJH",
 };
 
 const app = initializeApp(firebaseConfig);
