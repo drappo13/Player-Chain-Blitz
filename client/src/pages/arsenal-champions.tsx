@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import arsenalStats from "../data/arteta-arsenal-stats.json";
 import { Trophy, ChevronRight, Home, Share2, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
+import { useUser } from "@/lib/user-context";
+import { saveScore } from "@/lib/save-score";
+import { saveQuizPlay } from "@/lib/quiz-plays";
+import { UsernamePicker } from "@/components/username-picker";
+import { LeaderboardTable } from "@/components/leaderboard-table";
+import { useGameLeaderboard } from "@/lib/use-leaderboard";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -2718,16 +2724,48 @@ function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void 
 
 export default function ArsenalChampions() {
   const [, setLocation] = useLocation();
+  const { user } = useUser();
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentRound, setCurrentRound] = useState(0);
   const [roundScores, setRoundScores] = useState<number[]>([]);
   const [copied, setCopied] = useState(false);
   const [devOpen, setDevOpen] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [savedToLeaderboard, setSavedToLeaderboard] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const totalScore = roundScores.reduce((a, b) => a + b, 0);
   const activeRound = ROUNDS[currentRound];
 
-  function startQuiz() { setCurrentRound(0); setRoundScores([]); setPhase("between"); }
+  const { entries: lbEntries, loading: lbLoading } = useGameLeaderboard(
+    "arsenal-champions-2026",
+    "alltime",
+    10,
+    600, // small delay so a just-saved score lands before we fetch
+  );
+
+  // Save every play anonymously when the user reaches results, and auto-save to
+  // the leaderboard if a username is present. Anonymous players can opt in via
+  // the "See where you rank" CTA which triggers the standard signup flow — that
+  // signup writes a user, which this effect picks up and auto-submits the score.
+  useEffect(() => {
+    if (phase !== "results") return;
+    if (savedToLeaderboard) return;
+    if (totalScore <= 0) {
+      // Still record the play, but don't push a 0 to the leaderboard
+      saveQuizPlay("arsenal-champions-2026", totalScore, user?.username ?? null);
+      return;
+    }
+    saveQuizPlay("arsenal-champions-2026", totalScore, user?.username ?? null);
+    if (user?.username) {
+      saveScore(user.username, "arsenal-champions-2026", totalScore);
+      setSavedToLeaderboard(true);
+      setShowLeaderboard(true);
+      setShowSignup(false);
+    }
+  }, [phase, user, totalScore, savedToLeaderboard]);
+
+  function startQuiz() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setPhase("between"); }
   function startRound() { setPhase("playing"); }
   function handleRoundComplete(score: number) {
     // score is 0–10 per round (1pt per question × 10 questions)
@@ -2737,7 +2775,7 @@ export default function ArsenalChampions() {
     if (nextIdx >= ROUNDS.length) { setPhase("results"); }
     else { setCurrentRound(nextIdx); setPhase("between"); }
   }
-  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setPhase("intro"); }
+  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setPhase("intro"); }
   function handleShare() {
     navigator.clipboard.writeText(
       `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`
@@ -3153,6 +3191,57 @@ export default function ArsenalChampions() {
                     ))}
                   </motion.div>
 
+                  {/* Leaderboard CTA / display */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                    className="w-full mb-6"
+                  >
+                    {savedToLeaderboard ? (
+                      <div className="rounded-xl p-3 mb-3 flex items-center gap-3" style={{ background: "rgba(200,150,12,0.08)", border: "1px solid rgba(200,150,12,0.3)" }}>
+                        <span className="text-xl">{user?.avatar ?? "🏆"}</span>
+                        <div className="flex-1 text-left">
+                          <div className="text-xs font-bold" style={{ color: GOLD_LIGHT }}>Submitted to the leaderboard</div>
+                          <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>Playing as @{user?.username}</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <GoldButton
+                        onClick={() => setShowSignup(true)}
+                        className="py-3 w-full flex items-center justify-center gap-2 text-base mb-3"
+                      >
+                        <Trophy className="w-4 h-4" />
+                        <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.05rem" }}>
+                          See Where You Rank
+                        </span>
+                      </GoldButton>
+                    )}
+
+                    {showLeaderboard && (
+                      <div
+                        className="rounded-xl p-4"
+                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      >
+                        <div className="text-[10px] font-bold tracking-widest uppercase mb-3 text-left" style={{ color: GOLD }}>
+                          All-Time Leaderboard
+                        </div>
+                        <LeaderboardTable
+                          entries={lbEntries}
+                          loading={lbLoading}
+                          period="alltime"
+                          onPeriodChange={() => {}}
+                          currentUser={user?.username}
+                          accentBg="bg-yellow-500/10 border-yellow-500/40"
+                          scoreLabel="Score"
+                          formatScore={(s) => `${s}/100`}
+                          mini
+                          max={10}
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+
                   {/* Actions */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -3177,6 +3266,9 @@ export default function ArsenalChampions() {
                   </motion.div>
                 </motion.div>
               )}
+
+              {/* Signup overlay — appears only when user opts into leaderboard */}
+              {showSignup && !user && <UsernamePicker />}
 
             </AnimatePresence>
           </div>

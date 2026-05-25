@@ -2,7 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
 import { UserBadge } from "@/components/user-badge";
@@ -126,14 +126,20 @@ function Router() {
   );
 }
 
+// Routes where anonymous play is allowed — UsernamePicker is opt-in instead of forced.
+const ANON_ALLOWED_ROUTES = ["/arsenal-pl-champions-2026"];
+
 function AppContent() {
   const { user, loading } = useUser();
+  const [location] = useLocation();
 
   if (loading) return null;
 
+  const allowAnonymous = ANON_ALLOWED_ROUTES.includes(location);
+
   return (
     <>
-      {!user && <UsernamePicker />}
+      {!user && !allowAnonymous && <UsernamePicker />}
       <UserBadge />
       <Router />
     </>

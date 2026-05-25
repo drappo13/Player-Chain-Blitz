@@ -8,7 +8,8 @@ export type GameSlug =
   | "gridlock"
   | "overlap"
   | "clubladder"
-  | "griddle";
+  | "griddle"
+  | "arsenal-champions-2026";
 
 export async function saveScore(
   username: string | undefined,

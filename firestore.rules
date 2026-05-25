@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Firestore security rules for drapk.in
+//
+// To deploy:
+//   1) firebase login           (one-time, opens a browser)
+//   2) firebase init firestore  (one-time, point at this rules file; you can decline indexes)
+//   3) firebase deploy --only firestore:rules
+//
+// Or paste the contents of this file into the Rules editor at
+// https://console.firebase.google.com → Firestore Database → Rules tab → Publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users — username-only auth, no Firebase Auth required
+    match /users/{username} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['username', 'avatar', 'createdAt'])
+                    && request.resource.data.username is string
+                    && request.resource.data.username.size() >= 2
+                    && request.resource.data.username.size() <= 30
+                    && request.resource.data.avatar is string
+                    && request.resource.data.avatar.size() <= 8;
+      allow update, delete: if false;
+    }
+
+    // Per-game scores — used by every game's leaderboard (incl. Arsenal quiz)
+    match /scores/{doc} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['username', 'game', 'score', 'timestamp'])
+                    && request.resource.data.username is string
+                    && request.resource.data.username.size() >= 1
+                    && request.resource.data.username.size() <= 30
+                    && request.resource.data.game in [
+                         'goalchain','slamchain','targetman','gridlock',
+                         'overlap','clubladder','griddle','arsenal-champions-2026'
+                       ]
+                    && request.resource.data.score is int
+                    && request.resource.data.score >= 0
+                    && request.resource.data.score <= 100000;
+      allow update, delete: if false;
+    }
+
+    // Daily-game scores (Griddle and other daily modes)
+    match /daily-scores/{doc} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['username', 'game', 'score', 'date', 'timestamp'])
+                    && request.resource.data.username is string
+                    && request.resource.data.game is string
+                    && request.resource.data.score is int
+                    && request.resource.data.score >= 0
+                    && request.resource.data.score <= 100000;
+      allow update, delete: if false;
+    }
+
+    // Anonymous quiz-play tracking. Every completed Arsenal quiz writes a record
+    // here, with a localStorage-generated anonId. Used for analytics only; the
+    // client never reads this collection back.
+    match /quiz_plays/{doc} {
+      allow read: if false;
+      allow create: if request.resource.data.keys().hasOnly(['anonId', 'gameId', 'score', 'username', 'completedAt'])
+                    && request.resource.data.anonId is string
+                    && request.resource.data.anonId.size() <= 64
+                    && request.resource.data.gameId is string
+                    && request.resource.data.score is int
+                    && request.resource.data.score >= 0
+                    && request.resource.data.score <= 100
+                    && (request.resource.data.username == null
+                        || (request.resource.data.username is string
+                            && request.resource.data.username.size() <= 30));
+      allow update, delete: if false;
+    }
+  }
+}
