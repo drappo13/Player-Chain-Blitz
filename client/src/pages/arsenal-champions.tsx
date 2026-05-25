@@ -2493,7 +2493,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Granit Xhaka", value: 2 },
     ],
     correct: "Emile Smith Rowe",
-    reveal: "ESR: 4 long-range goals, more than Martinelli, Trossard, or Xhaka. (Ødegaard's 8 is the era-wide leader, but he's not on the board here.)",
+    reveal: "ESR: 4 long-range goals, more than Martinelli, Trossard, or Xhaka. (Ødegaard's 8 is the era-wide leader.)",
   },
   {
     stat: "PL headed goals under Arteta",
