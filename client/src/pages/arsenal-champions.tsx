@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { useUser } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
 import { saveQuizPlay } from "@/lib/quiz-plays";
+import { trackEvent } from "@/lib/firebase";
 import { UsernamePicker } from "@/components/username-picker";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { useGameLeaderboard } from "@/lib/use-leaderboard";
@@ -2935,15 +2936,29 @@ export default function ArsenalChampions() {
     })();
   }, [phase, user, totalScore, savedToLeaderboard, refreshLeaderboard]);
 
-  function startQuiz() { setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("between"); }
-  function startRound() { setCurrentRoundProgress(0); setPhase("playing"); }
+  function startQuiz() {
+    trackEvent("arsenal_quiz_started");
+    setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0);
+    setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false);
+    setPhase("between");
+  }
+  function startRound() {
+    const r = ROUNDS[currentRound];
+    trackEvent("arsenal_round_started", { round_number: r.number, round_name: r.name });
+    setCurrentRoundProgress(0);
+    setPhase("playing");
+  }
   function handleRoundComplete(score: number) {
     // score is 0–10 per round (1pt per question × 10 questions)
+    const r = ROUNDS[currentRound];
+    trackEvent("arsenal_round_completed", { round_number: r.number, round_name: r.name, score });
     setCurrentRoundProgress(0);
     const next = [...roundScores, score];
     setRoundScores(next);
     const nextIdx = currentRound + 1;
     if (nextIdx >= ROUNDS.length) {
+      const total = next.reduce((a, b) => a + b, 0);
+      trackEvent("arsenal_quiz_completed", { total_score: total });
       // Final round: show CHAMPIONS celebration briefly before results
       setShowChampionsCloser(true);
       setTimeout(() => {

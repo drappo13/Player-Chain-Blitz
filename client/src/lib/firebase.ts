@@ -35,3 +35,9 @@ export function trackPageView(path: string, title?: string) {
     page_location: window.location.href,
   });
 }
+
+/** Log a custom GA event. Safe to call anywhere — no-ops if Analytics isn't ready. */
+export function trackEvent(name: string, params?: Record<string, string | number | boolean>) {
+  if (!analytics) return;
+  logEvent(analytics, name as Parameters<typeof logEvent>[1], params);
+}
