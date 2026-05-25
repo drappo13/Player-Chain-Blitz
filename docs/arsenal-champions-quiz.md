@@ -3,7 +3,7 @@
 **Route:** `/arsenal-pl-champions-2026`  
 **File:** `client/src/pages/arsenal-champions.tsx`  
 **Data:** `client/src/data/arteta-arsenal-stats.json` (Arteta-era PL stats, from official PL API)  
-**Status:** ✅ All 10 rounds built and live — pending photos (Rounds 5 & 8) and stat/quote verification
+**Status:** ✅ All 10 rounds built and live — pending photos (Round 7 Corners) and stat/quote verification
 
 ---
 
@@ -13,7 +13,7 @@ A 10-round commemorative quiz celebrating Arsenal's 2025-26 Premier League title
 
 **Audience:** Arsenal fans  
 **Vibe:** Arsenal red + gold, dark background, premium and celebratory  
-**Format:** 10 sequential rounds, 10 questions each, 100 points per round, 1000 total  
+**Format:** 10 sequential rounds, 10 questions each, 10 points per round, 100 total  
 **Timer:** No timer — unlimited time per question  
 **Scoring:** 1 point per correct answer. 10 questions per round = 10pts/round. 10 rounds = **100 total**. No penalty for wrong answers.  
 **Leaderboard:** All-time only (not daily) — use existing Firebase `scores` collection with a new `gameId: "arsenal-champions-2026"` field
@@ -44,7 +44,28 @@ Intro → Round 1 → Between → Round 2 → Between → ... → Round 10 → R
 
 ---
 
-## The 10 Rounds
+## Final Round Order (live game, updated May 2026)
+
+The live `ROUNDS` array in `client/src/pages/arsenal-champions.tsx` ships rounds in this order. The per-round detail sections below preserve original implementation numbering for git history — use this table as the source of truth for the live sequence.
+
+| Live # | Round name | Original # (section below) | Mechanic |
+|--------|------------|-----------------------------|----------|
+| 1 | Who Doubted Us? | R2 | 4-option MC (quotes → who said it) |
+| 2 | Who Has Most? | R8 | 4-option MC (stat → who leads) |
+| 3 | Arteta's First XI *(renamed from "Build the XI")* | R9 | Position-by-position XI builder |
+| 4 | Top Scorers | R6 | Select top 10 from full pool |
+| 5 | Trust the Process | R1 | ▲▼ score guessing (2020/21) |
+| 6 | Arteta Speaks | R3 | 4-option MC (Arteta quotes → who about) |
+| 7 | Corner Kings | R5 | 4-option MC (corner photos → scorer) |
+| 8 | Guess the Score | R10 | ▲▼ score guessing (10 landmark games) |
+| 9 | The Assist Masters | R7 | Select top 10 from full pool |
+| 10 | The Season That Won It | R4 | 4-option MC (25/26 stats) |
+
+**Ordering rationale:** Opens punchy with pundit doubters (warm-up, instantly fun). Heavier knowledge tests middle (XI builder, top scorers, score-guessing). Ends on celebratory 25/26 stats — the actual title-winning numbers as the closer.
+
+---
+
+## The 10 Rounds *(detail sections, original implementation order)*
 
 ### Round 1 — Trust the Process
 **Subtitle:** "How bad did it get?"  
@@ -325,7 +346,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 
 ---
 
-### Round 9 — Build the XI
+### Round 9 — Arteta's First XI *(originally "Build the XI")*
 **Subtitle:** "Arteta's very first Arsenal starting XI. Boxing Day, Bournemouth, 2019. Name all ten outfield starters."  
 **Format:** Pool of ~25 players (from 2019/20 squad). Player taps to assign across 3 screens: Defenders (4) → Midfield (3) → Attackers (3). GK (Leno) excluded. Players committed on a previous screen are dimmed.  
 **Points:** 10 per correctly placed player  
@@ -447,8 +468,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 ## Assets Needed (Photos)
 
 All photos go in `public/arsenal-quiz/` with subfolders:
-- `corners/` — 10 corner goal photos (Round 5)
-- `memory-lane/` — 10 historical moment photos (Round 8)
+- `corners/` — 10 corner goal photos (live Round 7 — Corner Kings)
 
 **Photo specs:** Compress to <200KB each. JPEG preferred. Repo size impact: ~4MB total, fine for GitHub Pages.
 
@@ -476,10 +496,10 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - ✅ **Round 6** — Top Scorers: full player pool from arteta-arsenal-stats.json, select-10 mechanic, gold/red/faded reveal.
 - ✅ **Round 7** — Assist Masters: same mechanic as Round 6, assist data.
 - ✅ **Round 8** — Who Has Most?: 4-option MC, 10 stat-comparison questions across the Arteta era. All 10 confirmed PL API data. Q10 is a cult "cameo edition" twist — Balogun/Kepa/Nørgaard/Mkhitaryan, all four players ever to register Arsenal PL minutes under Arteta yet finish sub-2 hours. Options shuffle on mount; all 4 values revealed inline after selection.
-- ✅ **Round 9** — Build the XI: **Arteta's debut XI, Boxing Day 2019 vs Bournemouth** (changed from Burnley title-clincher). 3 screens: Defenders → Midfield → Attackers. Pool = 2019/20 squad, recent signings excluded.
+- ✅ **Round 9** — Arteta's First XI *(renamed from "Build the XI")*: **Arteta's debut XI, Boxing Day 2019 vs Bournemouth**. 3 screens: Defenders → Midfield → Attackers. Pool = 2019/20 squad, recent signings excluded. Results header fixed (was incorrectly showing "Burnley 2026").
 - ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal.
 
-### Round 9 — Arteta Debut XI (confirmed)
+### Round 9 (originally) — Arteta's First XI — debut XI data (confirmed)
 **Match:** Bournemouth 1-1 Arsenal, Boxing Day 26 Dec 2019  
 **Formation:** 4-3-3 (GK Leno excluded from quiz)  
 - **Defenders (4):** Maitland-Niles, Sokratis, David Luiz, Saka (at LB, aged 18)  
@@ -494,17 +514,17 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - Round 1 uses `homeTeam/awayTeam/homeScore/awayScore` — ▲▼ pickers, correct on submit
 - Rounds 2 + 3: `useState(() => quotes.map(q => ({...q, options: shuffle})))` for stable per-session shuffle
 
-### Round build status
-1. ✅ Round 1 — Trust the Process
-2. ✅ Round 2 — Who Doubted Us?
-3. ✅ Round 3 — Arteta Speaks ⚠️ verify quotes
-4. ✅ Round 4 — The Season That Won It ⚠️ verify stats
-5. ✅ Round 5 — Corner Kings ⚠️ needs photos
-6. ✅ Round 6 — Top Scorers
-7. ✅ Round 7 — Assist Masters
-8. ✅ Round 8 — Who Has Most?
-9. ✅ Round 9 — Build the XI (Arteta debut)
-10. ✅ Round 10 — Guess the Score
+### Round build status *(in live game order)*
+1. ✅ Who Doubted Us?
+2. ✅ Who Has Most?
+3. ✅ Arteta's First XI *(renamed from Build the XI)*
+4. ✅ Top Scorers
+5. ✅ Trust the Process
+6. ✅ Arteta Speaks ⚠️ verify quotes
+7. ✅ Corner Kings ⚠️ needs photos
+8. ✅ Guess the Score
+9. ✅ The Assist Masters
+10. ✅ The Season That Won It ⚠️ verify stats
 
 ### Corrections (important)
 - Sep 2024 Man City game was **2-2**, not 2-1 (Stones 98th min equaliser)
@@ -513,15 +533,17 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 
 ## Open Questions / TODOs
 
-- [x] **Scoring format:** No timer. +10 per correct, 0 wrong. 100 total (10 per round).
-- [x] **Round 3 (Arteta Speaks):** Built and live. ⚠️ User to verify quotes before sharing.
-- [ ] **Round 4 (Season stats):** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources.
-- [ ] **Round 5 (Corner Kings):** User to source 10 photos → `public/arsenal-quiz/corners/`
-- [x] **Round 8 (Who Has Most?):** All 10 questions finalised with official PL API data
-- [ ] **Round 10 (Guess the Score):** Verify all starting XIs and match details.
+*(Round numbers below = live game order, per the Final Round Order table at top.)*
+
+- [x] **Scoring format:** No timer. +1 per correct, 0 wrong. 100 total (10 per round).
+- [x] **Live R2 — Who Has Most?:** All 10 questions finalised with official PL API data
+- [ ] **Live R6 — Arteta Speaks:** Verify quotes before sharing
+- [ ] **Live R7 — Corner Kings:** User to source 10 photos → `public/arsenal-quiz/corners/`
+- [ ] **Live R8 — Guess the Score:** Verify all starting XIs and match details
+- [ ] **Live R10 — The Season That Won It:** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources
+- [ ] **Live R1 — Who Doubted Us?:** Check all source URLs before going live
 - [ ] **Firebase leaderboard:** Add `arsenal-champions-2026` game to Firebase rules + leaderboard page
 - [ ] **Home page card:** Add to drapk.in home page with Arsenal red/gold branding
-- [ ] **Quotes verification:** User to check all source URLs in Round 2 before going live
 
 ---
 

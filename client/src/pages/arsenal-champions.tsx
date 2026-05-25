@@ -29,63 +29,63 @@ interface RoundDef {
 const ROUNDS: RoundDef[] = [
   {
     number: 1,
-    name: "Trust the Process",
-    emoji: "📉",
-    description: "Guess the scores from Arsenal's 2020/21 horror run — the season that made the rebuild necessary.",
-  },
-  {
-    number: 2,
     name: "Who Doubted Us?",
     emoji: "🗣️",
     description: "Famous pundits, rivals and journalists who wrote Arsenal off. Can you name who said it?",
   },
   {
-    number: 3,
-    name: "Arteta Speaks",
-    emoji: "🎙️",
-    description: "Mikel Arteta spoke glowingly about his players every week. Guess who he was talking about.",
-  },
-  {
-    number: 4,
-    name: "The Season That Won It",
-    emoji: "📊",
-    description: "Stats and facts from Arsenal's title-winning 2025/26 campaign. How closely were you watching?",
-  },
-  {
-    number: 5,
-    name: "Corner Kings",
-    emoji: "🚩",
-    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026 — who got on the end of each one?",
-  },
-  {
-    number: 6,
-    name: "Top Scorers",
-    emoji: "⚽",
-    description: "Select Arsenal's top 10 Premier League scorers under Arteta. Order doesn't matter.",
-  },
-  {
-    number: 7,
-    name: "The Assist Masters",
-    emoji: "🎯",
-    description: "Select Arsenal's top 10 Premier League assisters under Arteta. Who created the most?",
-  },
-  {
-    number: 8,
+    number: 2,
     name: "Who Has Most?",
     emoji: "🏅",
     description: "Four Arteta-era Arsenal players, one stat. Pick whoever leads. Numbers from the official Premier League API.",
   },
   {
-    number: 9,
-    name: "Build the XI",
+    number: 3,
+    name: "Arteta's First XI",
     emoji: "🗺️",
     description: "Arteta's very first Arsenal starting XI. Boxing Day, Bournemouth, 2019. Name all ten outfield starters.",
   },
   {
-    number: 10,
+    number: 4,
+    name: "Top Scorers",
+    emoji: "⚽",
+    description: "Select Arsenal's top 10 Premier League scorers under Arteta. Order doesn't matter.",
+  },
+  {
+    number: 5,
+    name: "Trust the Process",
+    emoji: "📉",
+    description: "Guess the scores from Arsenal's 2020/21 horror run — the season that made the rebuild necessary.",
+  },
+  {
+    number: 6,
+    name: "Arteta Speaks",
+    emoji: "🎙️",
+    description: "Mikel Arteta spoke glowingly about his players every week. Guess who he was talking about.",
+  },
+  {
+    number: 7,
+    name: "Corner Kings",
+    emoji: "🚩",
+    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026 — who got on the end of each one?",
+  },
+  {
+    number: 8,
     name: "Guess the Score",
     emoji: "📋",
     description: "Ten landmark Arteta-era results. Enter the exact final score for each match — no multiple choice.",
+  },
+  {
+    number: 9,
+    name: "The Assist Masters",
+    emoji: "🎯",
+    description: "Select Arsenal's top 10 Premier League assisters under Arteta. Who created the most?",
+  },
+  {
+    number: 10,
+    name: "The Season That Won It",
+    emoji: "📊",
+    description: "Stats and facts from Arsenal's title-winning 2025/26 campaign. How closely were you watching?",
   },
 ];
 
@@ -1959,8 +1959,8 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
 
     return (
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="pb-16">
-        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Build the XI — Results</div>
-        <div className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Arsenal vs Burnley · 18 May 2026</div>
+        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Arteta's First XI — Results</div>
+        <div className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Bournemouth vs Arsenal · 26 Dec 2019</div>
 
         {(["defenders", "midfield", "attackers"] as R9Category[]).map(cat => {
           const correct = ROUND9_CORRECT[cat];
@@ -2033,7 +2033,7 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
       {/* Round header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Build the XI</div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Arteta's First XI</div>
           <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>Arteta's debut · Bournemouth · 26 Dec 2019</div>
         </div>
         <div className="text-right">
@@ -3004,25 +3004,25 @@ export default function ArsenalChampions() {
                   transition={{ duration: 0.2 }}
                 >
                   {currentRound === 0 ? (
-                    <Round1TrustTheProcess onComplete={handleRoundComplete} />
-                  ) : currentRound === 1 ? (
                     <Round2WhoDoubtedUs onComplete={handleRoundComplete} />
-                  ) : currentRound === 2 ? (
-                    <Round3ArtetaSpeaks onComplete={handleRoundComplete} />
-                  ) : currentRound === 3 ? (
-                    <Round4SeasonStats onComplete={handleRoundComplete} />
-                  ) : currentRound === 4 ? (
-                    <Round5CornerKings onComplete={handleRoundComplete} />
-                  ) : currentRound === 5 ? (
-                    <Round6TopScorers onComplete={handleRoundComplete} />
-                  ) : currentRound === 6 ? (
-                    <Round7AssistMasters onComplete={handleRoundComplete} />
-                  ) : currentRound === 7 ? (
+                  ) : currentRound === 1 ? (
                     <Round8WhoHasMost onComplete={handleRoundComplete} />
-                  ) : currentRound === 8 ? (
+                  ) : currentRound === 2 ? (
                     <Round9BuildTheXI onComplete={handleRoundComplete} />
-                  ) : currentRound === 9 ? (
+                  ) : currentRound === 3 ? (
+                    <Round6TopScorers onComplete={handleRoundComplete} />
+                  ) : currentRound === 4 ? (
+                    <Round1TrustTheProcess onComplete={handleRoundComplete} />
+                  ) : currentRound === 5 ? (
+                    <Round3ArtetaSpeaks onComplete={handleRoundComplete} />
+                  ) : currentRound === 6 ? (
+                    <Round5CornerKings onComplete={handleRoundComplete} />
+                  ) : currentRound === 7 ? (
                     <Round10GuessTheScore onComplete={handleRoundComplete} />
+                  ) : currentRound === 8 ? (
+                    <Round7AssistMasters onComplete={handleRoundComplete} />
+                  ) : currentRound === 9 ? (
+                    <Round4SeasonStats onComplete={handleRoundComplete} />
                   ) : (
                     <PlaceholderRound round={activeRound} onComplete={handleRoundComplete} />
                   )}
