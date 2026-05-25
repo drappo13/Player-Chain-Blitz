@@ -2518,7 +2518,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
     reveal: "David Luiz: 3 reds in Arteta's first 18 months, including that accidental brush of knees against Southampton... Lewis-Skelly already has 2 reds as an 18-year-old.",
   },
   {
-    stat: "PL minutes played under Arteta (the cameo edition)",
+    stat: "PL minutes played under Arteta",
     options: [
       { name: "Marquinhos", value: 1, unit: "min" },
       { name: "Folarin Balogun", value: 70, unit: "min" },
