@@ -1688,12 +1688,12 @@ const ROUND5_CORNERS: CornerGoal[] = [
     reveal: "A corner hit the bar and fell to Zinchenko, who volleyed it home acrobatically. Won Arsenal Goal of the Month. A left-back scoring like a forward, pure Jover chaos.",
   },
   {
-    scorer: "Jurrien Timber",
-    opponent: "Chelsea", date: "1 Mar 2026",
-    imagePath: "arsenal-quiz/corners/05-timber-chelsea-2026.jpg",
-    imageHint: "Timber header, Arsenal break all-time PL corner record vs Chelsea, Mar 2026",
-    options: ["Jurrien Timber", "William Saliba", "Gabriel Magalhães", "Riccardo Calafiori"],
-    reveal: "Arsenal's 16th corner goal of the season, equalling the all-time PL record (set by Oldham 92/93, WBA 16/17 and Arsenal themselves in 23/24). The record would fall a few weeks later.",
+    scorer: "Gabriel Magalhães",
+    opponent: "Tottenham (away)", date: "15 Sep 2024",
+    imagePath: "arsenal-quiz/corners/05-gabriel-spurs-2024.jpg",
+    imageHint: "Gabriel header, NLD winner from Saka corner at Tottenham, Sep 2024",
+    options: ["Jurrien Timber", "William Saliba", "Kai Havertz", "Gabriel Magalhães"],
+    reveal: "Gabriel headed in a Saka corner on 64 minutes to win the NLD at Tottenham. Nicolas Jover, the set-piece coach, sprinted down the touchline celebrating, becoming a meme. Arsenal's first away NLD win since 2014.",
   },
   {
     scorer: "Declan Rice",
