@@ -45,7 +45,7 @@ const ROUNDS: RoundDef[] = [
     number: 2,
     name: "Who Has Most?",
     emoji: "🏅",
-    description: "Seven years of Arteta. Four players. One leader per stat. Pick the right Gunner.",
+    description: "Seven years of Arteta in stats. Four players per question. Spot the leader.",
     photo: "arsenal-quiz/gallery/02-most.jpg",
   },
   {
@@ -2937,7 +2937,7 @@ export default function ArsenalChampions() {
         {showChampionsCloser && <ChampionsCloser key="champions-closer" />}
       </AnimatePresence>
 
-      {/* ── INTRO, full-screen vivid red overlay ── */}
+      {/* ── INTRO, photo background + minimal overlay ── */}
       <AnimatePresence>
         {phase === "intro" && (
           <motion.div
@@ -2947,17 +2947,21 @@ export default function ArsenalChampions() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.5 } }}
           >
-            {/* Gold centre glow */}
+            {/* Background photo */}
+            <div className="pointer-events-none absolute inset-0">
+              <img
+                src="/arsenal-quiz/gallery/00-intro-arteta-trophy.jpg"
+                alt=""
+                className="w-full h-full"
+                style={{ objectFit: "cover", objectPosition: "center 30%" }}
+              />
+            </div>
+            {/* Dark + red overlay so text reads */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
-                background: "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(200,150,12,0.25) 0%, transparent 70%)",
+                background: `linear-gradient(180deg, rgba(40,0,0,0.55) 0%, rgba(40,0,0,0.35) 35%, rgba(20,0,0,0.85) 100%), radial-gradient(ellipse 70% 60% at 50% 45%, rgba(200,150,12,0.18) 0%, transparent 70%)`,
               }}
-            />
-            {/* Bottom vignette */}
-            <div
-              className="pointer-events-none absolute bottom-0 left-0 right-0 h-48"
-              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4), transparent)" }}
             />
 
             <GoldSparkles />
@@ -2965,105 +2969,88 @@ export default function ArsenalChampions() {
             {/* Home link */}
             <button
               onClick={() => setLocation("/")}
-              className="absolute top-5 left-4 z-10 outline-none focus:outline-none text-white/60 hover:text-white transition-colors"
+              className="absolute top-5 left-4 z-10 outline-none focus:outline-none text-white/70 hover:text-white transition-colors"
             >
               <Home className="w-4 h-4" />
             </button>
 
-            <div className="relative z-10 flex flex-col items-center text-center px-4 pt-14 pb-16 min-h-screen justify-center">
-
-              {/* Crown */}
-              <motion.span
-                initial={{ scale: 0, rotate: -15 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 160, damping: 11, delay: 0.15 }}
-                className="text-3xl leading-none mb-3"
-              >
-                👑
-              </motion.span>
-
-              {/* Hero photo with pulsing gold glow */}
-              <motion.div
-                initial={{ scale: 0.85, opacity: 0 }}
-                animate={{
-                  scale: [0.85, 1.02, 1],
-                  opacity: 1,
-                  boxShadow: [
-                    "0 0 30px rgba(200,150,12,0.35), 0 0 60px rgba(200,150,12,0.15)",
-                    "0 0 60px rgba(200,150,12,0.7), 0 0 120px rgba(200,150,12,0.3)",
-                    "0 0 30px rgba(200,150,12,0.35), 0 0 60px rgba(200,150,12,0.15)",
-                  ],
-                }}
-                transition={{
-                  scale: { type: "spring", stiffness: 110, damping: 12, delay: 0.2 },
-                  opacity: { duration: 0.6, delay: 0.2 },
-                  boxShadow: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
-                }}
-                className="mb-6 rounded-2xl overflow-hidden"
-                style={{
-                  width: "min(280px, 70vw)",
-                  border: `2px solid ${GOLD}66`,
-                }}
-              >
-                <img
-                  src="/arsenal-quiz/gallery/00-intro-arteta-trophy.jpg"
-                  alt="Arteta lifting the Premier League trophy"
-                  className="w-full block"
-                  style={{ aspectRatio: "4/5", objectFit: "cover", objectPosition: "center top" }}
-                />
-              </motion.div>
+            <div className="relative z-10 flex flex-col items-center text-center px-4 pt-12 pb-8 min-h-screen justify-center">
 
               {/* Title block */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-                className="mb-2"
+                transition={{ delay: 0.2, duration: 0.45 }}
+                className="mb-7"
               >
                 {/* ARSENAL */}
-                <div
-                  className="text-6xl sm:text-7xl text-white leading-none"
-                  style={{ fontFamily: BEBAS, letterSpacing: "0.06em", textShadow: "0 2px 16px rgba(0,0,0,0.3)" }}
+                <motion.div
+                  className="text-5xl sm:text-6xl text-white leading-none"
+                  style={{
+                    fontFamily: BEBAS,
+                    letterSpacing: "0.06em",
+                  }}
+                  animate={{
+                    textShadow: [
+                      "0 0 16px rgba(255,255,255,0.35), 0 2px 12px rgba(0,0,0,0.6)",
+                      "0 0 28px rgba(255,255,255,0.6), 0 2px 12px rgba(0,0,0,0.6)",
+                      "0 0 16px rgba(255,255,255,0.35), 0 2px 12px rgba(0,0,0,0.6)",
+                    ],
+                  }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 >
                   ARSENAL
-                </div>
+                </motion.div>
 
                 {/* PREMIER LEAGUE */}
                 <div
-                  className="text-sm sm:text-base font-bold tracking-[0.35em] text-white/85 mt-1 uppercase"
+                  className="text-xs sm:text-sm font-bold tracking-[0.4em] text-white/90 mt-2 uppercase"
+                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}
                 >
                   Premier League
                 </div>
 
-                {/* CHAMPIONS, big gold */}
-                <GoldText
+                {/* CHAMPIONS, big gold, pulsing glow */}
+                <motion.div
                   className="block leading-none mt-1"
                   style={{
                     fontFamily: BEBAS,
-                    fontSize: "clamp(3.5rem, 14vw, 6rem)",
+                    fontSize: "clamp(4rem, 18vw, 7.5rem)",
                     letterSpacing: "0.04em",
-                  } as React.CSSProperties}
+                    background: `linear-gradient(135deg, ${GOLD_LIGHT}, ${GOLD}, ${GOLD_DARK})`,
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                  animate={{
+                    filter: [
+                      "drop-shadow(0 0 14px rgba(200,150,12,0.45)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
+                      "drop-shadow(0 0 34px rgba(245,208,120,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
+                      "drop-shadow(0 0 14px rgba(200,150,12,0.45)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
+                    ],
+                  }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
                 >
                   CHAMPIONS
-                </GoldText>
+                </motion.div>
 
                 {/* 2025-26 */}
                 <div
-                  className="text-3xl sm:text-4xl text-white/90 mt-1"
-                  style={{ fontFamily: BEBAS, letterSpacing: "0.1em" }}
+                  className="text-3xl sm:text-4xl text-white/95 mt-1"
+                  style={{ fontFamily: BEBAS, letterSpacing: "0.1em", textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}
                 >
                   2025–26
                 </div>
 
-                {/* 22 YEARS shimmer */}
+                {/* 22 Years shimmer subtitle */}
                 <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
                   className="mt-3"
                 >
                   <span
-                    className="inline-block text-xs sm:text-sm font-bold tracking-[0.4em] uppercase"
+                    className="inline-block text-xs font-bold tracking-[0.45em] uppercase"
                     style={{
                       background: `linear-gradient(90deg, ${GOLD_LIGHT}, #fff, ${GOLD_LIGHT})`,
                       backgroundSize: "200% 100%",
@@ -3073,56 +3060,29 @@ export default function ArsenalChampions() {
                       animation: "ac-shimmer 4.5s linear infinite",
                     }}
                   >
-                    22 Years In The Making
+                    22 Years
                   </span>
                 </motion.div>
               </motion.div>
 
-              {/* Gold divider */}
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="w-28 h-px my-6"
-                style={{ background: `linear-gradient(90deg, transparent, ${GOLD_LIGHT}, transparent)` }}
-              />
-
-              {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="text-sm text-white/75 max-w-xs leading-relaxed mb-5"
-              >
-                Test your knowledge of Arteta's title-winning journey
-              </motion.p>
-
-              {/* Pill */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.7 }}
-                className="flex items-center gap-2 px-5 py-2 rounded-full mb-8"
-                style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.25)" }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: GOLD }} />
-                <span className="text-xs text-white/85 font-semibold">10 Rounds</span>
-                <span className="text-white/30 text-xs">·</span>
-                <span className="text-xs text-white/85 font-semibold">100 Questions</span>
-              </motion.div>
-
-              {/* CTA */}
+              {/* CTA + meta */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.45 }}
+                className="flex flex-col items-center gap-3"
               >
-                <GoldButton onClick={startQuiz} className="px-14 py-4 text-xl flex items-center gap-2">
-                  <span style={{ fontFamily: BEBAS, letterSpacing: "0.08em", fontSize: "1.25rem" }}>
+                <GoldButton onClick={startQuiz} className="px-12 py-3.5 flex items-center gap-2">
+                  <span style={{ fontFamily: BEBAS, letterSpacing: "0.08em", fontSize: "1.2rem" }}>
                     START QUIZ
                   </span>
                   <ChevronRight className="w-5 h-5" />
                 </GoldButton>
+                <div className="text-[11px] font-semibold tracking-[0.25em] uppercase text-white/70"
+                  style={{ textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
+                >
+                  10 Rounds · 100 Questions
+                </div>
               </motion.div>
 
               {/* ── DEV: jump to round ── */}
