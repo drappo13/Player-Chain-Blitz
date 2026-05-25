@@ -2515,7 +2515,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Myles Lewis-Skelly", value: 2 },
     ],
     correct: "David Luiz",
-    reveal: "David Luiz: 3 reds in Arteta's first 18 months, including a penalty-conceded straight red vs Man City. Lewis-Skelly already has 2 reds as an 18-year-old.",
+    reveal: "David Luiz: 3 reds in Arteta's first 18 months, including that accidental brush of knees against Southampton... Lewis-Skelly already has 2 reds as an 18-year-old.",
   },
   {
     stat: "PL minutes played under Arteta (the cameo edition)",
