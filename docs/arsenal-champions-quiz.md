@@ -564,6 +564,37 @@ Every fact, score, lineup and stat across all 10 rounds was checked against `foo
 
 ---
 
+## Second audit pass — Arteta cutoff correction (May 2026)
+
+Discovered that the original `fetch-arteta-stats.mjs` script aggregated the full 2019/20 PL season as "Arteta era" — but Arteta's first game was Boxing Day 2019 (26 Dec). Arsenal played 18 PL games before that under Emery + Ljungberg. Those minutes/goals/cards were silently inflating the Arteta-era totals.
+
+**Most exposed case:** Round 8 "Who Has Most? — cameo edition" had Henrikh Mkhitaryan as the answer with 111 PL minutes — but every single one of those minutes was *pre-Arteta* (he loaned to Roma in Sept 2019, two months before Arteta took over). Same story for Nacho Monreal, who'd left for Real Sociedad in July 2019.
+
+**Refetched all stats with proper cutoff** (Dec 26 2019). Source: official PL API match events for the 20 post-Arteta 19/20 fixtures, combined with full-season stats for 20/21–25/26.
+
+### Changes applied
+
+| Round / Q | Issue | Fix |
+|-----------|-------|-----|
+| R2 Q1 (apps) | Torreira (29→14) and Kolasinac (29→15) cratered — most apps were pre-Arteta | New candidates: Vieira (33) / Eze (32) / Maitland-Niles (30) / Willian (25) — Vieira still wins |
+| R2 Q3 (yellows) | Saka 28→26, Xhaka era leader 32→28 | Updated reveal numbers |
+| R2 Q4 (goals) | Jesus 20→21 (recent goal), Gabriel still 20 — tie broken | Updated value + reveal |
+| R2 Q8 (headed) | Lacazette 3→2 (one was pre-Arteta) | Updated value |
+| R2 Q10 (cameo) | Mkhitaryan and Monreal both had 0 post-Arteta minutes | Replaced with Marquinhos (1) / Balogun (70) / Kepa (90) / Nørgaard (101) — Nørgaard wins |
+| Player pool (R4/R9) | Mkhitaryan + Monreal incorrectly listed as Arteta-era | Removed from `arteta-arsenal-stats.json` (pool now 66, was 68) |
+
+### Verified unchanged after cutoff
+
+- R2 Q2 (single-season goals), Q5 (assists), Q6 (pens), Q7 (outside box), Q9 (reds) — winners and tallies all still correct
+- R4 Top Scorers and R9 Assist Masters — same 10 players in each top-10 set (order shifts but the round mechanic doesn't care about order)
+- R10 (25/26 stats), R5 (2020/21 scores), R8 (10 landmark games), R3 (Boxing Day XI), R1/R6/R7 — none affected by 19/20 cutoff
+
+### Known approximation
+
+For derived/Opta-coded stats (`att_hd_goal`, `att_obox_goal`, `att_pen_goal`) the PL API doesn't expose per-match values. The 19/20 portion of these uses event-based counting where possible (penalty goals manually corrected: Aubameyang and Pépé each had one post-Arteta pen in 19/20). For headed goals and outside-box goals the 19/20 contribution is taken as ~0 (small approximation, doesn't change any answer).
+
+---
+
 ## Tech Notes
 
 - **File:** `client/src/pages/arsenal-champions.tsx` (one file, self-contained)
