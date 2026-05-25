@@ -1674,7 +1674,7 @@ interface CornerGoal {
 const ROUND5_CORNERS: CornerGoal[] = [
   {
     scorer: "Martín Zubimendi",
-    opponent: "Nottingham Forest", date: "13 Sep 2025",
+    opponent: "Forest (3-0 W)", date: "13 Sep 2025",
     imagePath: "arsenal-quiz/corners/01-zubimendi-forest-2025.jpg",
     imageHint: "Zubimendi volley from corner clearance, Emirates, Sep 2025",
     options: ["Martín Zubimendi", "Declan Rice", "Martin Ødegaard", "Mikel Merino"],
@@ -1682,7 +1682,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Kai Havertz",
-    opponent: "Burnley", date: "18 May 2026",
+    opponent: "Burnley (1-0 W)", date: "18 May 2026",
     imagePath: "arsenal-quiz/corners/02-havertz-burnley-2026.jpg",
     imageHint: "Havertz header, Arsenal 1-0 Burnley, 18 May 2026",
     options: ["Kai Havertz", "Gabriel Magalhães", "William Saliba", "Declan Rice"],
@@ -1690,7 +1690,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Gabriel Magalhães",
-    opponent: "Newcastle (away)", date: "28 Sep 2025",
+    opponent: "Newcastle away (2-1 W)", date: "28 Sep 2025",
     imagePath: "arsenal-quiz/corners/03-gabriel-newcastle-2025.jpg",
     imageHint: "Gabriel 96th-minute winner, St James' Park, Sep 2025",
     options: ["Gabriel Magalhães", "Mikel Merino", "William Saliba", "Jurrien Timber"],
@@ -1698,7 +1698,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Oleksandr Zinchenko",
-    opponent: "Burnley", date: "11 Nov 2023",
+    opponent: "Burnley (3-1 W)", date: "11 Nov 2023",
     imagePath: "arsenal-quiz/corners/04-zinchenko-burnley-2023.jpg",
     imageHint: "Zinchenko scissor volley, Emirates, Nov 2023",
     options: ["Oleksandr Zinchenko", "Thomas Partey", "Declan Rice", "Granit Xhaka"],
@@ -1706,7 +1706,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Gabriel Magalhães",
-    opponent: "Tottenham (away)", date: "15 Sep 2024",
+    opponent: "Tottenham away (1-0 W)", date: "15 Sep 2024",
     imagePath: "arsenal-quiz/corners/05-gabriel-spurs-2024.jpg",
     imageHint: "Gabriel header, NLD winner from Saka corner at Tottenham, Sep 2024",
     options: ["Jurrien Timber", "William Saliba", "Kai Havertz", "Gabriel Magalhães"],
@@ -1714,7 +1714,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Declan Rice",
-    opponent: "Manchester United", date: "3 Sep 2023",
+    opponent: "Man Utd (3-1 W)", date: "3 Sep 2023",
     imagePath: "arsenal-quiz/corners/06-rice-manutd-2023.jpg",
     imageHint: "Rice's 90+6' winner vs Man Utd, Sep 2023",
     options: ["Declan Rice", "Kai Havertz", "Martin Ødegaard", "Gabriel Jesus"],
@@ -1722,7 +1722,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Own Goal",
-    opponent: "Wolves", date: "13 Dec 2025",
+    opponent: "Wolves (2-1 W)", date: "13 Dec 2025",
     imagePath: "arsenal-quiz/corners/07-og-wolves-2025.jpg",
     imageHint: "Corner about to be taken vs Wolves, Dec 2025 (Arsenal 2-1)",
     options: ["Own Goal", "Gabriel Magalhães", "Leandro Trossard", "Viktor Gyökeres"],
@@ -1730,15 +1730,15 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Eddie Nketiah",
-    opponent: "Sheffield United", date: "28 Oct 2023",
+    opponent: "Sheff Utd (5-0 W)", date: "28 Oct 2023",
     imagePath: "arsenal-quiz/corners/08-nketiah-sheffield-2023.jpg",
     imageHint: "Arsenal 5-0 Sheff Utd, Nketiah hat-trick, Oct 2023",
     options: ["Fábio Vieira", "Takehiro Tomiyasu", "Eddie Nketiah", "Ben White"],
-    reveal: "Nketiah's day. The hat-trick (28', 50', 58') in a 5-0 home thrashing of Sheffield United. Vieira added a 4th from the spot, Tomiyasu got the 5th in injury time, but the corner finishes were all Nketiah.",
+    reveal: "Nketiah's day. The hat-trick (28', 50', 58') in a 5-0 home thrashing of Sheffield United. Vieira added a 4th from the spot, Tomiyasu got the 5th in injury time.",
   },
   {
     scorer: "Ben White",
-    opponent: "Chelsea", date: "23 Apr 2024",
+    opponent: "Chelsea (5-0 W)", date: "23 Apr 2024",
     imagePath: "arsenal-quiz/corners/09-white-chelsea-2024.jpg",
     imageHint: "Arsenal 5-0 Chelsea, Ben White brace, Apr 2024",
     options: ["Jakub Kiwior", "Thomas Partey", "Gabriel Martinelli", "Ben White"],
@@ -1746,7 +1746,7 @@ const ROUND5_CORNERS: CornerGoal[] = [
   },
   {
     scorer: "Eberechi Eze",
-    opponent: "Newcastle", date: "Apr 2026",
+    opponent: "Newcastle (1-0 W)", date: "25 Apr 2026",
     imagePath: "arsenal-quiz/corners/10-eze-newcastle-2026.jpg",
     imageHint: "Eze short corner routine, record-breaking 17th corner goal, Apr 2026",
     options: ["Eberechi Eze", "Bukayo Saka", "Kai Havertz", "Gabriel Magalhães"],
