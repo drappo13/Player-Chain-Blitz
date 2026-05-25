@@ -595,6 +595,67 @@ For derived/Opta-coded stats (`att_hd_goal`, `att_obox_goal`, `att_pen_goal`) th
 
 ---
 
+## R3 Arteta's First XI — formation results + position-blind scoring (May 2026)
+
+Old behaviour: each pick was credited only if placed in the right category (defender / midfielder / attacker). So picking Özil as an attacker, when he started in midfield, gave 0 points even though the user had correctly identified him as a starter.
+
+New behaviour:
+- Score = how many of the user's 10 picks appear in the actual XI, regardless of category. Özil-in-the-wrong-row now scores.
+- Results screen redesigned as a 4-3-3 formation board. GK (Leno) sits greyed out and dashed-bordered at the top (he was excluded from the picking phase).
+- Each missed starter shows the user's wrong pick from that category below it (e.g. *missed: David Luiz, you picked: Mustafi*).
+- Wrong picks that don't pair to a missed slot in their category go into an "Other wrong picks" footer chip row.
+- Stale "Burnley 2026" subtitle fixed to "Bournemouth vs Arsenal · 26 Dec 2019".
+
+---
+
+## Anonymous play + opt-in leaderboard (May 2026)
+
+The Arsenal quiz is the first game on drapk.in that does **not** force account creation. App-level change: `/arsenal-pl-champions-2026` is in an `ANON_ALLOWED_ROUTES` list in `App.tsx`, so the global `UsernamePicker` overlay is skipped on that route.
+
+| Behaviour | Logged-in user | Anonymous user |
+|-----------|----------------|----------------|
+| Plays the quiz | ✅ Same as other games | ✅ No signup required |
+| Every play recorded | ✅ Written to `quiz_plays` with `username` set | ✅ Written to `quiz_plays` with `username: null` and a localStorage `anonId` |
+| Leaderboard submission | Auto-submitted to the existing `scores` collection on results screen mount | Hidden behind a "See Where You Rank" CTA. Tapping it opens the standard `UsernamePicker` overlay. After signup the `useEffect` picks up the new user and auto-submits the score, then expands the leaderboard inline. |
+
+New files:
+- `client/src/lib/quiz-plays.ts` — anonymous play tracker, generates a per-browser `pcb-anon-id` in localStorage.
+- `firestore.rules` — repo-tracked rules file.
+- `firebase.json` / `.firebaserc` — config so `firebase deploy --only firestore:rules` works without re-running `firebase init`.
+
+Firestore rules deployed via CLI on 25 May 2026. New `quiz_plays` collection added with `allow read: false` (server-only analytics) and `allow create: true` (anyone can write). Existing rules for `users` / `scores` / `daily-scores` left untouched in their permissive style — `arsenal-champions-2026` works under the existing `scores` rule because game is unconstrained.
+
+`GameSlug` type in `client/src/lib/save-score.ts` gained the new `"arsenal-champions-2026"` member so it ties into the existing leaderboard hook (`useGameLeaderboard`).
+
+---
+
+## Celebratory flair pass (May 2026)
+
+The quiz now feels less like a quiz and more like a celebration. Visual layer added across the journey:
+
+| Surface | What changed |
+|---------|--------------|
+| Intro screen | Static trophy emoji replaced with a **hero photo** (Arteta + trophy from the post-Burnley title-clincher), framed in a pulsing gold glow. Below the existing title block, a shimmering **"22 Years In The Making"** sub-banner using a CSS gradient + `ac-shimmer` keyframe in `index.css`. |
+| Between-rounds screens | Each of the 10 rounds gets a **thematic celebration photo** (`client/public/arsenal-quiz/gallery/01-doubters.jpg` → `10-season.jpg`). The descriptions are also rewritten as punchier one-liner taglines (e.g. R1: "No team had more doubters. Pundits, rivals, neutrals. Put a face to each take."). |
+| Results screen | When the final score exceeds 60 the user gets **falling confetti** (gold + red + white + light-gold) across the viewport. Lighter scores get no confetti by design — fair signal that they didn't quite earn it. |
+| End-of-game closer | After Round 10 completes, before transitioning to the results screen, a **full-screen red CHAMPIONS overlay** holds for ~4 seconds: bouncing trophy, shimmering CHAMPIONS wordmark, "22 Years Later", "2025-26 Premier League", confetti throughout. |
+
+Photo mapping (live round order → file):
+1. Who Doubted Us? → `01-doubters.jpg` (Ødegaard trophy + red confetti)
+2. Who Has Most? → `02-most.jpg` (Saka holding trophy)
+3. Arteta's First XI → `03-xi.jpg` (Arteta thrown in the air by squad)
+4. Top Scorers → `04-scorers.jpg` (Havertz with trophy)
+5. Trust the Process → `05-process.jpg` (squad photo, packed stadium)
+6. Arteta Speaks → `06-arteta.jpg` (full team + Arteta + staff group shot)
+7. Corner Kings → `07-corners.jpg` (Gabriel with trophy, Brazil flag)
+8. Guess the Score → `08-scores.jpg` (Rice lifting trophy, confetti)
+9. The Assist Masters → `09-assists.jpg` (Trossard with trophy held high)
+10. The Season That Won It → `10-season.jpg` (Eze kissing the trophy)
+
+`RoundDef` gained an optional `photo` field. If a future round has no photo, the between-rounds screen falls back to the existing emoji-only design.
+
+---
+
 ## Tech Notes
 
 - **File:** `client/src/pages/arsenal-champions.tsx` (one file, self-contained)
