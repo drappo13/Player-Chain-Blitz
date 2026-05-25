@@ -920,7 +920,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 3, opponentGoals: 1,
     arsenalXI: "Ramsdale; White, Saliba, Gabriel, Zinchenko; Rice, Ødegaard; Saka, Havertz, Martinelli; Nketiah",
     opponentXI: "Onana; Wan-Bissaka, Lindelöf, Martínez, Dalot; Casemiro, Eriksen; Antony, Rashford, Fernandes; Martial",
-    reveal: "Gabriel crouched to let a United player run offside, it went viral. Rice scored his first Arsenal goal on 90+6'. Jesus came off the bench to make it three.",
+    reveal: "Gabriel crouched to let a United player run offside, Ten Hag still claims to this day it wasn't offside. Rice scored his first Arsenal goal on 90+6'. Jesus came off the bench to make it three.",
   },
   {
     matchTitle: "Arsenal vs Manchester City",
@@ -944,7 +944,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 6, opponentGoals: 0,
     arsenalXI: "Raya; White, Saliba, Gabriel, Kiwior; Rice, Ødegaard, Havertz; Saka, Trossard, Martinelli",
     opponentXI: "Areola; Coufal, Zouma, Aguerd, Emerson; Ward-Prowse, Soucek; Kudus, Álvarez, Bowen; Johnson",
-    reveal: "Arsenal's biggest Premier League win under Arteta, the most goals in a single PL game of the Arteta era. Rice returned to his old ground and got six. West Ham's radioactive zebra kit was the only thing more embarrassing than the scoreline.",
+    reveal: "Arsenal's biggest Premier League win under Arteta including a beauty from Rice against his former club.",
   },
   {
     matchTitle: "Arsenal vs Chelsea",
@@ -968,7 +968,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 2, opponentGoals: 2,
     arsenalXI: "Raya; Timber, Saliba, Gabriel, Calafiori; Partey, Rice; Saka, Trossard, Martinelli; Havertz",
     opponentXI: "Ederson; Walker, Akanji, Dias, Gvardiol; Rodri, Gündogan; Savinho, Bernardo Silva, Doku; Haaland",
-    reveal: "Trossard was shown a second yellow for kicking the ball away. Arsenal still led 2-1 heading into the 98th minute. Stones equalized. Haaland walked over to Arteta: \"Stay humble, eh.\"",
+    reveal: "Trossard was shown a second yellow for kicking the ball away, a refereeing decision that has never been replicated before or since. Arsenal still led 2-1 heading into the 98th minute. Stones equalized. Haaland walked over to Arteta: \"Stay humble, eh.\"",
   },
   {
     matchTitle: "Arsenal vs Manchester City",
@@ -980,7 +980,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 5, opponentGoals: 1,
     arsenalXI: "Raya; Timber, Saliba, Gabriel, Lewis-Skelly; Ødegaard, Partey, Rice; Trossard, Havertz, Martinelli",
     opponentXI: "Ortega; Nunes, Akanji, Stones, Gvardiol; Bernardo Silva, Kovačić; Savinho, Foden, Marmoush; Haaland",
-    reveal: "Haaland equalized at 1-1, then Partey, Lewis-Skelly, Havertz and Nwaneri (off the bench) made it five. Haaland had scored in a 5-1 loss at the Emirates.",
+    reveal: "Haaland equalized at 1-1, then Partey, Lewis-Skelly, Havertz and Nwaneri (off the bench) made it five.",
   },
   {
     matchTitle: "Arsenal vs Tottenham",
@@ -992,7 +992,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 4, opponentGoals: 1,
     arsenalXI: "Raya; Timber, Saliba, Hincapié, Calafiori; Zubimendi, Rice; Saka, Eze, Trossard; Merino",
     opponentXI: "Vicario; Danso, Romero, van de Ven; Udogie, Bentancur, Palhinha, Spence; Odobert, Kudus; Richarlison",
-    reveal: "Eze scored a hat-trick. Only the fourth player in history to score an NLD hat-trick, and he'd snubbed Spurs to make it happen.",
+    reveal: "Eze scored a hat-trick. Only the fourth player in history to score an NLD hat-trick, and he'd snubbed Spurs to make it happen. It all worked out.",
   },
   {
     matchTitle: "Arsenal vs Burnley",
@@ -1512,13 +1512,13 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "What was Arsenal's longest unbeaten run in the Premier League in 2025/26?",
     options: ["7", "9", "11", "13"],
     correct: "11",
-    reveal: "11 games unbeaten, the run that put the title beyond doubt.",
+    reveal: "11 games unbeaten, the run that put the title beyond doubt... for a few weeks.",
   },
   {
     question: "How many times did Arsenal score 5 or more goals in a Premier League game in 2025/26?",
     options: ["0", "1", "2", "3"],
     correct: "1",
-    reveal: "Once,5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club.",
+    reveal: "Once, 5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club.",
   },
   {
     question: "How many times did Arsenal concede more than 2 goals in a Premier League game in 2025/26?",
@@ -1530,7 +1530,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "Which outfield player logged the most Premier League minutes for Arsenal in 2025/26?",
     options: ["Declan Rice", "Martín Zubimendi", "Gabriel Magalhães", "William Saliba"],
     correct: "Declan Rice",
-    reveal: "Declan Rice: 3,099 minutes,4 goals, 5 assists, and barely off the pitch all season.",
+    reveal: "Declan Rice: 3,099 minutes, 4 goals, 5 assists, and barely off the pitch all season.",
   },
   {
     question: "How many Arsenal players scored a Premier League penalty in 2025/26?",
