@@ -3046,11 +3046,19 @@ export default function ArsenalChampions() {
                     className="text-3xl sm:text-4xl text-white mb-8"
                     style={{ fontFamily: BEBAS, letterSpacing: "0.04em" }}
                   >
-                    {totalScore >= 80
+                    {totalScore === 100
+                      ? "Are You Mikel Arteta? 🎯"
+                      : totalScore >= 90
+                      ? "Saka-Level. PL Player of the Season 🌟"
+                      : totalScore >= 80
                       ? "Gunner Through & Through 🔴"
                       : totalScore >= 60
                       ? "Solid Gooner Knowledge 💪"
-                      : "Room to Improve, Goonette"}
+                      : totalScore >= 40
+                      ? "Bench Warmer Energy 🪑"
+                      : totalScore >= 20
+                      ? "Mkhitaryan Minutes — Barely Showed Up 😬"
+                      : "Did You Just Show Up For The Parade? 🚌"}
                   </h2>
 
                   <div className="mb-8">
