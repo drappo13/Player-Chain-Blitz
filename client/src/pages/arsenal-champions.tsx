@@ -59,7 +59,7 @@ const ROUNDS: RoundDef[] = [
     number: 4,
     name: "Top Scorers",
     emoji: "⚽",
-    description: "Saka, Martinelli, and eight more. Pick Arsenal's top 10 PL scorers under Arteta.",
+    description: "From the full Arteta-era pool, pick the 10 leading PL scorers. Order doesn't matter.",
     photo: "arsenal-quiz/gallery/04-scorers.jpg",
   },
   {
