@@ -1797,8 +1797,13 @@ function Round5CornerKings({ onComplete, onProgress }: { onComplete: (score: num
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
+  // Shuffle option order once per mount so the correct answer isn't always
+  // first on the board (it was, in the original data ordering).
+  const [shuffled] = useState(() =>
+    ROUND5_CORNERS.map(c => ({ ...c, options: [...c.options].sort(() => Math.random() - 0.5) }))
+  );
 
-  const g = ROUND5_CORNERS[qIndex];
+  const g = shuffled[qIndex];
   const revealed = selected !== null;
   const isCorrect = selected === g.scorer;
 
