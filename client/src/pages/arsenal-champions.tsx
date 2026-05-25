@@ -3049,15 +3049,13 @@ export default function ArsenalChampions() {
                     {totalScore === 100
                       ? "Are You Mikel Arteta? 🎯"
                       : totalScore >= 90
-                      ? "Saka-Level. PL Player of the Season 🌟"
+                      ? "Saka-Level. Star Performance ⭐"
                       : totalScore >= 80
                       ? "Gunner Through & Through 🔴"
                       : totalScore >= 60
                       ? "Solid Gooner Knowledge 💪"
-                      : totalScore >= 40
-                      ? "Bench Warmer Energy 🪑"
                       : totalScore >= 20
-                      ? "Mkhitaryan Minutes — Barely Showed Up 😬"
+                      ? "Room to Improve 📈"
                       : "Did You Just Show Up For The Parade? 🚌"}
                   </h2>
 
