@@ -71,9 +71,9 @@ const ROUNDS: RoundDef[] = [
   },
   {
     number: 8,
-    name: "Memory Lane",
-    emoji: "📸",
-    description: "Date the moments. We show you a famous Arsenal milestone — you tell us when it happened.",
+    name: "Who Has Most?",
+    emoji: "🏅",
+    description: "Four Arteta-era Arsenal players, one stat. Pick whoever leads. Numbers from the official Premier League API.",
   },
   {
     number: 9,
@@ -2322,6 +2322,342 @@ function Round7AssistMasters({ onComplete }: { onComplete: (score: number) => vo
   );
 }
 
+// ─── Round 8 data ──────────────────────────────────────────────────────────────
+// Stats sourced from the official Premier League API (footballapi.pulselive.com).
+// Aggregated across all 7 Arteta PL seasons (2019/20 → 2025/26).
+// Re-fetch script lives at scripts/fetch-arteta-stats.mjs.
+
+interface MostOption {
+  name: string;
+  value: number;
+  unit?: string;
+}
+
+interface MostQuestion {
+  stat: string;
+  options: MostOption[];
+  correct: string;
+  reveal: string;
+  tbd?: boolean;
+}
+
+const ROUND8_QUESTIONS: MostQuestion[] = [
+  {
+    stat: "PL appearances under Arteta",
+    options: [
+      { name: "Fábio Vieira", value: 33 },
+      { name: "Eberechi Eze", value: 31 },
+      { name: "Lucas Torreira", value: 29 },
+      { name: "Sead Kolasinac", value: 29 },
+    ],
+    correct: "Fábio Vieira",
+    reveal: "Vieira played 33 PL games across 2022-24 before heading back to Porto. Eze feels like he's been everywhere this season but only joined in summer 2025 — he'd need another year to catch up.",
+  },
+  {
+    stat: "PL goals in a single season under Arteta",
+    options: [
+      { name: "Bukayo Saka", value: 16, unit: "(2023/24)" },
+      { name: "Gabriel Martinelli", value: 15, unit: "(2022/23)" },
+      { name: "Martin Ødegaard", value: 15, unit: "(2022/23)" },
+      { name: "Viktor Gyökeres", value: 14, unit: "(2025/26)" },
+    ],
+    correct: "Bukayo Saka",
+    reveal: "Saka hit 16 in 2023/24 — his career PL high. Martinelli and Ødegaard each scored 15 in 2022/23, the season Arsenal led the league for 248 days but came up just short.",
+  },
+  {
+    stat: "PL yellow cards under Arteta",
+    options: [
+      { name: "Bukayo Saka", value: 28 },
+      { name: "Gabriel Magalhães", value: 25 },
+      { name: "Thomas Partey", value: 22 },
+      { name: "Ben White", value: 18 },
+    ],
+    correct: "Bukayo Saka",
+    reveal: "Saka: 28 yellows — more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 32, but isn't on the board here.)",
+  },
+  {
+    stat: "PL goals under Arteta",
+    options: [
+      { name: "Kai Havertz", value: 24 },
+      { name: "Gabriel Jesus", value: 20 },
+      { name: "Gabriel Magalhães", value: 20 },
+      { name: "Eddie Nketiah", value: 18 },
+    ],
+    correct: "Kai Havertz",
+    reveal: "Havertz: 24 goals. The 'flop' label aged badly — he's outscored every centre-forward signed under Arteta. Gabriel the defender tied with Jesus the striker on 20.",
+  },
+  {
+    stat: "PL assists under Arteta",
+    options: [
+      { name: "Emile Smith Rowe", value: 9 },
+      { name: "Kieran Tierney", value: 8 },
+      { name: "Jurriën Timber", value: 8 },
+      { name: "Oleksandr Zinchenko", value: 5 },
+    ],
+    correct: "Emile Smith Rowe",
+    reveal: "ESR: 9 assists — the early-Arteta hero. Tierney (LB) and Timber (RB) tied on 8. Zinchenko basically played as a midfielder but only made 5.",
+  },
+  {
+    stat: "PL penalty goals scored under Arteta",
+    options: [
+      { name: "Nicolas Pépé", value: 2 },
+      { name: "Gabriel Jesus", value: 1 },
+      { name: "Kai Havertz", value: 1 },
+      { name: "Fábio Vieira", value: 1 },
+    ],
+    correct: "Nicolas Pépé",
+    reveal: "Pépé: 2 PL penalties. Even Vieira got one — vs Brighton, May 2023. Saka would run away with this 12-0 if he were on the board, but here Pépé is the cult answer.",
+  },
+  {
+    stat: "PL goals from outside the box under Arteta",
+    options: [
+      { name: "Emile Smith Rowe", value: 4 },
+      { name: "Gabriel Martinelli", value: 3 },
+      { name: "Leandro Trossard", value: 2 },
+      { name: "Granit Xhaka", value: 2 },
+    ],
+    correct: "Emile Smith Rowe",
+    reveal: "ESR: 4 long-range goals — more than Martinelli, Trossard, or Xhaka. (Ødegaard's 8 is the era-wide leader, but he's not on the board here.)",
+  },
+  {
+    stat: "PL headed goals under Arteta",
+    options: [
+      { name: "Mikel Merino", value: 7 },
+      { name: "Kai Havertz", value: 5 },
+      { name: "William Saliba", value: 4 },
+      { name: "Alexandre Lacazette", value: 3 },
+    ],
+    correct: "Mikel Merino",
+    reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13 — the corner king — but isn't on the board.)",
+  },
+  // ── Q9 & Q10: PLACEHOLDERS (TBD — swap when finalised) ─────────────────────
+  {
+    tbd: true,
+    stat: "PL red cards under Arteta",
+    options: [
+      { name: "David Luiz", value: 3 },
+      { name: "Gabriel Magalhães", value: 2 },
+      { name: "Granit Xhaka", value: 2 },
+      { name: "Myles Lewis-Skelly", value: 2 },
+    ],
+    correct: "David Luiz",
+    reveal: "PLACEHOLDER — David Luiz picked up 3 reds in Arteta's first 18 months. Lewis-Skelly already has 2 as an 18-year-old.",
+  },
+  {
+    tbd: true,
+    stat: "PL minutes played under Arteta",
+    options: [
+      { name: "Bukayo Saka", value: 17388 },
+      { name: "Gabriel Magalhães", value: 16636 },
+      { name: "Martin Ødegaard", value: 13596 },
+      { name: "William Saliba", value: 11492 },
+    ],
+    correct: "Bukayo Saka",
+    reveal: "PLACEHOLDER — Saka: 17,388 PL minutes. Gabriel just behind on 16,636 — those two have shared a pitch more than any other pair of the era.",
+  },
+];
+
+// ─── Round 8: Who Has Most? ────────────────────────────────────────────────────
+
+function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void }) {
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<boolean[]>([]);
+  const [shuffled] = useState(() =>
+    ROUND8_QUESTIONS.map(q => ({ ...q, options: [...q.options].sort(() => Math.random() - 0.5) }))
+  );
+
+  const q = shuffled[qIndex];
+  const revealed = selected !== null;
+  const isCorrect = selected === q.correct;
+
+  function handleSelect(name: string) {
+    if (revealed) return;
+    setSelected(name);
+  }
+
+  function handleNext() {
+    const newAnswers = [...answers, selected === q.correct];
+    if (qIndex + 1 >= ROUND8_QUESTIONS.length) {
+      onComplete(newAnswers.filter(Boolean).length);
+    } else {
+      setAnswers(newAnswers);
+      setQIndex(i => i + 1);
+      setSelected(null);
+    }
+  }
+
+  return (
+    <motion.div
+      key={qIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.25 }}
+      className="pb-16"
+    >
+      {/* Round header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>
+            Who Has Most?
+          </div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+            Four Arteta-era Gunners. One stat. Who leads?
+          </div>
+        </div>
+        <div className="text-right">
+          <span
+            className="text-3xl leading-none"
+            style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}
+          >
+            Q{qIndex + 1}
+          </span>
+          <span className="text-sm ml-1" style={{ color: "rgba(255,255,255,0.3)" }}>/ 10</span>
+        </div>
+      </div>
+
+      {/* Progress dots */}
+      <div className="flex gap-1 mb-6">
+        {ROUND8_QUESTIONS.map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 h-1 rounded-full transition-all duration-300"
+            style={{
+              background:
+                i < answers.length
+                  ? answers[i] ? GOLD : RED
+                  : i === qIndex
+                  ? "rgba(255,255,255,0.35)"
+                  : "rgba(255,255,255,0.08)",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Stat card */}
+      <div
+        className="rounded-2xl p-5 mb-6 text-center"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.09)",
+        }}
+      >
+        <div className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+          Who has the most…
+        </div>
+        <p
+          className="text-2xl sm:text-3xl text-white leading-tight"
+          style={{ fontFamily: BEBAS, letterSpacing: "0.03em" }}
+        >
+          {q.stat}
+        </p>
+        {q.tbd && (
+          <div className="mt-2 text-[9px] font-bold tracking-wider uppercase" style={{ color: GOLD }}>
+            Placeholder — TBD
+          </div>
+        )}
+      </div>
+
+      {/* Options */}
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        {q.options.map((opt) => {
+          const isSelected = selected === opt.name;
+          const isCorrectOpt = opt.name === q.correct;
+          let btnStyle: React.CSSProperties = {
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            color: "white",
+          };
+          if (revealed) {
+            if (isCorrectOpt) {
+              btnStyle = {
+                background: `rgba(200,150,12,0.18)`,
+                border: `2px solid ${GOLD}`,
+                color: GOLD_LIGHT,
+              };
+            } else if (isSelected) {
+              btnStyle = {
+                background: "rgba(219,0,7,0.15)",
+                border: `2px solid ${RED}`,
+                color: "#ff8888",
+              };
+            } else {
+              btnStyle = {
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                color: "rgba(255,255,255,0.25)",
+              };
+            }
+          }
+          return (
+            <button
+              key={opt.name}
+              onClick={() => handleSelect(opt.name)}
+              disabled={revealed}
+              className="outline-none focus:outline-none rounded-xl py-4 px-3 text-sm font-semibold text-center leading-tight transition-all duration-200 active:scale-95 disabled:cursor-default flex flex-col items-center justify-center gap-1 min-h-[72px]"
+              style={btnStyle}
+            >
+              <span className="leading-tight">{opt.name}</span>
+              {revealed && (
+                <span className="text-xs font-bold opacity-80">
+                  {opt.value.toLocaleString()}{opt.unit ? ` ${opt.unit}` : ""}
+                  {isCorrectOpt && <span className="ml-1">✓</span>}
+                  {isSelected && !isCorrectOpt && <span className="ml-1">✗</span>}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Reveal panel */}
+      <AnimatePresence>
+        {revealed && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="rounded-xl p-4 mb-4"
+              style={{
+                background: isCorrect ? "rgba(200,150,12,0.08)" : "rgba(255,255,255,0.04)",
+                border: isCorrect
+                  ? `1px solid rgba(200,150,12,0.35)`
+                  : "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">{isCorrect ? "✅" : "❌"}</span>
+                <span
+                  className="font-bold text-sm"
+                  style={{ color: isCorrect ? GOLD_LIGHT : "white" }}
+                >
+                  {isCorrect ? "Correct!" : `It was ${q.correct}`}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {q.reveal}
+              </p>
+            </div>
+
+            <GoldButton
+              onClick={handleNext}
+              className="w-full py-3.5 flex items-center justify-center gap-2"
+            >
+              <span style={{ fontFamily: BEBAS, letterSpacing: "0.06em", fontSize: "1.1rem" }}>
+                {qIndex + 1 >= ROUND8_QUESTIONS.length ? "FINISH ROUND" : "NEXT QUESTION"}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </GoldButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ArsenalChampions() {
@@ -2684,6 +3020,8 @@ export default function ArsenalChampions() {
                     <Round6TopScorers onComplete={handleRoundComplete} />
                   ) : currentRound === 6 ? (
                     <Round7AssistMasters onComplete={handleRoundComplete} />
+                  ) : currentRound === 7 ? (
+                    <Round8WhoHasMost onComplete={handleRoundComplete} />
                   ) : currentRound === 8 ? (
                     <Round9BuildTheXI onComplete={handleRoundComplete} />
                   ) : currentRound === 9 ? (

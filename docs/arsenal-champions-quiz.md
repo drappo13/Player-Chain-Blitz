@@ -280,26 +280,48 @@ These narratives make the round more resonant — each quote can be prefaced wit
 
 ---
 
-### Round 8 — Memory Lane
-**Subtitle:** "When did this happen? Guess the month and year."  
-**Format:** Show a photo of an Arsenal moment from the Arteta era. Player picks from 4 date options (month + year).  
-**Points:** 10 per correct date  
-**Status:** 🔴 User to source 10 photos — moment, date, and photo needed  
-**Photos:** Stored in `public/arsenal-quiz/memory-lane/` in the repo
+### Round 8 — Who Has Most?
+**Subtitle:** "Four Arteta-era Gunners. One stat. Who leads?"  
+**Format:** Each question shows a single stat ("PL appearances under Arteta") plus 4 player options. Player picks whichever of the 4 has the highest value. Stats are aggregated across all 7 Arteta PL seasons (2019/20 → 2025/26).  
+**Points:** 1 per correct = 10 per round  
+**Status:** ✅ Built and live. Q1–Q8 confirmed with official PL API data. Q9–Q10 are working placeholders flagged `tbd: true` in code — swap when finalised.  
+**Data source:** [`scripts/fetch-arteta-stats.mjs`](../scripts/fetch-arteta-stats.mjs) pattern, official PL API at `footballapi.pulselive.com`. Stats endpoints confirmed working: `appearances`, `goals`, `goal_assist`, `yellow_card`, `red_card`, `mins_played`, `own_goals`, `att_pen_goal`, `att_hd_goal`, `att_obox_goal`, `big_chance_missed`, `fouls`.
 
-**Suggested moments to cover (spread across the full era):**
-1. FA Cup final win — August 2020
-2. First PL win under Arteta — January 2020 (vs Man Utd)
-3. First Champions League qualification — May 2023
-4. First PL win over Man City (Martinelli goal) — October 2023
-5. Ødegaard lifting the PL trophy — May 2026
-6. A famous NLD win
-7. Arteta's first match in charge (Bournemouth away, Dec 2019)
-8. A key Saka moment
-9. A famous Gabriel header
-10. Another significant 2025-26 moment
+**The 10 questions (Q1–Q8 confirmed, Q9–Q10 placeholders):**
 
-**Date option format:** e.g. "October 2023" vs "March 2024" vs "January 2023" vs "May 2022" — close enough to need knowledge but distinct enough to be fair
+| # | Stat | Options (value) | Answer |
+|---|------|-----------------|--------|
+| 1 | PL appearances under Arteta | Fábio Vieira (33), Eberechi Eze (31), Lucas Torreira (29), Sead Kolasinac (29) | **Vieira** |
+| 2 | PL goals in a single season under Arteta | Saka (16, 23/24), Martinelli (15, 22/23), Ødegaard (15, 22/23), Gyökeres (14, 25/26) | **Saka** |
+| 3 | PL yellow cards under Arteta | Saka (28), Gabriel Magalhães (25), Partey (22), Ben White (18) | **Saka** *(Xhaka is the era-wide leader on 32 — excluded so Saka is the surprise answer)* |
+| 4 | PL goals under Arteta | Havertz (24), Jesus (20), Gabriel Magalhães (20), Nketiah (18) | **Havertz** |
+| 5 | PL assists under Arteta | ESR (9), Tierney (8), Timber (8), Zinchenko (5) | **ESR** *(Pépé also on 9 — excluded to avoid tie at top)* |
+| 6 | PL penalty goals scored under Arteta | Pépé (2), Jesus (1), Havertz (1), Vieira (1) | **Pépé** *(Saka excluded — he'd run away with 12)* |
+| 7 | PL goals from outside the box under Arteta | ESR (4), Martinelli (3), Trossard (2), Xhaka (2) | **ESR** *(Ødegaard is era leader on 8 — excluded)* |
+| 8 | PL headed goals under Arteta | Merino (7), Havertz (5), Saliba (4), Lacazette (3) | **Merino** *(Gabriel Magalhães is era leader on 13 — excluded)* |
+| 9 | 🟡 TBD placeholder — PL red cards | David Luiz (3), Gabriel Magalhães (2), Xhaka (2), Lewis-Skelly (2) | **David Luiz** |
+| 10 | 🟡 TBD placeholder — PL minutes played | Saka (17,388), Gabriel Magalhães (16,636), Ødegaard (13,596), Saliba (11,492) | **Saka** |
+
+**Q9 / Q10 ideas to consider (some need extra data fetching):**
+- Most career hat-tricks for Arsenal (manual research)
+- Most clubs in senior career (Wikipedia — Jorginho / Willian / Merino / Trossard)
+- Tallest in current squad (Havertz 1.93 / Saliba / Gabriel / Mosquera)
+- Most managers played under at Arsenal (Wenger + Emery + Ljungberg + Arteta crowd — David Luiz, Auba, Bellerín, Xhaka)
+- Most fouls committed (Saka 221 runaway leader)
+- Most big chances missed (Saka 42 / Martinelli 37 / Havertz 34 / Jesus 32)
+- Most goals vs Tottenham / Man City (needs match-by-match API scraping)
+- Most stoppage-time goals (needs per-event timing scrape)
+
+**UX notes:**
+- Options shuffle on mount so position is randomised per play
+- After selection, all 4 values are revealed inline on the buttons (not just the correct one) — supports the "see how close it was" payoff
+- TBD placeholder questions show a "Placeholder — TBD" gold tag under the stat
+- Data lives inline in `ROUND8_QUESTIONS` array (no separate JSON) — easy to swap candidates
+
+---
+
+### Round 8 — DEPRECATED: Memory Lane *(replaced May 2026)*
+~~Date-the-photo round. Replaced because sourcing 10 photos with verified dates was a bottleneck and the round didn't tie into Arteta-era stats the way other rounds do. "Who Has Most?" uses live PL API data so no asset sourcing is needed.~~
 
 ---
 
@@ -453,7 +475,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - ✅ **Round 5** — Corner Kings: 10 corner goal questions with photo slots. CornerPhotoSlot component shows placeholder until real images added. ⚠️ User to source photos → `public/arsenal-quiz/corners/`.
 - ✅ **Round 6** — Top Scorers: full player pool from arteta-arsenal-stats.json, select-10 mechanic, gold/red/faded reveal.
 - ✅ **Round 7** — Assist Masters: same mechanic as Round 6, assist data.
-- ✅ **Round 8** — Memory Lane: placeholder (needs photos).
+- ✅ **Round 8** — Who Has Most?: 4-option MC, 10 stat-comparison questions across the Arteta era. Q1–Q8 confirmed PL API data; Q9–Q10 playable placeholders (`tbd: true`) — swap when finalised. Options shuffle on mount; all 4 values revealed inline after selection.
 - ✅ **Round 9** — Build the XI: **Arteta's debut XI, Boxing Day 2019 vs Bournemouth** (changed from Burnley title-clincher). 3 screens: Defenders → Midfield → Attackers. Pool = 2019/20 squad, recent signings excluded.
 - ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal.
 
@@ -480,7 +502,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 5. ✅ Round 5 — Corner Kings ⚠️ needs photos
 6. ✅ Round 6 — Top Scorers
 7. ✅ Round 7 — Assist Masters
-8. 🔴 Round 8 — Memory Lane (needs photos)
+8. ✅ Round 8 — Who Has Most? (Q9–Q10 placeholders pending)
 9. ✅ Round 9 — Build the XI (Arteta debut)
 10. ✅ Round 10 — Guess the Score
 
@@ -495,7 +517,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - [x] **Round 3 (Arteta Speaks):** Built and live. ⚠️ User to verify quotes before sharing.
 - [ ] **Round 4 (Season stats):** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources.
 - [ ] **Round 5 (Corner Kings):** User to source 10 photos → `public/arsenal-quiz/corners/`
-- [ ] **Round 8 (Memory Lane):** User to source 10 photos + confirm dates → `public/arsenal-quiz/memory-lane/`
+- [ ] **Round 8 (Who Has Most?):** Finalise Q9 and Q10 (currently placeholders — red cards / minutes played)
 - [ ] **Round 10 (Guess the Score):** Verify all starting XIs and match details.
 - [ ] **Firebase leaderboard:** Add `arsenal-champions-2026` game to Firebase rules + leaderboard page
 - [ ] **Home page card:** Add to drapk.in home page with Arsenal red/gold branding
