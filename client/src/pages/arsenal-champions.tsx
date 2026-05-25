@@ -1704,12 +1704,12 @@ const ROUND5_CORNERS: CornerGoal[] = [
     reveal: "Tied 1-1 deep into injury time. Saka swung in a corner, the ball pinballed around, Rice slid it home from close range. Jesus added a third moments later. Rice's first Arsenal goal, and the moment the Emirates believed.",
   },
   {
-    scorer: "TBD",
-    opponent: "Photo coming soon", date: "",
-    imagePath: "arsenal-quiz/corners/07-tbd.jpg",
-    imageHint: "Photo coming soon",
-    options: ["Gabriel Magalhães", "William Saliba", "Jurrien Timber", "Kai Havertz"],
-    reveal: "",
+    scorer: "Own Goal",
+    opponent: "Wolves", date: "13 Dec 2025",
+    imagePath: "arsenal-quiz/corners/07-og-wolves-2025.jpg",
+    imageHint: "Corner about to be taken vs Wolves, Dec 2025 (Arsenal 2-1)",
+    options: ["Own Goal", "Gabriel Magalhães", "Leandro Trossard", "Viktor Gyökeres"],
+    reveal: "Sam Johnstone, the Wolves keeper, bundled this 70th-minute corner into his own net to give Arsenal the lead. As if that wasn't enough, Yerson Mosquera added a second own goal in the 94th to win it 2-1 — two own goals from corners in one game.",
   },
   {
     scorer: "TBD",
