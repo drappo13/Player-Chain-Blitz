@@ -3487,7 +3487,12 @@ export default function ArsenalChampions() {
               )}
 
               {/* Signup overlay — appears only when user opts into leaderboard */}
-              {showSignup && !user && <UsernamePicker />}
+              {showSignup && !user && (
+                <UsernamePicker
+                  signupTitle="How do you want to appear on the leaderboard?"
+                  signupSubtitle="Pick a username & avatar"
+                />
+              )}
 
             </AnimatePresence>
           </div>

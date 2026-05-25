@@ -10,7 +10,14 @@ const AVATARS = [
   "\uD83D\uDC51", "\u2B50", "\uD83D\uDD25", "\uD83D\uDC8E", "\u26A1", "\uD83C\uDF1F",
 ];
 
-export function UsernamePicker() {
+interface UsernamePickerProps {
+  /** Override the signup-mode title (default: "Welcome to drapk.in") */
+  signupTitle?: string;
+  /** Override the signup-mode subtitle (default: "Pick a username & avatar to get started") */
+  signupSubtitle?: string;
+}
+
+export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerProps = {}) {
   const { signup, login } = useUser();
   const [mode, setMode] = useState<"signup" | "login">("signup");
   const [username, setUsername] = useState("");
@@ -63,11 +70,11 @@ export function UsernamePicker() {
       >
         <div className="text-center mb-3 sm:mb-5">
           <h2 className="text-lg sm:text-xl font-bold text-foreground">
-            {mode === "signup" ? "Welcome to drapk.in" : "Welcome back"}
+            {mode === "signup" ? (signupTitle ?? "Welcome to drapk.in") : "Welcome back"}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {mode === "signup"
-              ? "Pick a username & avatar to get started"
+              ? (signupSubtitle ?? "Pick a username & avatar to get started")
               : "Enter your username to continue"}
           </p>
         </div>
