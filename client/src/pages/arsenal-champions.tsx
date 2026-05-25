@@ -28,6 +28,7 @@ interface RoundDef {
   name: string;
   description: string;
   emoji: string;
+  photo?: string;
 }
 
 // ─── Round definitions ─────────────────────────────────────────────────────────
@@ -37,61 +38,71 @@ const ROUNDS: RoundDef[] = [
     number: 1,
     name: "Who Doubted Us?",
     emoji: "🗣️",
-    description: "Famous pundits, rivals and journalists who wrote Arsenal off. Can you name who said it?",
+    description: "No team had more doubters. Pundits, rivals, neutrals. Put a face to each take.",
+    photo: "arsenal-quiz/gallery/01-doubters.jpg",
   },
   {
     number: 2,
     name: "Who Has Most?",
     emoji: "🏅",
-    description: "Four Arteta-era Arsenal players, one stat. Pick whoever leads. Numbers from the official Premier League API.",
+    description: "Seven years of Arteta. Four players. One leader per stat. Pick the right Gunner.",
+    photo: "arsenal-quiz/gallery/02-most.jpg",
   },
   {
     number: 3,
     name: "Arteta's First XI",
     emoji: "🗺️",
-    description: "Arteta's very first Arsenal starting XI. Boxing Day, Bournemouth, 2019. Name all ten outfield starters.",
+    description: "Boxing Day 2019. Bournemouth away. The XI that started the rebuild. Name it.",
+    photo: "arsenal-quiz/gallery/03-xi.jpg",
   },
   {
     number: 4,
     name: "Top Scorers",
     emoji: "⚽",
-    description: "Select Arsenal's top 10 Premier League scorers under Arteta. Order doesn't matter.",
+    description: "Saka, Martinelli, and eight more. Pick Arsenal's top 10 PL scorers under Arteta.",
+    photo: "arsenal-quiz/gallery/04-scorers.jpg",
   },
   {
     number: 5,
     name: "Trust the Process",
     emoji: "📉",
-    description: "Guess the scores from Arsenal's 2020/21 horror run, the season that made the rebuild necessary.",
+    description: "October 2020. Arsenal sat 15th. Ten games that made the rebuild necessary.",
+    photo: "arsenal-quiz/gallery/05-process.jpg",
   },
   {
     number: 6,
     name: "Arteta Speaks",
     emoji: "🎙️",
-    description: "Mikel Arteta spoke glowingly about his players every week. Guess who he was talking about.",
+    description: "Mikel on his players, every week. Who is he talking about this time?",
+    photo: "arsenal-quiz/gallery/06-arteta.jpg",
   },
   {
     number: 7,
     name: "Corner Kings",
     emoji: "🚩",
-    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026, who got on the end of each one?",
+    description: "No tactic caused more rival fury. Ten corner goals across the era. Name each scorer.",
+    photo: "arsenal-quiz/gallery/07-corners.jpg",
   },
   {
     number: 8,
     name: "Guess the Score",
     emoji: "📋",
-    description: "Ten landmark Arteta-era results. Enter the exact final score for each match, no multiple choice.",
+    description: "Ten landmark Arteta-era results. Just the exact score. No multiple choice.",
+    photo: "arsenal-quiz/gallery/08-scores.jpg",
   },
   {
     number: 9,
     name: "The Assist Masters",
     emoji: "🎯",
-    description: "Select Arsenal's top 10 Premier League assisters under Arteta. Who created the most?",
+    description: "Goals get the glory. The creators? Pick Arsenal's top 10 PL assisters under Arteta.",
+    photo: "arsenal-quiz/gallery/09-assists.jpg",
   },
   {
     number: 10,
     name: "The Season That Won It",
     emoji: "📊",
-    description: "Stats and facts from Arsenal's title-winning 2025/26 campaign. How closely were you watching?",
+    description: "2025/26. The numbers behind the title. How closely were you watching?",
+    photo: "arsenal-quiz/gallery/10-season.jpg",
   },
 ];
 
@@ -2720,6 +2731,132 @@ function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void 
   );
 }
 
+// ─── Confetti (results screen + champions closer) ─────────────────────────────
+
+function Confetti({ count = 70 }: { count?: number }) {
+  const colors = [GOLD, GOLD_LIGHT, RED, "#ffffff"];
+  const pieces = Array.from({ length: count }, (_, i) => ({
+    id: i,
+    leftPct: Math.random() * 100,
+    delay: Math.random() * 0.9,
+    duration: 2.4 + Math.random() * 2.2,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    width: 6 + Math.random() * 6,
+    height: 2 + Math.random() * 8,
+    drift: (Math.random() - 0.5) * 220,
+    rotate: Math.random() * 360,
+  }));
+  return (
+    <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden">
+      {pieces.map(p => (
+        <motion.div
+          key={p.id}
+          initial={{ y: -40, x: 0, rotate: p.rotate, opacity: 1 }}
+          animate={{ y: "110vh", x: p.drift, rotate: p.rotate + 720, opacity: [1, 1, 0.9, 0] }}
+          transition={{ duration: p.duration, delay: p.delay, ease: "linear" }}
+          style={{
+            position: "absolute",
+            left: `${p.leftPct}vw`,
+            top: 0,
+            width: p.width,
+            height: p.height,
+            background: p.color,
+            borderRadius: 1,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Champions closer (shown after Round 10, before results) ───────────────────
+
+function ChampionsCloser() {
+  return (
+    <motion.div
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center px-4 text-center overflow-hidden"
+      style={{ background: RED }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+    >
+      {/* Gold centre glow */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(200,150,12,0.35) 0%, transparent 70%)",
+        }}
+      />
+      <Confetti count={110} />
+
+      <motion.div
+        initial={{ scale: 0.3, opacity: 0, rotate: -8 }}
+        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 130, damping: 12, delay: 0.1 }}
+        className="relative z-10 max-w-md"
+      >
+        <motion.div
+          animate={{ y: [-3, 5, -3], rotate: [-2, 2, -2] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          className="text-7xl mb-3"
+        >
+          🏆
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.45 }}
+        >
+          <span
+            className="block leading-none"
+            style={{
+              fontFamily: BEBAS,
+              fontSize: "clamp(3.5rem, 16vw, 7rem)",
+              letterSpacing: "0.05em",
+              background: `linear-gradient(90deg, ${GOLD_LIGHT}, #ffffff, ${GOLD_LIGHT})`,
+              backgroundSize: "200% 100%",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+              animation: "ac-shimmer 2.6s linear infinite",
+            }}
+          >
+            CHAMPIONS
+          </span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.95 }}
+          className="text-base sm:text-xl font-bold tracking-[0.3em] text-white/90 uppercase mt-2"
+        >
+          22 Years Later
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ delay: 1.3, duration: 0.5 }}
+          className="w-24 h-px mx-auto my-6"
+          style={{ background: `linear-gradient(90deg, transparent, ${GOLD_LIGHT}, transparent)` }}
+        />
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6 }}
+          className="text-xs sm:text-sm font-bold tracking-[0.35em] text-white/75 uppercase"
+        >
+          2025-26 Premier League
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ArsenalChampions() {
@@ -2733,6 +2870,7 @@ export default function ArsenalChampions() {
   const [showSignup, setShowSignup] = useState(false);
   const [savedToLeaderboard, setSavedToLeaderboard] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showChampionsCloser, setShowChampionsCloser] = useState(false);
 
   const totalScore = roundScores.reduce((a, b) => a + b, 0);
   const activeRound = ROUNDS[currentRound];
@@ -2765,17 +2903,26 @@ export default function ArsenalChampions() {
     }
   }, [phase, user, totalScore, savedToLeaderboard]);
 
-  function startQuiz() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setPhase("between"); }
+  function startQuiz() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("between"); }
   function startRound() { setPhase("playing"); }
   function handleRoundComplete(score: number) {
     // score is 0–10 per round (1pt per question × 10 questions)
     const next = [...roundScores, score];
     setRoundScores(next);
     const nextIdx = currentRound + 1;
-    if (nextIdx >= ROUNDS.length) { setPhase("results"); }
-    else { setCurrentRound(nextIdx); setPhase("between"); }
+    if (nextIdx >= ROUNDS.length) {
+      // Final round: show CHAMPIONS celebration briefly before results
+      setShowChampionsCloser(true);
+      setTimeout(() => {
+        setShowChampionsCloser(false);
+        setPhase("results");
+      }, 4200);
+    } else {
+      setCurrentRound(nextIdx);
+      setPhase("between");
+    }
   }
-  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setPhase("intro"); }
+  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("intro"); }
   function handleShare() {
     navigator.clipboard.writeText(
       `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`
@@ -2784,6 +2931,11 @@ export default function ArsenalChampions() {
 
   return (
     <div className="min-h-screen text-white relative overflow-x-hidden" style={{ background: DARK }}>
+
+      {/* ── CHAMPIONS closer overlay (after Round 10, before results) ── */}
+      <AnimatePresence>
+        {showChampionsCloser && <ChampionsCloser key="champions-closer" />}
+      </AnimatePresence>
 
       {/* ── INTRO, full-screen vivid red overlay ── */}
       <AnimatePresence>
@@ -2820,23 +2972,45 @@ export default function ArsenalChampions() {
 
             <div className="relative z-10 flex flex-col items-center text-center px-4 pt-14 pb-16 min-h-screen justify-center">
 
-              {/* Crown + Trophy */}
-              <motion.div
+              {/* Crown */}
+              <motion.span
                 initial={{ scale: 0, rotate: -15 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 160, damping: 11, delay: 0.15 }}
-                className="mb-6 flex flex-col items-center"
+                className="text-3xl leading-none mb-3"
               >
-                <span className="text-4xl leading-none mb-1">👑</span>
-                <div
-                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `radial-gradient(circle at 35% 35%, ${GOLD_LIGHT}, ${GOLD}, ${GOLD_DARK})`,
-                    boxShadow: `0 0 50px rgba(200,150,12,0.6), 0 0 100px rgba(200,150,12,0.25)`,
-                  }}
-                >
-                  <span className="text-5xl sm:text-6xl drop-shadow-lg">🏆</span>
-                </div>
+                👑
+              </motion.span>
+
+              {/* Hero photo with pulsing gold glow */}
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{
+                  scale: [0.85, 1.02, 1],
+                  opacity: 1,
+                  boxShadow: [
+                    "0 0 30px rgba(200,150,12,0.35), 0 0 60px rgba(200,150,12,0.15)",
+                    "0 0 60px rgba(200,150,12,0.7), 0 0 120px rgba(200,150,12,0.3)",
+                    "0 0 30px rgba(200,150,12,0.35), 0 0 60px rgba(200,150,12,0.15)",
+                  ],
+                }}
+                transition={{
+                  scale: { type: "spring", stiffness: 110, damping: 12, delay: 0.2 },
+                  opacity: { duration: 0.6, delay: 0.2 },
+                  boxShadow: { duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
+                }}
+                className="mb-6 rounded-2xl overflow-hidden"
+                style={{
+                  width: "min(280px, 70vw)",
+                  border: `2px solid ${GOLD}66`,
+                }}
+              >
+                <img
+                  src="/arsenal-quiz/gallery/00-intro-arteta-trophy.jpg"
+                  alt="Arteta lifting the Premier League trophy"
+                  className="w-full block"
+                  style={{ aspectRatio: "4/5", objectFit: "cover", objectPosition: "center top" }}
+                />
               </motion.div>
 
               {/* Title block */}
@@ -2880,6 +3054,28 @@ export default function ArsenalChampions() {
                 >
                   2025–26
                 </div>
+
+                {/* 22 YEARS shimmer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="mt-3"
+                >
+                  <span
+                    className="inline-block text-xs sm:text-sm font-bold tracking-[0.4em] uppercase"
+                    style={{
+                      background: `linear-gradient(90deg, ${GOLD_LIGHT}, #fff, ${GOLD_LIGHT})`,
+                      backgroundSize: "200% 100%",
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                      color: "transparent",
+                      animation: "ac-shimmer 4.5s linear infinite",
+                    }}
+                  >
+                    22 Years In The Making
+                  </span>
+                </motion.div>
               </motion.div>
 
               {/* Gold divider */}
@@ -3070,7 +3266,36 @@ export default function ArsenalChampions() {
                     </div>
                   )}
 
-                  <div className="text-5xl mb-4">{activeRound.emoji}</div>
+                  {activeRound.photo ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4, delay: 0.1 }}
+                      className="w-full rounded-2xl overflow-hidden mb-5 relative"
+                      style={{
+                        maxWidth: 360,
+                        aspectRatio: "16/10",
+                        border: `1px solid ${GOLD}55`,
+                        boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      <img
+                        src={`/${activeRound.photo}`}
+                        alt={activeRound.name}
+                        className="w-full h-full"
+                        style={{ objectFit: "cover", objectPosition: "center top" }}
+                      />
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.55) 100%)",
+                        }}
+                      />
+                      <div className="absolute bottom-2 right-3 text-2xl drop-shadow-lg">{activeRound.emoji}</div>
+                    </motion.div>
+                  ) : (
+                    <div className="text-5xl mb-4">{activeRound.emoji}</div>
+                  )}
 
                   <h2
                     className="text-4xl sm:text-5xl text-white mb-3"
@@ -3078,7 +3303,7 @@ export default function ArsenalChampions() {
                   >
                     {activeRound.name}
                   </h2>
-                  <p className="text-sm text-gray-400 max-w-sm leading-relaxed mb-10">
+                  <p className="text-sm text-gray-300 max-w-sm leading-relaxed mb-10">
                     {activeRound.description}
                   </p>
 
@@ -3136,6 +3361,7 @@ export default function ArsenalChampions() {
                   transition={{ duration: 0.5 }}
                   className="flex flex-col items-center text-center pt-10 pb-16"
                 >
+                  {totalScore > 60 && <Confetti />}
                   <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>
                     Quiz Complete
                   </div>

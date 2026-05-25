@@ -306,3 +306,9 @@
     inset: -1px;
   }
 }
+
+/* Arsenal Champions quiz shimmer (used on intro "22 Years" sub-banner) */
+@keyframes ac-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
