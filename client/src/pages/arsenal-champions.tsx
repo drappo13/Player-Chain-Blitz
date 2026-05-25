@@ -2504,7 +2504,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Alexandre Lacazette", value: 2 },
     ],
     correct: "Mikel Merino",
-    reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13, the corner king, but isn't on the board.)",
+    reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13, the corner king.)",
   },
   {
     stat: "PL red cards under Arteta",
