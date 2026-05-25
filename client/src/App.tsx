@@ -6,7 +6,8 @@ import { Switch, Route, useLocation } from "wouter";
 import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
 import { UserBadge } from "@/components/user-badge";
-import { lazy, Suspense, Component, type ReactNode } from "react";
+import { lazy, Suspense, Component, useEffect, type ReactNode } from "react";
+import { trackPageView } from "@/lib/firebase";
 
 // Lazy-load all pages — isolates crashes so one broken page can't kill the whole app
 const Home = lazy(() => import("@/pages/home"));
@@ -132,6 +133,12 @@ const ANON_ALLOWED_ROUTES = ["/arsenal-pl-champions-2026"];
 function AppContent() {
   const { user, loading } = useUser();
   const [location] = useLocation();
+
+  // Fire a Firebase Analytics page_view on every wouter route change. No-ops
+  // if Analytics isn't configured (no measurementId in firebase.ts).
+  useEffect(() => {
+    trackPageView(location);
+  }, [location]);
 
   if (loading) return null;
 

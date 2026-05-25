@@ -346,7 +346,7 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
   },
   {
     quote: "Stay humble, eh. Stay humble, eh.",
-    context: "September 2024, said to Arteta's face on the touchline after scoring a 98th-minute equaliser",
+    context: "September 2024, said to Arteta's face on the touchline after Man City scored a 98th-minute equaliser",
     options: ["Erling Haaland", "Rodri", "Kevin De Bruyne", "Bernardo Silva"],
     correct: "Erling Haaland",
     reveal: 'Arteta said he found it "funny". Who\'s laughing now?',
