@@ -284,7 +284,7 @@ These narratives make the round more resonant — each quote can be prefaced wit
 **Subtitle:** "Four Arteta-era Gunners. One stat. Who leads?"  
 **Format:** Each question shows a single stat ("PL appearances under Arteta") plus 4 player options. Player picks whichever of the 4 has the highest value. Stats are aggregated across all 7 Arteta PL seasons (2019/20 → 2025/26).  
 **Points:** 1 per correct = 10 per round  
-**Status:** ✅ Built and live. Q1–Q8 confirmed with official PL API data. Q9–Q10 are working placeholders flagged `tbd: true` in code — swap when finalised.  
+**Status:** ✅ Built and live. All 10 questions confirmed with official PL API data.  
 **Data source:** [`scripts/fetch-arteta-stats.mjs`](../scripts/fetch-arteta-stats.mjs) pattern, official PL API at `footballapi.pulselive.com`. Stats endpoints confirmed working: `appearances`, `goals`, `goal_assist`, `yellow_card`, `red_card`, `mins_played`, `own_goals`, `att_pen_goal`, `att_hd_goal`, `att_obox_goal`, `big_chance_missed`, `fouls`.
 
 **The 10 questions (Q1–Q8 confirmed, Q9–Q10 placeholders):**
@@ -299,8 +299,8 @@ These narratives make the round more resonant — each quote can be prefaced wit
 | 6 | PL penalty goals scored under Arteta | Pépé (2), Jesus (1), Havertz (1), Vieira (1) | **Pépé** *(Saka excluded — he'd run away with 12)* |
 | 7 | PL goals from outside the box under Arteta | ESR (4), Martinelli (3), Trossard (2), Xhaka (2) | **ESR** *(Ødegaard is era leader on 8 — excluded)* |
 | 8 | PL headed goals under Arteta | Merino (7), Havertz (5), Saliba (4), Lacazette (3) | **Merino** *(Gabriel Magalhães is era leader on 13 — excluded)* |
-| 9 | 🟡 TBD placeholder — PL red cards | David Luiz (3), Gabriel Magalhães (2), Xhaka (2), Lewis-Skelly (2) | **David Luiz** |
-| 10 | 🟡 TBD placeholder — PL minutes played | Saka (17,388), Gabriel Magalhães (16,636), Ødegaard (13,596), Saliba (11,492) | **Saka** |
+| 9 | PL red cards under Arteta | David Luiz (3), Gabriel Magalhães (2), Xhaka (2), Lewis-Skelly (2) | **David Luiz** |
+| 10 | PL minutes played under Arteta (cameo edition) | Balogun (70), Kepa (90), Nørgaard (101), Mkhitaryan (111) | **Mkhitaryan** *(all four under 2 hours — the cult cameos round)* |
 
 **Q9 / Q10 ideas to consider (some need extra data fetching):**
 - Most career hat-tricks for Arsenal (manual research)
@@ -475,7 +475,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - ✅ **Round 5** — Corner Kings: 10 corner goal questions with photo slots. CornerPhotoSlot component shows placeholder until real images added. ⚠️ User to source photos → `public/arsenal-quiz/corners/`.
 - ✅ **Round 6** — Top Scorers: full player pool from arteta-arsenal-stats.json, select-10 mechanic, gold/red/faded reveal.
 - ✅ **Round 7** — Assist Masters: same mechanic as Round 6, assist data.
-- ✅ **Round 8** — Who Has Most?: 4-option MC, 10 stat-comparison questions across the Arteta era. Q1–Q8 confirmed PL API data; Q9–Q10 playable placeholders (`tbd: true`) — swap when finalised. Options shuffle on mount; all 4 values revealed inline after selection.
+- ✅ **Round 8** — Who Has Most?: 4-option MC, 10 stat-comparison questions across the Arteta era. All 10 confirmed PL API data. Q10 is a cult "cameo edition" twist — Balogun/Kepa/Nørgaard/Mkhitaryan, all four players ever to register Arsenal PL minutes under Arteta yet finish sub-2 hours. Options shuffle on mount; all 4 values revealed inline after selection.
 - ✅ **Round 9** — Build the XI: **Arteta's debut XI, Boxing Day 2019 vs Bournemouth** (changed from Burnley title-clincher). 3 screens: Defenders → Midfield → Attackers. Pool = 2019/20 squad, recent signings excluded.
 - ✅ **Round 10** — Guess the Score: ▲▼ number pickers, "Show Starting XIs" toggle, lock-in + reveal.
 
@@ -502,7 +502,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 5. ✅ Round 5 — Corner Kings ⚠️ needs photos
 6. ✅ Round 6 — Top Scorers
 7. ✅ Round 7 — Assist Masters
-8. ✅ Round 8 — Who Has Most? (Q9–Q10 placeholders pending)
+8. ✅ Round 8 — Who Has Most?
 9. ✅ Round 9 — Build the XI (Arteta debut)
 10. ✅ Round 10 — Guess the Score
 
@@ -517,7 +517,7 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 - [x] **Round 3 (Arteta Speaks):** Built and live. ⚠️ User to verify quotes before sharing.
 - [ ] **Round 4 (Season stats):** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources.
 - [ ] **Round 5 (Corner Kings):** User to source 10 photos → `public/arsenal-quiz/corners/`
-- [ ] **Round 8 (Who Has Most?):** Finalise Q9 and Q10 (currently placeholders — red cards / minutes played)
+- [x] **Round 8 (Who Has Most?):** All 10 questions finalised with official PL API data
 - [ ] **Round 10 (Guess the Score):** Verify all starting XIs and match details.
 - [ ] **Firebase leaderboard:** Add `arsenal-champions-2026` game to Firebase rules + leaderboard page
 - [ ] **Home page card:** Add to drapk.in home page with Arsenal red/gold branding

@@ -2430,9 +2430,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
     correct: "Mikel Merino",
     reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13 — the corner king — but isn't on the board.)",
   },
-  // ── Q9 & Q10: PLACEHOLDERS (TBD — swap when finalised) ─────────────────────
   {
-    tbd: true,
     stat: "PL red cards under Arteta",
     options: [
       { name: "David Luiz", value: 3 },
@@ -2441,19 +2439,18 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Myles Lewis-Skelly", value: 2 },
     ],
     correct: "David Luiz",
-    reveal: "PLACEHOLDER — David Luiz picked up 3 reds in Arteta's first 18 months. Lewis-Skelly already has 2 as an 18-year-old.",
+    reveal: "David Luiz: 3 reds in Arteta's first 18 months — including a penalty-conceded straight red vs Man City. Lewis-Skelly already has 2 reds as an 18-year-old.",
   },
   {
-    tbd: true,
-    stat: "PL minutes played under Arteta",
+    stat: "PL minutes played under Arteta (the cameo edition)",
     options: [
-      { name: "Bukayo Saka", value: 17388 },
-      { name: "Gabriel Magalhães", value: 16636 },
-      { name: "Martin Ødegaard", value: 13596 },
-      { name: "William Saliba", value: 11492 },
+      { name: "Folarin Balogun", value: 70, unit: "min" },
+      { name: "Kepa Arrizabalaga", value: 90, unit: "min" },
+      { name: "Christian Nørgaard", value: 101, unit: "min" },
+      { name: "Henrikh Mkhitaryan", value: 111, unit: "min" },
     ],
-    correct: "Bukayo Saka",
-    reveal: "PLACEHOLDER — Saka: 17,388 PL minutes. Gabriel just behind on 16,636 — those two have shared a pitch more than any other pair of the era.",
+    correct: "Henrikh Mkhitaryan",
+    reveal: "Mkhitaryan 'wins' with 111 PL minutes — about one Carabao Cup round of football. He was an Arsenal player for four seasons but Arteta barely used him. Every player here played for Arsenal in the Arteta era — and not one of them broke two hours.",
   },
 ];
 
