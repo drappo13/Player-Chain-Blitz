@@ -1696,12 +1696,12 @@ const ROUND5_CORNERS: CornerGoal[] = [
     reveal: "Arsenal's 16th corner goal of the season, equalling the all-time PL record (set by Oldham 92/93, WBA 16/17 and Arsenal themselves in 23/24). The record would fall a few weeks later.",
   },
   {
-    scorer: "TBD",
-    opponent: "Photo coming soon", date: "",
-    imagePath: "arsenal-quiz/corners/06-tbd.jpg",
-    imageHint: "Photo coming soon",
-    options: ["Gabriel Magalhães", "William Saliba", "Jurrien Timber", "Kai Havertz"],
-    reveal: "",
+    scorer: "Declan Rice",
+    opponent: "Manchester United", date: "3 Sep 2023",
+    imagePath: "arsenal-quiz/corners/06-rice-manutd-2023.jpg",
+    imageHint: "Rice's 90+6' winner vs Man Utd, Sep 2023",
+    options: ["Declan Rice", "Kai Havertz", "Martin Ødegaard", "Gabriel Jesus"],
+    reveal: "Tied 1-1 deep into injury time. Saka swung in a corner, the ball pinballed around, Rice slid it home from close range. Jesus added a third moments later. Rice's first Arsenal goal, and the moment the Emirates believed.",
   },
   {
     scorer: "TBD",
