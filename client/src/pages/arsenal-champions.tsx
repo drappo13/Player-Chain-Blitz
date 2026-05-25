@@ -2449,7 +2449,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Ben White", value: 18 },
     ],
     correct: "Bukayo Saka",
-    reveal: "Saka: 26 yellows, more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 28, but isn't on the board here.)",
+    reveal: "Saka actually has the 2nd most bookings of any player under Arteta, behind Granit Xhaka of course (28).",
   },
   {
     stat: "PL goals under Arteta",
