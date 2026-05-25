@@ -384,7 +384,7 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
 // ─── Round 2: Who Doubted Us? ──────────────────────────────────────────────────
 
 
-function Round2WhoDoubtedUs({ onComplete }: { onComplete: (score: number) => void }) {
+function Round2WhoDoubtedUs({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -403,8 +403,10 @@ function Round2WhoDoubtedUs({ onComplete }: { onComplete: (score: number) => voi
 
   function handleNext() {
     const newAnswers = [...answers, selected === q.correct];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND2_QUOTES.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -660,7 +662,7 @@ const ROUND1_GAMES: HorrorGame[] = [
 
 // ─── Round 1: Trust the Process ───────────────────────────────────────────────
 
-function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => void }) {
+function Round1TrustTheProcess({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [homeInput, setHomeInput] = useState(0);
   const [awayInput, setAwayInput] = useState(0);
@@ -690,8 +692,10 @@ function Round1TrustTheProcess({ onComplete }: { onComplete: (score: number) => 
   function handleNext() {
     const correct = homeInput === g.homeScore && awayInput === g.awayScore;
     const newAnswers = [...answers, correct];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND1_GAMES.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -1046,7 +1050,7 @@ function ScorePicker({
 
 // ─── Round 10: Guess the Score ────────────────────────────────────────────────
 
-function Round10GuessTheScore({ onComplete }: { onComplete: (score: number) => void }) {
+function Round10GuessTheScore({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [arsenalInput, setArsenalInput] = useState(0);
   const [opponentInput, setOpponentInput] = useState(0);
@@ -1064,8 +1068,10 @@ function Round10GuessTheScore({ onComplete }: { onComplete: (score: number) => v
 
   function handleNext() {
     const newAnswers = [...answers, arsenalInput === g.arsenalGoals && opponentInput === g.opponentGoals];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND10_GAMES.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -1346,7 +1352,7 @@ const ROUND3_QUOTES: ArtetaQuote[] = [
 
 // ─── Round 3: Arteta Speaks ───────────────────────────────────────────────────
 
-function Round3ArtetaSpeaks({ onComplete }: { onComplete: (score: number) => void }) {
+function Round3ArtetaSpeaks({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -1365,6 +1371,7 @@ function Round3ArtetaSpeaks({ onComplete }: { onComplete: (score: number) => voi
 
   function handleNext() {
     const newAnswers = [...answers, selected === q.player];
+    onProgress?.(newAnswers.filter(Boolean).length);
     if (qIndex + 1 >= ROUND3_QUOTES.length) {
       onComplete(newAnswers.filter(Boolean).length);
     } else {
@@ -1542,7 +1549,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
 
 // ─── Round 4: The Season That Won It ─────────────────────────────────────────
 
-function Round4SeasonStats({ onComplete }: { onComplete: (score: number) => void }) {
+function Round4SeasonStats({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -1558,8 +1565,10 @@ function Round4SeasonStats({ onComplete }: { onComplete: (score: number) => void
 
   function handleNext() {
     const newAnswers = [...answers, selected === q.correct];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND4_QUESTIONS.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -1783,7 +1792,7 @@ function CornerPhotoSlot({ src, hint }: { src: string; hint: string }) {
 
 // ─── Round 5: Corner Kings ────────────────────────────────────────────────────
 
-function Round5CornerKings({ onComplete }: { onComplete: (score: number) => void }) {
+function Round5CornerKings({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -1799,8 +1808,10 @@ function Round5CornerKings({ onComplete }: { onComplete: (score: number) => void
 
   function handleNext() {
     const newAnswers = [...answers, selected === g.scorer];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND5_CORNERS.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -1925,7 +1936,7 @@ const R9_CONFIG: Record<R9Category, { label: string; subtitle: string; slots: nu
   attackers: { label: "ATTACKERS", subtitle: "Pick 3 attackers", slots: 3 },
 };
 
-function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void }) {
+function Round9BuildTheXI({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [pool] = useState<string[]>(() => [...ROUND9_POOL_BASE].sort(() => Math.random() - 0.5));
   const [screen, setScreen] = useState<R9Screen>("defenders");
   const [picks, setPicks] = useState<Record<R9Category, string[]>>({
@@ -1948,9 +1959,15 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
     if (usedInPrior.has(name)) return;
     setPicks(prev => {
       const cur = prev[cat];
-      if (cur.includes(name)) return { ...prev, [cat]: cur.filter(n => n !== name) };
-      if (cur.length >= R9_CONFIG[cat].slots) return prev;
-      return { ...prev, [cat]: [...cur, name] };
+      let nextCur: string[];
+      if (cur.includes(name)) nextCur = cur.filter(n => n !== name);
+      else if (cur.length >= R9_CONFIG[cat].slots) nextCur = cur;
+      else nextCur = [...cur, name];
+      const nextPicks = { ...prev, [cat]: nextCur };
+      const xiSet = new Set([...ROUND9_CORRECT.defenders, ...ROUND9_CORRECT.midfield, ...ROUND9_CORRECT.attackers]);
+      const all = [...nextPicks.defenders, ...nextPicks.midfield, ...nextPicks.attackers];
+      onProgress?.(all.filter(p => xiSet.has(p)).length);
+      return nextPicks;
     });
   }
 
@@ -2242,11 +2259,13 @@ function SelectTopTenRound({
   roundName,
   subtitle,
   onComplete,
+  onProgress,
 }: {
   topSet: Set<string>;
   roundName: string;
   subtitle: string;
   onComplete: (score: number) => void;
+  onProgress?: (n: number) => void;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -2256,9 +2275,12 @@ function SelectTopTenRound({
   function togglePlayer(name: string) {
     if (submitted) return;
     setSelected(prev => {
-      if (prev.includes(name)) return prev.filter(n => n !== name);
-      if (prev.length >= 10) return prev;
-      return [...prev, name];
+      let nextSelected: string[];
+      if (prev.includes(name)) nextSelected = prev.filter(n => n !== name);
+      else if (prev.length >= 10) nextSelected = prev;
+      else nextSelected = [...prev, name];
+      onProgress?.(nextSelected.filter(n => topSet.has(n)).length);
+      return nextSelected;
     });
   }
 
@@ -2376,24 +2398,26 @@ function SelectTopTenRound({
   );
 }
 
-function Round6TopScorers({ onComplete }: { onComplete: (score: number) => void }) {
+function Round6TopScorers({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   return (
     <SelectTopTenRound
       topSet={TOP10_SCORERS_SET}
       roundName="Top Scorers"
       subtitle="Select the top 10 PL goalscorers under Arteta"
       onComplete={onComplete}
+      onProgress={onProgress}
     />
   );
 }
 
-function Round7AssistMasters({ onComplete }: { onComplete: (score: number) => void }) {
+function Round7AssistMasters({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   return (
     <SelectTopTenRound
       topSet={TOP10_ASSISTERS_SET}
       roundName="The Assist Masters"
       subtitle="Select the top 10 PL assisters under Arteta"
       onComplete={onComplete}
+      onProgress={onProgress}
     />
   );
 }
@@ -2532,7 +2556,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
 
 // ─── Round 8: Who Has Most? ────────────────────────────────────────────────────
 
-function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void }) {
+function Round8WhoHasMost({ onComplete, onProgress }: { onComplete: (score: number) => void; onProgress?: (n: number) => void }) {
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -2551,8 +2575,10 @@ function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void 
 
   function handleNext() {
     const newAnswers = [...answers, selected === q.correct];
+    const correctCount = newAnswers.filter(Boolean).length;
+    onProgress?.(correctCount);
     if (qIndex + 1 >= ROUND8_QUESTIONS.length) {
-      onComplete(newAnswers.filter(Boolean).length);
+      onComplete(correctCount);
     } else {
       setAnswers(newAnswers);
       setQIndex(i => i + 1);
@@ -2871,8 +2897,10 @@ export default function ArsenalChampions() {
   const [savedToLeaderboard, setSavedToLeaderboard] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showChampionsCloser, setShowChampionsCloser] = useState(false);
+  const [currentRoundProgress, setCurrentRoundProgress] = useState(0);
 
   const totalScore = roundScores.reduce((a, b) => a + b, 0);
+  const displayedScore = totalScore + currentRoundProgress;
   const activeRound = ROUNDS[currentRound];
 
   const { entries: lbEntries, loading: lbLoading, refresh: refreshLeaderboard } = useGameLeaderboard(
@@ -2907,10 +2935,11 @@ export default function ArsenalChampions() {
     })();
   }, [phase, user, totalScore, savedToLeaderboard, refreshLeaderboard]);
 
-  function startQuiz() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("between"); }
-  function startRound() { setPhase("playing"); }
+  function startQuiz() { setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("between"); }
+  function startRound() { setCurrentRoundProgress(0); setPhase("playing"); }
   function handleRoundComplete(score: number) {
     // score is 0–10 per round (1pt per question × 10 questions)
+    setCurrentRoundProgress(0);
     const next = [...roundScores, score];
     setRoundScores(next);
     const nextIdx = currentRound + 1;
@@ -2926,7 +2955,7 @@ export default function ArsenalChampions() {
       setPhase("between");
     }
   }
-  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("intro"); }
+  function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("intro"); }
   function handleShare() {
     navigator.clipboard.writeText(
       `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`
@@ -2946,7 +2975,7 @@ export default function ArsenalChampions() {
         {phase === "intro" && (
           <motion.div
             key="intro-overlay"
-            className="fixed inset-0 z-50 overflow-y-auto"
+            className="fixed inset-0 z-50 overflow-hidden"
             style={{ background: RED }}
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.5 } }}
@@ -2978,7 +3007,7 @@ export default function ArsenalChampions() {
               <Home className="w-4 h-4" />
             </button>
 
-            <div className="relative z-10 flex flex-col items-center text-center px-4 pt-12 pb-8 min-h-screen justify-center">
+            <div className="relative z-10 flex flex-col items-center text-center px-4 h-screen justify-center">
 
               {/* Title block */}
               <motion.div
@@ -3014,8 +3043,9 @@ export default function ArsenalChampions() {
                   Premier League
                 </div>
 
-                {/* CHAMPIONS, big gold, pulsing glow */}
-                <motion.div
+                {/* CHAMPIONS, big gold, pulsing glow via CSS keyframe
+                    (avoids the mobile jitter we saw animating filter via framer-motion). */}
+                <div
                   className="block leading-none mt-1"
                   style={{
                     fontFamily: BEBAS,
@@ -3025,18 +3055,12 @@ export default function ArsenalChampions() {
                     WebkitBackgroundClip: "text",
                     backgroundClip: "text",
                     color: "transparent",
+                    animation: "ac-champions-pulse 2.8s ease-in-out infinite",
+                    willChange: "text-shadow",
                   }}
-                  animate={{
-                    filter: [
-                      "drop-shadow(0 0 14px rgba(200,150,12,0.45)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
-                      "drop-shadow(0 0 34px rgba(245,208,120,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
-                      "drop-shadow(0 0 14px rgba(200,150,12,0.45)) drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
-                    ],
-                  }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
                 >
                   CHAMPIONS
-                </motion.div>
+                </div>
 
                 {/* 2025-26 */}
                 <div
@@ -3180,7 +3204,7 @@ export default function ArsenalChampions() {
                 <RoundProgressBar current={roundScores.length} total={ROUNDS.length} />
               </div>
               <span className="text-xs font-bold flex-shrink-0" style={{ color: GOLD }}>
-                {totalScore}/100
+                {displayedScore}/100
               </span>
             </div>
           </div>
@@ -3290,25 +3314,25 @@ export default function ArsenalChampions() {
                   transition={{ duration: 0.2 }}
                 >
                   {currentRound === 0 ? (
-                    <Round2WhoDoubtedUs onComplete={handleRoundComplete} />
+                    <Round2WhoDoubtedUs onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 1 ? (
-                    <Round8WhoHasMost onComplete={handleRoundComplete} />
+                    <Round8WhoHasMost onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 2 ? (
-                    <Round9BuildTheXI onComplete={handleRoundComplete} />
+                    <Round9BuildTheXI onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 3 ? (
-                    <Round6TopScorers onComplete={handleRoundComplete} />
+                    <Round6TopScorers onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 4 ? (
-                    <Round1TrustTheProcess onComplete={handleRoundComplete} />
+                    <Round1TrustTheProcess onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 5 ? (
-                    <Round3ArtetaSpeaks onComplete={handleRoundComplete} />
+                    <Round3ArtetaSpeaks onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 6 ? (
-                    <Round5CornerKings onComplete={handleRoundComplete} />
+                    <Round5CornerKings onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 7 ? (
-                    <Round10GuessTheScore onComplete={handleRoundComplete} />
+                    <Round10GuessTheScore onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 8 ? (
-                    <Round7AssistMasters onComplete={handleRoundComplete} />
+                    <Round7AssistMasters onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : currentRound === 9 ? (
-                    <Round4SeasonStats onComplete={handleRoundComplete} />
+                    <Round4SeasonStats onComplete={handleRoundComplete} onProgress={setCurrentRoundProgress} />
                   ) : (
                     <PlaceholderRound round={activeRound} onComplete={handleRoundComplete} />
                   )}
