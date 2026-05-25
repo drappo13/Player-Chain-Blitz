@@ -1944,64 +1944,123 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
   }
 
   function handleFinish() {
-    const score =
-      picks.defenders.filter(n => ROUND9_CORRECT.defenders.includes(n)).length +
-      picks.midfield.filter(n => ROUND9_CORRECT.midfield.includes(n)).length +
-      picks.attackers.filter(n => ROUND9_CORRECT.attackers.includes(n)).length;
-    onComplete(score);
+    const allPicks = [...picks.defenders, ...picks.midfield, ...picks.attackers];
+    const xiSet = new Set([...ROUND9_CORRECT.defenders, ...ROUND9_CORRECT.midfield, ...ROUND9_CORRECT.attackers]);
+    onComplete(allPicks.filter(p => xiSet.has(p)).length);
   }
 
   if (screen === "results") {
-    const total =
-      picks.defenders.filter(n => ROUND9_CORRECT.defenders.includes(n)).length +
-      picks.midfield.filter(n => ROUND9_CORRECT.midfield.includes(n)).length +
-      picks.attackers.filter(n => ROUND9_CORRECT.attackers.includes(n)).length;
+    const allPicks = [...picks.defenders, ...picks.midfield, ...picks.attackers];
+    const pickedSet = new Set(allPicks);
+    const xiSet = new Set([...ROUND9_CORRECT.defenders, ...ROUND9_CORRECT.midfield, ...ROUND9_CORRECT.attackers]);
+    const total = allPicks.filter(p => xiSet.has(p)).length;
+
+    // Wrong picks per category — players the user picked that aren't in the XI at all
+    const wrongByCat: Record<R9Category, string[]> = {
+      defenders: picks.defenders.filter(n => !xiSet.has(n)),
+      midfield: picks.midfield.filter(n => !xiSet.has(n)),
+      attackers: picks.attackers.filter(n => !xiSet.has(n)),
+    };
+    // Pair each missed starter with one wrong pick from the same category, in order
+    function buildSlots(starters: string[], cat: R9Category) {
+      const queue = [...wrongByCat[cat]];
+      return starters.map(name => {
+        const picked = pickedSet.has(name);
+        const wrongPick = !picked ? queue.shift() ?? null : null;
+        return { name, picked, wrongPick };
+      });
+    }
+    const defSlots = buildSlots(ROUND9_CORRECT.defenders, "defenders");
+    const midSlots = buildSlots(ROUND9_CORRECT.midfield, "midfield");
+    const attSlots = buildSlots(ROUND9_CORRECT.attackers, "attackers");
+    // Wrong picks that didn't match any missed slot in their own category
+    function leftover(starters: string[], cat: R9Category) {
+      return wrongByCat[cat].slice(starters.filter(s => !pickedSet.has(s)).length);
+    }
+    const leftoverWrong = [
+      ...leftover(ROUND9_CORRECT.defenders, "defenders"),
+      ...leftover(ROUND9_CORRECT.midfield, "midfield"),
+      ...leftover(ROUND9_CORRECT.attackers, "attackers"),
+    ];
+
+    type Slot = { name: string; picked: boolean | null; wrongPick: string | null; isGK?: boolean };
+    const renderRow = (slots: Slot[]) => (
+      <div className="flex justify-around items-start gap-1.5">
+        {slots.map(({ name, picked, wrongPick, isGK }) => {
+          let bg = "rgba(255,255,255,0.04)";
+          let border = "1px solid rgba(255,255,255,0.15)";
+          let color = "rgba(255,255,255,0.5)";
+          let icon = "";
+          if (isGK) {
+            bg = "rgba(255,255,255,0.025)";
+            border = "1px dashed rgba(255,255,255,0.18)";
+            color = "rgba(255,255,255,0.32)";
+          } else if (picked) {
+            bg = "rgba(200,150,12,0.18)";
+            border = `1px solid ${GOLD}aa`;
+            color = GOLD_LIGHT;
+            icon = " ✓";
+          }
+          return (
+            <div key={name} className="flex flex-col items-center gap-1 flex-1" style={{ minWidth: 0, maxWidth: 130 }}>
+              <div
+                className="px-2 py-2 rounded-lg text-[11px] font-semibold text-center w-full leading-tight"
+                style={{ background: bg, border, color }}
+              >
+                {name}{icon}
+              </div>
+              {isGK && (
+                <div className="text-[9px] tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.25)" }}>GK</div>
+              )}
+              {wrongPick && (
+                <div className="text-[9px] text-center leading-tight pt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  you picked
+                  <div style={{ color: "#ff8888", fontWeight: 700 }}>{wrongPick}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
 
     return (
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="pb-16">
         <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Arteta's First XI, Results</div>
         <div className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Bournemouth vs Arsenal · 26 Dec 2019</div>
 
-        {(["defenders", "midfield", "attackers"] as R9Category[]).map(cat => {
-          const correct = ROUND9_CORRECT[cat];
-          const chosen = picks[cat];
-          const catScore = chosen.filter(n => correct.includes(n)).length;
-          return (
-            <div key={cat} className="mb-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="text-xs font-bold tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  {cat.toUpperCase()}
-                </div>
-                <div className="text-xs font-bold" style={{ color: catScore === correct.length ? GOLD : "rgba(255,255,255,0.5)" }}>
-                  {catScore}/{correct.length}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {chosen.map(name => {
-                  const ok = correct.includes(name);
-                  return (
-                    <div key={name} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{
-                      background: ok ? "rgba(200,150,12,0.15)" : "rgba(219,0,7,0.15)",
-                      border: `1px solid ${ok ? GOLD + "88" : RED + "88"}`,
-                      color: ok ? GOLD_LIGHT : "#ff8888",
-                    }}>
-                      {name} {ok ? "✓" : "✗"}
-                    </div>
-                  );
-                })}
-                {correct.filter(n => !chosen.includes(n)).map(name => (
-                  <div key={name} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{
-                    background: "rgba(200,150,12,0.05)",
-                    border: "1px solid rgba(200,150,12,0.25)",
-                    color: "rgba(200,150,12,0.55)",
-                  }}>
-                    {name}
-                  </div>
-                ))}
-              </div>
+        {/* Formation board */}
+        <div
+          className="rounded-2xl p-4 mb-5 space-y-5"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,30,0,0.18), rgba(0,0,0,0.35))",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {renderRow([{ name: "Leno", picked: null, wrongPick: null, isGK: true }])}
+          {renderRow(defSlots)}
+          {renderRow(midSlots)}
+          {renderRow(attSlots)}
+        </div>
+
+        {leftoverWrong.length > 0 && (
+          <div className="mb-5">
+            <div className="text-[10px] font-bold tracking-widest uppercase mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+              Other wrong picks
             </div>
-          );
-        })}
+            <div className="flex flex-wrap gap-2">
+              {leftoverWrong.map(name => (
+                <div key={name} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{
+                  background: "rgba(219,0,7,0.12)",
+                  border: `1px solid ${RED}66`,
+                  color: "#ff8888",
+                }}>
+                  {name} ✗
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div
           className="rounded-xl p-4 mb-5 text-center"
@@ -2010,7 +2069,7 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
           <div className="text-3xl font-bold mb-0.5" style={{ fontFamily: BEBAS, color: GOLD, letterSpacing: "0.04em" }}>
             {total} / 10
           </div>
-          <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>players correctly placed</div>
+          <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>players correctly identified</div>
         </div>
 
         <GoldButton onClick={handleFinish} className="w-full py-3.5 flex items-center justify-center gap-2">
