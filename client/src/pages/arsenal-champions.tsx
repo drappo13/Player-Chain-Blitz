@@ -55,7 +55,7 @@ const ROUNDS: RoundDef[] = [
     number: 5,
     name: "Trust the Process",
     emoji: "📉",
-    description: "Guess the scores from Arsenal's 2020/21 horror run — the season that made the rebuild necessary.",
+    description: "Guess the scores from Arsenal's 2020/21 horror run, the season that made the rebuild necessary.",
   },
   {
     number: 6,
@@ -67,13 +67,13 @@ const ROUNDS: RoundDef[] = [
     number: 7,
     name: "Corner Kings",
     emoji: "🚩",
-    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026 — who got on the end of each one?",
+    description: "No tactic caused more rival fury across the Arteta era. Ten corner goals from 2019 to 2026, who got on the end of each one?",
   },
   {
     number: 8,
     name: "Guess the Score",
     emoji: "📋",
-    description: "Ten landmark Arteta-era results. Enter the exact final score for each match — no multiple choice.",
+    description: "Ten landmark Arteta-era results. Enter the exact final score for each match, no multiple choice.",
   },
   {
     number: 9,
@@ -300,64 +300,64 @@ const ROUND2_QUOTES: QuoteQuestion[] = [
     reveal: "Said on The Overlap, suggesting Arteta's ceiling was a top-four finish. Arteta did go on to win the league.",
   },
   {
-    quote: "Arsenal have looked a very nervy bunch — in part that stems from Arteta and his antics on the touchline.",
-    context: "February 2023 — Arsenal's title challenge begins to wobble",
+    quote: "Arsenal have looked a very nervy bunch, in part that stems from Arteta and his antics on the touchline.",
+    context: "February 2023, Arsenal's title challenge begins to wobble",
     options: ["Graeme Souness", "Roy Keane", "Harry Redknapp", "Jermaine Jenas"],
     correct: "Graeme Souness",
     reveal: "Said on Sky Sports as Arsenal surrendered a 7-point lead to Man City.",
   },
   {
     quote: "When they came here I thought: these guys do not want to beat us. They just want to draw.",
-    context: "May 2024 — on Arsenal's visit to the Etihad during the 2023/24 title run-in",
+    context: "May 2024, on Arsenal's visit to the Etihad during the 2023/24 title run-in",
     options: ["Rodri", "Bernardo Silva", "Kevin De Bruyne", "Erling Haaland"],
     correct: "Rodri",
     reveal: "Said after Man City won their 4th consecutive title. Arsenal went unbeaten against Man City for more than 2 years across 6 games after this.",
   },
   {
     quote: "They were just booting it, like a small team with a small mentality.",
-    context: "September 2024 — after Arsenal conceded a 98th-minute equaliser having led 2-1 at the Etihad",
+    context: "September 2024, after Arsenal conceded a 98th-minute equaliser having led 2-1 at the Etihad",
     options: ["Roy Keane", "Graeme Souness", "Alan Shearer", "Gabriel Agbonlahor"],
     correct: "Roy Keane",
     reveal: "Said on Sky Sports. Arsenal went on to win the league.",
   },
   {
     quote: "Watching Arsenal is like watching Netflix. You always have to wait for the next season!",
-    context: "October 2024 — after another Arsenal near-miss",
+    context: "October 2024, after another Arsenal near-miss",
     options: ["Patrice Evra", "Gary Neville", "Joe Hart", "Jermaine Jenas"],
     correct: "Patrice Evra",
     reveal: "The line became one of the most-shared Arsenal memes of the era. Arsenal made it worth the wait.",
   },
   {
     quote: "Stay humble, eh. Stay humble, eh.",
-    context: "September 2024 — said to Arteta's face on the touchline after scoring a 98th-minute equaliser",
+    context: "September 2024, said to Arteta's face on the touchline after scoring a 98th-minute equaliser",
     options: ["Erling Haaland", "Rodri", "Kevin De Bruyne", "Bernardo Silva"],
     correct: "Erling Haaland",
     reveal: 'Arteta said he found it "funny". Who\'s laughing now?',
   },
   {
-    quote: "They've cheated their way to winning the Premier League. I wouldn't recognise them as winners — for me, it's illegal the way they win games.",
-    context: "March 2026 — said on talkSPORT as Arsenal led the title race on the back of a record corner-kick season",
+    quote: "They've cheated their way to winning the Premier League. I wouldn't recognise them as winners, for me, it's illegal the way they win games.",
+    context: "March 2026, said on talkSPORT as Arsenal led the title race on the back of a record corner-kick season",
     options: ["John Obi Mikel", "Wayne Rooney", "Peter Schmeichel", "Tim Sherwood"],
     correct: "John Obi Mikel",
     reveal: "Former Chelsea midfielder, said on talkSPORT, 11 March 2026. Mikel was always known for his explosive attacking style, wasn't he? Arsenal were recognised as champions regardless.",
   },
   {
     quote: "He has to walk! Mikel Arteta should resign if Arsenal fails to win the league. Failing to win a trophy after being in contention necessitates his departure.",
-    context: "April 2026 — Agbonlahor on talkSPORT during Arsenal's title run-in",
+    context: "April 2026, Agbonlahor on talkSPORT during Arsenal's title run-in",
     options: ["Gabriel Agbonlahor", "Alan Shearer", "Paul Merson", "Jermaine Jenas"],
     correct: "Gabriel Agbonlahor",
     reveal: "Said on talkSPORT, April 2026. Agbonlahor spent his entire career at Aston Villa, winning nothing. Arteta stayed. Arsenal won the league weeks later.",
   },
   {
     quote: "It's going to come on full blast now, being bottle jobs, melting.",
-    context: "February 2026 — after Arsenal blew a 2-0 home lead to draw 2-2 with Wolves",
+    context: "February 2026, after Arsenal blew a 2-0 home lead to draw 2-2 with Wolves",
     options: ["Paul Merson", "Roy Keane", "Wayne Rooney", "Paul Scholes"],
     correct: "Paul Merson",
     reveal: "He predicted Arsenal would choke in the run-in. They didn't.",
   },
   {
     quote: "We can't have all these games and the championship decided on corner kicks. We just can't.",
-    context: "March 2026 — after Arsenal beat Chelsea 2-1 with both goals from corners",
+    context: "March 2026, after Arsenal beat Chelsea 2-1 with both goals from corners",
     options: ["Peter Schmeichel", "Wayne Rooney", "Gary Neville", "Graeme Souness"],
     correct: "Peter Schmeichel",
     reveal: "Schmeichel's own 1999 Champions League final win was decided by two late corner routines.",
@@ -595,7 +595,7 @@ const ROUND1_GAMES: HorrorGame[] = [
     homeTeam: "Manchester United", awayTeam: "Arsenal", date: "1 Nov 2020",
     homeScore: 0, awayScore: 1, result: "W",
     options: ["0-1", "1-0", "1-1", "0-0"],
-    reveal: "Aubameyang converted a penalty — Arsenal's first win at Old Trafford in 14 years. Even at their absolute lowest, Arsenal could still go to Old Trafford and win.",
+    reveal: "Aubameyang converted a penalty, Arsenal's first win at Old Trafford in 14 years. Even at their absolute lowest, Arsenal could still go to Old Trafford and win.",
   },
   {
     homeTeam: "Arsenal", awayTeam: "Aston Villa", date: "8 Nov 2020",
@@ -607,7 +607,7 @@ const ROUND1_GAMES: HorrorGame[] = [
     homeTeam: "Leeds United", awayTeam: "Arsenal", date: "22 Nov 2020",
     homeScore: 0, awayScore: 0, result: "D",
     options: ["0-0", "1-0", "0-1", "1-1"],
-    reveal: "A point at Elland Road felt about right — Arsenal were deeply uninspiring.",
+    reveal: "A point at Elland Road felt about right, Arsenal were deeply uninspiring.",
   },
   {
     homeTeam: "Arsenal", awayTeam: "Wolves", date: "29 Nov 2020",
@@ -891,7 +891,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 3, opponentGoals: 2,
     arsenalXI: "Ramsdale; Tomiyasu, Saliba, Gabriel, Zinchenko; Partey, Vieira; Saka, Ødegaard, Martinelli; Trossard",
     opponentXI: "Neto; Smith, Mepham, Senesi, Zemura; Cook, Lerma; Billing, Tavernier, Moore; Solanke",
-    reveal: "Bournemouth led 2-0 — Billing scored after just 9 seconds. Partey pulled one back, then Ben White came off the bench to equalise on 70. Nelson came off the bench and scored in the 97th minute. Pandemonium at the Emirates.",
+    reveal: "Bournemouth led 2-0, Billing scored after just 9 seconds. Partey pulled one back, then Ben White came off the bench to equalise on 70. Nelson came off the bench and scored in the 97th minute. Pandemonium at the Emirates.",
   },
   {
     matchTitle: "Arsenal vs Manchester United",
@@ -903,7 +903,7 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 3, opponentGoals: 1,
     arsenalXI: "Ramsdale; White, Saliba, Gabriel, Zinchenko; Rice, Ødegaard; Saka, Havertz, Martinelli; Nketiah",
     opponentXI: "Onana; Wan-Bissaka, Lindelöf, Martínez, Dalot; Casemiro, Eriksen; Antony, Rashford, Fernandes; Martial",
-    reveal: "Gabriel crouched to let a United player run offside — it went viral. Rice scored his first Arsenal goal on 90+6'. Jesus came off the bench to make it three.",
+    reveal: "Gabriel crouched to let a United player run offside, it went viral. Rice scored his first Arsenal goal on 90+6'. Jesus came off the bench to make it three.",
   },
   {
     matchTitle: "Arsenal vs Manchester City",
@@ -921,13 +921,13 @@ const ROUND10_GAMES: ScoreGame[] = [
     matchTitle: "West Ham vs Arsenal",
     date: "11 February 2024",
     venue: "London Stadium",
-    context: "Radioactive zebra, raining goals — Rice on return",
+    context: "Radioactive zebra, raining goals, Rice on return",
     isArsenalHome: false,
     opponentName: "West Ham",
     arsenalGoals: 6, opponentGoals: 0,
     arsenalXI: "Raya; White, Saliba, Gabriel, Kiwior; Rice, Ødegaard, Havertz; Saka, Trossard, Martinelli",
     opponentXI: "Areola; Coufal, Zouma, Aguerd, Emerson; Ward-Prowse, Soucek; Kudus, Álvarez, Bowen; Johnson",
-    reveal: "Arsenal's biggest Premier League win under Arteta — the most goals in a single PL game of the Arteta era. Rice returned to his old ground and got six. West Ham's radioactive zebra kit was the only thing more embarrassing than the scoreline.",
+    reveal: "Arsenal's biggest Premier League win under Arteta, the most goals in a single PL game of the Arteta era. Rice returned to his old ground and got six. West Ham's radioactive zebra kit was the only thing more embarrassing than the scoreline.",
   },
   {
     matchTitle: "Arsenal vs Chelsea",
@@ -975,19 +975,19 @@ const ROUND10_GAMES: ScoreGame[] = [
     arsenalGoals: 4, opponentGoals: 1,
     arsenalXI: "Raya; Timber, Saliba, Hincapié, Calafiori; Zubimendi, Rice; Saka, Eze, Trossard; Merino",
     opponentXI: "Vicario; Danso, Romero, van de Ven; Udogie, Bentancur, Palhinha, Spence; Odobert, Kudus; Richarlison",
-    reveal: "Eze scored a hat-trick. Only the fourth player in history to score an NLD hat-trick — and he'd snubbed Spurs to make it happen.",
+    reveal: "Eze scored a hat-trick. Only the fourth player in history to score an NLD hat-trick, and he'd snubbed Spurs to make it happen.",
   },
   {
     matchTitle: "Arsenal vs Burnley",
     date: "18 May 2026",
     venue: "Emirates Stadium",
-    context: "Penultimate game of the season — the title was one result away",
+    context: "Penultimate game of the season, the title was one result away",
     isArsenalHome: true,
     opponentName: "Burnley",
     arsenalGoals: 1, opponentGoals: 0,
     arsenalXI: "Raya; Mosquera, Saliba, Gabriel, Calafiori; Rice, Ødegaard; Eze, Trossard, Saka; Havertz",
     opponentXI: "Weiss; Walker, Estève, Tuanzebe, Pires; Ugochukwu, Florentino; Anthony, Hannibal, Tchaouna; Flemming",
-    reveal: "Havertz headed in from a corner — Arsenal's 18th corner goal of the season. Man City drew 1-1 at Bournemouth the next night. Arsenal were champions. Twenty-two years.",
+    reveal: "Havertz headed in from a corner, Arsenal's 18th corner goal of the season. Man City drew 1-1 at Bournemouth the next night. Arsenal were champions. Twenty-two years.",
   },
 ];
 
@@ -1244,7 +1244,7 @@ function Round10GuessTheScore({ onComplete }: { onComplete: (score: number) => v
 }
 
 // ─── Round 3 data ────────────────────────────────────────────────────────────
-// ⚠️ Verify all quotes + sources before going live — see docs/arsenal-champions-quiz.md
+// ⚠️ Verify all quotes + sources before going live, see docs/arsenal-champions-quiz.md
 
 interface ArtetaQuote {
   quote: string;
@@ -1256,72 +1256,72 @@ interface ArtetaQuote {
 
 const ROUND3_QUOTES: ArtetaQuote[] = [
   {
-    quote: "You don't really see that at 21 years old — a debut in the Premier League against this opponent, and resolve the situation with that composure, that calmness and that presence.",
+    quote: "You don't really see that at 21 years old, a debut in the Premier League against this opponent, and resolve the situation with that composure, that calmness and that presence.",
     player: "William Saliba",
     context: "August 2022",
     options: ["William Saliba", "Gabriel Magalhães", "Ben White", "Jurrien Timber"],
     reveal: "Saliba had spent three seasons on loan in France before returning. Arteta was blown away on debut. He went on to become one of the best defenders in the world.",
   },
   {
-    quote: "By a mile. By 100 miles. Everybody chose the same person — which is the most clear sign you can have of how they feel about who has to lead them.",
+    quote: "By a mile. By 100 miles. Everybody chose the same person, which is the most clear sign you can have of how they feel about who has to lead them.",
     player: "Martin Ødegaard",
-    context: "August 2025 — on one of his players' leadership",
+    context: "August 2025, on one of his players' leadership",
     options: ["Martin Ødegaard", "Declan Rice", "William Saliba", "Bukayo Saka"],
     reveal: "The vote came after pundits questioned the captaincy following difficult results. The squad was unanimous. Ødegaard went on to lift the Premier League trophy.",
   },
   {
     quote: "I loved it. It's about taking initiative, making things happen and believing that you can actually win the game by yourself sometimes. I was really impressed.",
     player: "Declan Rice",
-    context: "April 2025 — on ignoring their set piece coach in a Champions League match",
+    context: "April 2025, on ignoring their set piece coach in a Champions League match",
     options: ["Declan Rice", "Bukayo Saka", "Martin Ødegaard", "Gabriel Martinelli"],
-    reveal: "Rice stepped up despite Jover's signals — and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
+    reveal: "Rice stepped up despite Jover's signals, and scored both. Arsenal won the quarter-final. Arteta was delighted rather than annoyed.",
   },
   {
-    quote: "He destroyed all the metrics we had in the gym for the last ten years. Power, acceleration, muscle mass — the transformation has been incredible.",
+    quote: "He destroyed all the metrics we had in the gym for the last ten years. Power, acceleration, muscle mass, the transformation has been incredible.",
     player: "Kai Havertz",
-    context: "May 2025 — on a player returning from a hamstring injury",
+    context: "May 2025, on a player returning from a hamstring injury",
     options: ["Kai Havertz", "Jurrien Timber", "Viktor Gyökeres", "Declan Rice"],
-    reveal: "Havertz arrived with doubts about his physicality. After his hamstring recovery he returned a different player — and became Arsenal's title-winning number nine the following season.",
+    reveal: "Havertz arrived with doubts about his physicality. After his hamstring recovery he returned a different player, and became Arsenal's title-winning number nine the following season.",
   },
   {
     quote: "He is a leader. He loves to be on show and a big presence in everything we do. He is very vocal and extremely gifted technically.",
     player: "Jurrien Timber",
-    context: "July 2024 — pre-season, on a player returning to fitness",
+    context: "July 2024, pre-season, on a player returning to fitness",
     options: ["Jurrien Timber", "Riccardo Calafiori", "Kai Havertz", "Ben White"],
     reveal: "Timber tore his ACL on the opening day of his debut season. A year of rehab later, he became a cornerstone of Arsenal's title-winning defence.",
   },
   {
     quote: "He really glues the team together and that's a quality that is not easy for a striker. He's got it.",
     player: "Alexandre Lacazette",
-    context: "2021 — on a striker's role in the team",
+    context: "2021, on a striker's role in the team",
     options: ["Alexandre Lacazette", "Pierre-Emerick Aubameyang", "Gabriel Martinelli", "Martin Ødegaard"],
     reveal: "Lacazette was selfless in a way rare for a striker. He left as a free agent in 2022 but Arteta praised him for making the whole team function.",
   },
   {
-    quote: "He's so physical, he opens spaces for everybody. The way he presses the ball, holds the ball — he's just phenomenal.",
+    quote: "He's so physical, he opens spaces for everybody. The way he presses the ball, holds the ball, he's just phenomenal.",
     player: "Viktor Gyökeres",
-    context: "November 2025 — after a Champions League match",
+    context: "November 2025, after a Champions League match",
     options: ["Viktor Gyökeres", "Kai Havertz", "Alexandre Lacazette", "Gabriel Martinelli"],
-    reveal: "Gyökeres signed from Sporting in the summer of 2025. He went on to become Arsenal's top PL scorer with 14 goals — the final piece of the puzzle.",
+    reveal: "Gyökeres signed from Sporting in the summer of 2025. He went on to become Arsenal's top PL scorer with 14 goals, the final piece of the puzzle.",
   },
   {
     quote: "What he actually transmits is such security, calmness and composure in every situation on the field. He brings something unique and very powerful for the team.",
     player: "Eberechi Eze",
-    context: "May 2026 — on a player's impact during the title-winning season",
+    context: "May 2026, on a player's impact during the title-winning season",
     options: ["Eberechi Eze", "Martin Ødegaard", "Kai Havertz", "Gabriel Martinelli"],
     reveal: "Eze chose Arsenal over Spurs in summer 2025. He scored a hat-trick against them in November. Arteta described his on-field calmness as uniquely powerful.",
   },
   {
-    quote: "When we have to make that decision, it's because that's the right one to defend the interests of the club. It was really hurting — and it still is. It needs a little bit of time to heal.",
+    quote: "When we have to make that decision, it's because that's the right one to defend the interests of the club. It was really hurting, and it still is. It needs a little bit of time to heal.",
     player: "Pierre-Emerick Aubameyang",
-    context: "December 2021 — after a difficult decision involving a senior player",
+    context: "December 2021, after a difficult decision involving a senior player",
     options: ["Pierre-Emerick Aubameyang", "Alexandre Lacazette", "Granit Xhaka", "Nicolas Pépé"],
     reveal: "Aubameyang broke a pre-match curfew rule. Arteta dropped him from the squad and stripped the armband publicly. One of the defining cultural moments of the rebuild.",
   },
   {
     quote: "His reaction after scoring was to say thank you to all the sports scientists and physios who participated in his recovery. It tells you who he is as a person. It's impossible not to love him.",
     player: "Bukayo Saka",
-    context: "March 2025 — after a player returned from a long injury",
+    context: "March 2025, after a player returned from a long injury",
     options: ["Bukayo Saka", "Gabriel Martinelli", "Jurrien Timber", "Kai Havertz"],
     reveal: "Saka missed nearly four months. His first thought on returning was to thank the backroom staff. Arteta consistently praises his character as much as his talent.",
   },
@@ -1451,7 +1451,7 @@ function Round3ArtetaSpeaks({ onComplete }: { onComplete: (score: number) => voi
 }
 
 // ─── Round 4 data ────────────────────────────────────────────────────────────
-// ⚠️ Verify all stats before going live — see docs/arsenal-champions-quiz.md
+// ⚠️ Verify all stats before going live, see docs/arsenal-champions-quiz.md
 
 interface SeasonStatQ {
   question: string;
@@ -1471,7 +1471,7 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "How many goals did Spurs score against Man City across both Premier League fixtures in 2025/26?",
     options: ["2", "3", "4", "5"],
     correct: "4",
-    reveal: "Four goals against City across the two fixtures. Spurs could barely win a game all season — but they did win us the league.",
+    reveal: "Four goals against City across the two fixtures. Spurs could barely win a game all season, but they did win us the league.",
   },
   {
     question: "How many Premier League goals did Arsenal's top scorer Viktor Gyökeres score in 2025/26?",
@@ -1480,15 +1480,10 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     reveal: "14 goals in his debut Arsenal season. Not bad for a flop.",
   },
   {
-    question: "Which three Arsenal players shared the most yellow cards in 2025/26 — five each?",
-    options: [
-      "Calafiori, Timber & Gyökeres",
-      "Calafiori, Timber & Mosquera",
-      "Calafiori, Gabriel & Zubimendi",
-      "Rice, Mosquera & Lewis-Skelly",
-    ],
-    correct: "Calafiori, Timber & Gyökeres",
-    reveal: "Three players tied on 5 — Calafiori, Timber and Gyökeres. The two full-backs you'd expect, plus the new striker.",
+    question: "How many Arsenal players got more than 5 Premier League yellow cards in 2025/26?",
+    options: ["0", "1", "2", "3"],
+    correct: "0",
+    reveal: "Zero. The most-booked Gunners, Calafiori, Timber and Gyökeres, all topped out at exactly 5. A famously disciplined title-winning season.",
   },
   {
     question: "How many Arsenal players made more Premier League assists than Trossard in 2025/26?",
@@ -1500,31 +1495,31 @@ const ROUND4_QUESTIONS: SeasonStatQ[] = [
     question: "What was Arsenal's longest unbeaten run in the Premier League in 2025/26?",
     options: ["7", "9", "11", "13"],
     correct: "11",
-    reveal: "11 games unbeaten — the run that put the title beyond doubt.",
+    reveal: "11 games unbeaten, the run that put the title beyond doubt.",
   },
   {
     question: "How many times did Arsenal score 5 or more goals in a Premier League game in 2025/26?",
     options: ["0", "1", "2", "3"],
     correct: "1",
-    reveal: "Once — 5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club.",
+    reveal: "Once,5-0 vs Leeds at the Emirates, August 2025. Timber scored twice, Gyökeres got his first goals for the club.",
   },
   {
     question: "How many times did Arsenal concede more than 2 goals in a Premier League game in 2025/26?",
     options: ["0", "1", "2", "3"],
     correct: "1",
-    reveal: "Just once all season — the 2-3 home loss to Man Utd in January. Arsenal's first 3+ conceded in the PL since the 4-3 win at Luton in December 2023.",
+    reveal: "Just once all season, the 2-3 home loss to Man Utd in January. Arsenal's first 3+ conceded in the PL since the 4-3 win at Luton in December 2023.",
   },
   {
     question: "Which outfield player logged the most Premier League minutes for Arsenal in 2025/26?",
     options: ["Declan Rice", "Martín Zubimendi", "Gabriel Magalhães", "William Saliba"],
     correct: "Declan Rice",
-    reveal: "Declan Rice: 3,099 minutes — 4 goals, 5 assists, and barely off the pitch all season.",
+    reveal: "Declan Rice: 3,099 minutes,4 goals, 5 assists, and barely off the pitch all season.",
   },
   {
     question: "How many Arsenal players scored a Premier League penalty in 2025/26?",
     options: ["1", "2", "3", "4"],
     correct: "2",
-    reveal: "Gyökeres and Saka — Gyökeres scored 3, Saka 1. All four converted.",
+    reveal: "Gyökeres and Saka, Gyökeres scored 3, Saka 1. All four converted.",
   },
 ];
 
@@ -1567,7 +1562,7 @@ function Round4SeasonStats({ onComplete }: { onComplete: (score: number) => void
       <div className="flex items-center justify-between mb-5">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>The Season That Won It</div>
-          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>2025/26 — the numbers behind the title</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>2025/26, the numbers behind the title</div>
         </div>
         <div className="text-right">
           <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
@@ -1646,7 +1641,7 @@ function Round4SeasonStats({ onComplete }: { onComplete: (score: number) => void
 }
 
 // ─── Round 5 data ────────────────────────────────────────────────────────────
-// ⚠️ Photos needed — add to public/arsenal-quiz/corners/ before going live
+// ⚠️ Photos needed, add to public/arsenal-quiz/corners/ before going live
 // ⚠️ See docs/arsenal-champions-quiz.md for photo sourcing guide (Getty/PA Images)
 
 interface CornerGoal {
@@ -1664,41 +1659,41 @@ const ROUND5_CORNERS: CornerGoal[] = [
     scorer: "Martín Zubimendi",
     opponent: "Nottingham Forest", date: "13 Sep 2025",
     imagePath: "arsenal-quiz/corners/01-zubimendi-forest-2025.jpg",
-    imageHint: "Zubimendi volley from corner clearance — Emirates, Sep 2025",
+    imageHint: "Zubimendi volley from corner clearance, Emirates, Sep 2025",
     options: ["Martín Zubimendi", "Declan Rice", "Martin Ødegaard", "Mikel Merino"],
-    reveal: "A corner was cleared to the edge of the box — Zubimendi volleyed it back first time and it swerved into the net. Won PL Goal of the Month.",
+    reveal: "A corner was cleared to the edge of the box, Zubimendi volleyed it back first time and it swerved into the net. Won PL Goal of the Month.",
   },
   {
     scorer: "Kai Havertz",
     opponent: "Burnley", date: "18 May 2026",
     imagePath: "arsenal-quiz/corners/02-havertz-burnley-2026.jpg",
-    imageHint: "Havertz header — Arsenal 1-0 Burnley, 18 May 2026",
+    imageHint: "Havertz header, Arsenal 1-0 Burnley, 18 May 2026",
     options: ["Kai Havertz", "Gabriel Magalhães", "William Saliba", "Declan Rice"],
-    reveal: "The title-winning goal. Havertz headed home from Saka's corner — Arsenal's 18th of the season, a new PL record. Man City drew at Bournemouth the next night. Arsenal were champions.",
+    reveal: "The title-winning goal. Havertz headed home from Saka's corner, Arsenal's 18th of the season, a new PL record. Man City drew at Bournemouth the next night. Arsenal were champions.",
   },
   {
     scorer: "Gabriel Magalhães",
     opponent: "Newcastle (away)", date: "28 Sep 2025",
     imagePath: "arsenal-quiz/corners/03-gabriel-newcastle-2025.jpg",
-    imageHint: "Gabriel 96th-minute winner — St James' Park, Sep 2025",
+    imageHint: "Gabriel 96th-minute winner, St James' Park, Sep 2025",
     options: ["Gabriel Magalhães", "Mikel Merino", "William Saliba", "Jurrien Timber"],
-    reveal: "Arsenal were 1-0 down at Newcastle. Merino equalised in the 84th minute — then Gabriel powered home a corner in the 96th to win it 2-1. One of the defining moments of the title run.",
+    reveal: "Arsenal were 1-0 down at Newcastle. Merino equalised in the 84th minute, then Gabriel powered home a corner in the 96th to win it 2-1. One of the defining moments of the title run.",
   },
   {
     scorer: "Oleksandr Zinchenko",
     opponent: "Burnley", date: "11 Nov 2023",
     imagePath: "arsenal-quiz/corners/04-zinchenko-burnley-2023.jpg",
-    imageHint: "Zinchenko scissor volley — Emirates, Nov 2023",
+    imageHint: "Zinchenko scissor volley, Emirates, Nov 2023",
     options: ["Oleksandr Zinchenko", "Thomas Partey", "Declan Rice", "Granit Xhaka"],
-    reveal: "A corner hit the bar and fell to Zinchenko, who volleyed it home acrobatically. Won Arsenal Goal of the Month. A left-back scoring like a forward — pure Jover chaos.",
+    reveal: "A corner hit the bar and fell to Zinchenko, who volleyed it home acrobatically. Won Arsenal Goal of the Month. A left-back scoring like a forward, pure Jover chaos.",
   },
   {
     scorer: "Jurrien Timber",
     opponent: "Chelsea", date: "1 Mar 2026",
     imagePath: "arsenal-quiz/corners/05-timber-chelsea-2026.jpg",
-    imageHint: "Timber header — Arsenal break all-time PL corner record vs Chelsea, Mar 2026",
+    imageHint: "Timber header, Arsenal break all-time PL corner record vs Chelsea, Mar 2026",
     options: ["Jurrien Timber", "William Saliba", "Gabriel Magalhães", "Riccardo Calafiori"],
-    reveal: "Arsenal's 16th corner goal of the season — equalling the all-time PL record (set by Oldham 92/93, WBA 16/17 and Arsenal themselves in 23/24). The record would fall a few weeks later.",
+    reveal: "Arsenal's 16th corner goal of the season, equalling the all-time PL record (set by Oldham 92/93, WBA 16/17 and Arsenal themselves in 23/24). The record would fall a few weeks later.",
   },
   {
     scorer: "TBD",
@@ -1736,9 +1731,9 @@ const ROUND5_CORNERS: CornerGoal[] = [
     scorer: "Eberechi Eze",
     opponent: "Newcastle", date: "Apr 2026",
     imagePath: "arsenal-quiz/corners/10-eze-newcastle-2026.jpg",
-    imageHint: "Eze short corner routine — record-breaking 17th corner goal, Apr 2026",
+    imageHint: "Eze short corner routine, record-breaking 17th corner goal, Apr 2026",
     options: ["Eberechi Eze", "Bukayo Saka", "Kai Havertz", "Gabriel Magalhães"],
-    reveal: "Arsenal's 17th corner goal of the season — a new all-time Premier League record. Eze finished from a short corner routine, breaking the record Arteta's side had set two seasons earlier.",
+    reveal: "Arsenal's 17th corner goal of the season, a new all-time Premier League record. Eze finished from a short corner routine, breaking the record Arteta's side had set two seasons earlier.",
   },
 ];
 
@@ -1808,7 +1803,7 @@ function Round5CornerKings({ onComplete }: { onComplete: (score: number) => void
       <div className="flex items-center justify-between mb-5">
         <div>
           <div className="text-xs font-bold tracking-widest uppercase" style={{ color: GOLD }}>Corner Kings</div>
-          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>The set-piece that made rivals furious — 2019 to 2026</div>
+          <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>The set-piece that made rivals furious,2019 to 2026</div>
         </div>
         <div className="text-right">
           <span className="text-3xl leading-none" style={{ fontFamily: BEBAS, color: "white", letterSpacing: "0.04em" }}>Q{qIndex + 1}</span>
@@ -1964,7 +1959,7 @@ function Round9BuildTheXI({ onComplete }: { onComplete: (score: number) => void 
 
     return (
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="pb-16">
-        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Arteta's First XI — Results</div>
+        <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: GOLD }}>Arteta's First XI, Results</div>
         <div className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>Bournemouth vs Arsenal · 26 Dec 2019</div>
 
         {(["defenders", "midfield", "attackers"] as R9Category[]).map(cat => {
@@ -2356,7 +2351,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Sead Kolasinac", value: 29 },
     ],
     correct: "Fábio Vieira",
-    reveal: "Vieira played 33 PL games across 2022-24 before heading back to Porto. Eze feels like he's been everywhere this season but only joined in summer 2025 — he'd need another year to catch up.",
+    reveal: "Vieira played 33 PL games across 2022-24 before heading back to Porto. Eze feels like he's been everywhere this season but only joined in summer 2025, he'd need another year to catch up.",
   },
   {
     stat: "PL goals in a single season under Arteta",
@@ -2367,7 +2362,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Viktor Gyökeres", value: 14, unit: "(2025/26)" },
     ],
     correct: "Bukayo Saka",
-    reveal: "Saka hit 16 in 2023/24 — his career PL high. Martinelli and Ødegaard each scored 15 in 2022/23, the season Arsenal led the league for 248 days but came up just short.",
+    reveal: "Saka hit 16 in 2023/24, his career PL high. Martinelli and Ødegaard each scored 15 in 2022/23, the season Arsenal led the league for 248 days but came up just short.",
   },
   {
     stat: "PL yellow cards under Arteta",
@@ -2378,7 +2373,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Ben White", value: 18 },
     ],
     correct: "Bukayo Saka",
-    reveal: "Saka: 28 yellows — more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 32, but isn't on the board here.)",
+    reveal: "Saka: 28 yellows, more than Gabriel, Partey, or Ben White. Most-fouled player at Arsenal, but he also picks up bookings of his own. (Granit Xhaka is the era-wide leader on 32, but isn't on the board here.)",
   },
   {
     stat: "PL goals under Arteta",
@@ -2389,7 +2384,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Eddie Nketiah", value: 18 },
     ],
     correct: "Kai Havertz",
-    reveal: "Havertz: 24 goals. The 'flop' label aged badly — he's outscored every centre-forward signed under Arteta. Gabriel the defender tied with Jesus the striker on 20.",
+    reveal: "Havertz: 24 goals. The 'flop' label aged badly, he's outscored every centre-forward signed under Arteta. Gabriel the defender tied with Jesus the striker on 20.",
   },
   {
     stat: "PL assists under Arteta",
@@ -2400,7 +2395,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Oleksandr Zinchenko", value: 5 },
     ],
     correct: "Emile Smith Rowe",
-    reveal: "ESR: 9 assists — the early-Arteta hero. Tierney (LB) and Timber (RB) tied on 8. Zinchenko basically played as a midfielder but only made 5.",
+    reveal: "ESR: 9 assists, the early-Arteta hero. Tierney (LB) and Timber (RB) tied on 8. Zinchenko basically played as a midfielder but only made 5.",
   },
   {
     stat: "PL penalty goals scored under Arteta",
@@ -2411,7 +2406,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Fábio Vieira", value: 1 },
     ],
     correct: "Nicolas Pépé",
-    reveal: "Pépé: 2 PL penalties. Even Vieira got one — vs Brighton, May 2023. Saka would run away with this 12-0 if he were on the board, but here Pépé is the cult answer.",
+    reveal: "Pépé: 2 PL penalties. Even Vieira got one, vs Brighton, May 2023. Saka would run away with this 12-0 if he were on the board, but here Pépé is the cult answer.",
   },
   {
     stat: "PL goals from outside the box under Arteta",
@@ -2422,7 +2417,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Granit Xhaka", value: 2 },
     ],
     correct: "Emile Smith Rowe",
-    reveal: "ESR: 4 long-range goals — more than Martinelli, Trossard, or Xhaka. (Ødegaard's 8 is the era-wide leader, but he's not on the board here.)",
+    reveal: "ESR: 4 long-range goals, more than Martinelli, Trossard, or Xhaka. (Ødegaard's 8 is the era-wide leader, but he's not on the board here.)",
   },
   {
     stat: "PL headed goals under Arteta",
@@ -2433,7 +2428,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Alexandre Lacazette", value: 3 },
     ],
     correct: "Mikel Merino",
-    reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13 — the corner king — but isn't on the board.)",
+    reveal: "Merino: 7 headed goals already, mostly during his striker stint when Havertz and Jesus were injured. (Gabriel Magalhães is the era-wide leader on 13, the corner king, but isn't on the board.)",
   },
   {
     stat: "PL red cards under Arteta",
@@ -2444,7 +2439,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Myles Lewis-Skelly", value: 2 },
     ],
     correct: "David Luiz",
-    reveal: "David Luiz: 3 reds in Arteta's first 18 months — including a penalty-conceded straight red vs Man City. Lewis-Skelly already has 2 reds as an 18-year-old.",
+    reveal: "David Luiz: 3 reds in Arteta's first 18 months, including a penalty-conceded straight red vs Man City. Lewis-Skelly already has 2 reds as an 18-year-old.",
   },
   {
     stat: "PL minutes played under Arteta (the cameo edition)",
@@ -2455,7 +2450,7 @@ const ROUND8_QUESTIONS: MostQuestion[] = [
       { name: "Henrikh Mkhitaryan", value: 111, unit: "min" },
     ],
     correct: "Henrikh Mkhitaryan",
-    reveal: "Mkhitaryan 'wins' with 111 PL minutes — about one Carabao Cup round of football. He was an Arsenal player for four seasons but Arteta barely used him. Every player here played for Arsenal in the Arteta era — and not one of them broke two hours.",
+    reveal: "Mkhitaryan 'wins' with 111 PL minutes, about one Carabao Cup round of football. He was an Arsenal player for four seasons but Arteta barely used him. Every player here played for Arsenal in the Arteta era, and not one of them broke two hours.",
   },
 ];
 
@@ -2556,7 +2551,7 @@ function Round8WhoHasMost({ onComplete }: { onComplete: (score: number) => void 
         </p>
         {q.tbd && (
           <div className="mt-2 text-[9px] font-bold tracking-wider uppercase" style={{ color: GOLD }}>
-            Placeholder — TBD
+            Placeholder, TBD
           </div>
         )}
       </div>
@@ -2693,7 +2688,7 @@ export default function ArsenalChampions() {
   return (
     <div className="min-h-screen text-white relative overflow-x-hidden" style={{ background: DARK }}>
 
-      {/* ── INTRO — full-screen vivid red overlay ── */}
+      {/* ── INTRO, full-screen vivid red overlay ── */}
       <AnimatePresence>
         {phase === "intro" && (
           <motion.div
@@ -2769,7 +2764,7 @@ export default function ArsenalChampions() {
                   Premier League
                 </div>
 
-                {/* CHAMPIONS — big gold */}
+                {/* CHAMPIONS, big gold */}
                 <GoldText
                   className="block leading-none mt-1"
                   style={{
