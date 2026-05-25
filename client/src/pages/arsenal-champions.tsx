@@ -3043,20 +3043,21 @@ export default function ArsenalChampions() {
                   Premier League
                 </div>
 
-                {/* CHAMPIONS, big gold, pulsing glow via CSS keyframe
-                    (avoids the mobile jitter we saw animating filter via framer-motion). */}
+                {/* CHAMPIONS — gradient drifts slightly lighter and back. */}
                 <div
                   className="block leading-none mt-1"
                   style={{
                     fontFamily: BEBAS,
                     fontSize: "clamp(4rem, 18vw, 7.5rem)",
                     letterSpacing: "0.04em",
-                    background: `linear-gradient(135deg, ${GOLD_LIGHT}, ${GOLD}, ${GOLD_DARK})`,
+                    background: `linear-gradient(100deg, ${GOLD}, ${GOLD_LIGHT}, #fff4cf, ${GOLD_LIGHT}, ${GOLD})`,
+                    backgroundSize: "200% 100%",
                     WebkitBackgroundClip: "text",
                     backgroundClip: "text",
                     color: "transparent",
-                    animation: "ac-champions-pulse 2.8s ease-in-out infinite",
-                    willChange: "text-shadow",
+                    animation: "ac-champions-pulse 5.5s ease-in-out infinite",
+                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.6))",
+                    willChange: "background-position",
                   }}
                 >
                   CHAMPIONS

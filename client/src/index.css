@@ -313,19 +313,10 @@
   100% { background-position: -200% 0; }
 }
 
-/* Arsenal Champions intro CHAMPIONS wordmark — text-shadow pulse.
-   text-shadow animates more smoothly than filter: drop-shadow on
-   mobile browsers (Safari iOS in particular). */
+/* Arsenal Champions intro CHAMPIONS wordmark — subtle gradient drift.
+   Animates background-position so a slightly-lighter band drifts across
+   the text and back. GPU-friendly, no stutter on mobile. */
 @keyframes ac-champions-pulse {
-  0%, 100% {
-    text-shadow:
-      0 0 14px rgba(200,150,12,0.45),
-      0 2px 6px rgba(0,0,0,0.6);
-  }
-  50% {
-    text-shadow:
-      0 0 32px rgba(245,208,120,0.8),
-      0 0 60px rgba(245,208,120,0.4),
-      0 2px 6px rgba(0,0,0,0.6);
-  }
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
 }
