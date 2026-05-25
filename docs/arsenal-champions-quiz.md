@@ -536,14 +536,31 @@ All photos go in `public/arsenal-quiz/` with subfolders:
 *(Round numbers below = live game order, per the Final Round Order table at top.)*
 
 - [x] **Scoring format:** No timer. +1 per correct, 0 wrong. 100 total (10 per round).
-- [x] **Live R2 — Who Has Most?:** All 10 questions finalised with official PL API data
-- [ ] **Live R6 — Arteta Speaks:** Verify quotes before sharing
-- [ ] **Live R7 — Corner Kings:** User to source 10 photos → `public/arsenal-quiz/corners/`
-- [ ] **Live R8 — Guess the Score:** Verify all starting XIs and match details
-- [ ] **Live R10 — The Season That Won It:** Verify Q1, Q2, Q4, Q5, Q6, Q9 against official sources
-- [ ] **Live R1 — Who Doubted Us?:** Check all source URLs before going live
+- [x] **Full data verification pass (all 10 rounds)** — completed May 2026 against official PL API + web search. 9 errors caught and fixed in one commit. See **Verification Log** section below.
+- [ ] **Live R7 — Corner Kings:** User to source 5 remaining photos → `public/arsenal-quiz/corners/` (Q6–Q9)
 - [ ] **Firebase leaderboard:** Add `arsenal-champions-2026` game to Firebase rules + leaderboard page
 - [ ] **Home page card:** Add to drapk.in home page with Arsenal red/gold branding
+
+---
+
+## Verification Log (May 2026)
+
+Every fact, score, lineup and stat across all 10 rounds was checked against `footballapi.pulselive.com` (the official PL API). Quote attributions checked via web search.
+
+| Round (live) | What was checked | Result |
+|--------------|------------------|--------|
+| R1 Who Doubted Us? | 10 quote attributions | 8 ✅, 2 fixed (Q8 Agbonlahor date, Q9 Merson context) |
+| R2 Who Has Most? | 10 stat-comparison numbers | ✅ All 10 verified against PL API |
+| R3 Arteta's First XI | Bournemouth Boxing Day 2019 starting XI | ✅ Matches PL API exactly |
+| R4 Top Scorers | Top 10 PL goalscorers under Arteta | ✅ Set matches PL API totals |
+| R5 Trust the Process | 10 game scores from 2020/21 | ✅ All 10 match |
+| R6 Arteta Speaks | 10 Arteta quote attributions | 9 ✅, 1 fixed (Q4 Havertz date) |
+| R7 Corner Kings | 5 confirmed corner scorers + match results | ✅ All 5 scorers + match results verified. Q5 reveal corrected: 16 corner goals *tied* the PL record, didn't break it. |
+| R8 Guess the Score | 10 game scores + starting XIs | Scores ✅. Lineups: 8 ✅, 2 fixed (Game 2 Bournemouth — 4 wrong players; Game 5 West Ham — Jesus→Trossard). |
+| R9 The Assist Masters | Top 10 PL assisters under Arteta | ✅ Set matches PL API totals |
+| R10 The Season That Won It | 10 stats from 2025/26 | 8 ✅, 2 fixed (Q4 yellows premise broken — 3 players tied not 2; Q9 Rice minutes 3,094→3,099). Q8 reveal also tweaked — Luton 4-3 (Dec 2023) had been overlooked. |
+
+**Total fixes applied:** 9 errors corrected in one commit.
 
 ---
 
