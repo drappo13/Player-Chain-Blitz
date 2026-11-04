@@ -114,6 +114,15 @@ async function main() {
     console.log();
   }
 
+  // The API only slices by season, and Arteta's first match was 17 Dec 2019 — so a
+  // 2019/20 row can be appearances made under Emery or Ljungberg. These players had
+  // already left before that date (Monreal to Real Sociedad in Aug 2019, Mkhitaryan
+  // on loan at Roma from Sept 2019) and never played under Arteta.
+  const PRE_ARTETA_EXITS = new Set(["Nacho Monreal", "Henrikh Mkhitaryan"]);
+  for (const [id, p] of playerMap) {
+    if (PRE_ARTETA_EXITS.has(p.displayName)) playerMap.delete(id);
+  }
+
   // Build totals and final output
   const result = [...playerMap.values()]
     .map((p) => {
