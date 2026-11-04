@@ -48,8 +48,8 @@
   },
   {
     "displayName": "Gabriel Martinelli",
-    "firstName": "Gabriel Teodoro",
-    "lastName": "Martinelli Silva",
+    "firstName": "Gabriel",
+    "lastName": "Teodoro Martinelli Silva",
     "position": "Left Winger",
     "nationality": "Brazil",
     "seasons": {
@@ -84,14 +84,14 @@
         "assists": 4
       },
       "2025/26": {
-        "appearances": 29,
+        "appearances": 30,
         "goals": 1,
-        "assists": 3
+        "assists": 4
       }
     },
-    "totalAppearances": 190,
+    "totalAppearances": 191,
     "totalGoals": 41,
-    "totalAssists": 23
+    "totalAssists": 24
   },
   {
     "displayName": "Pierre-Emerick Aubameyang",
@@ -166,7 +166,7 @@
     "displayName": "Leandro Trossard",
     "firstName": "Leandro",
     "lastName": "Trossard",
-    "position": "Forward",
+    "position": "Left Winger",
     "nationality": "Belgium",
     "seasons": {
       "2022/23": {
@@ -239,20 +239,20 @@
         "assists": 3
       },
       "2025/26": {
-        "appearances": 11,
+        "appearances": 12,
         "goals": 2,
-        "assists": 2
+        "assists": 3
       }
     },
-    "totalAppearances": 71,
+    "totalAppearances": 72,
     "totalGoals": 24,
-    "totalAssists": 12
+    "totalAssists": 13
   },
   {
     "displayName": "Gabriel Jesus",
     "firstName": "Gabriel Fernando",
     "lastName": "de Jesus",
-    "position": "Second Striker",
+    "position": "Striker",
     "nationality": "Brazil",
     "seasons": {
       "2022/23": {
@@ -271,13 +271,13 @@
         "assists": 0
       },
       "2025/26": {
-        "appearances": 13,
-        "goals": 2,
+        "appearances": 14,
+        "goals": 3,
         "assists": 0
       }
     },
-    "totalAppearances": 83,
-    "totalGoals": 20,
+    "totalAppearances": 84,
+    "totalGoals": 21,
     "totalAssists": 11
   },
   {
@@ -313,12 +313,12 @@
         "assists": 1
       },
       "2025/26": {
-        "appearances": 31,
+        "appearances": 32,
         "goals": 3,
         "assists": 4
       }
     },
-    "totalAppearances": 191,
+    "totalAppearances": 192,
     "totalGoals": 20,
     "totalAssists": 5
   },
@@ -360,9 +360,9 @@
     "totalAssists": 5
   },
   {
-    "displayName": "Nicolas Pépé",
+    "displayName": "Nicolas Pepe",
     "firstName": "Nicolas",
-    "lastName": "Pépé",
+    "lastName": "Pepe",
     "position": "Right Winger",
     "nationality": "Cote D’Ivoire",
     "seasons": {
@@ -421,12 +421,12 @@
     "nationality": "Sweden",
     "seasons": {
       "2025/26": {
-        "appearances": 35,
+        "appearances": 36,
         "goals": 14,
         "assists": 1
       }
     },
-    "totalAppearances": 35,
+    "totalAppearances": 36,
     "totalGoals": 14,
     "totalAssists": 1
   },
@@ -480,12 +480,12 @@
         "assists": 2
       },
       "2025/26": {
-        "appearances": 21,
+        "appearances": 22,
         "goals": 4,
         "assists": 3
       }
     },
-    "totalAppearances": 49,
+    "totalAppearances": 50,
     "totalGoals": 11,
     "totalAssists": 5
   },
@@ -493,7 +493,7 @@
     "displayName": "Granit Xhaka",
     "firstName": "Granit",
     "lastName": "Xhaka",
-    "position": "Central Defender",
+    "position": "Defensive Midfielder",
     "nationality": "Switzerland",
     "seasons": {
       "2019/20": {
@@ -598,12 +598,12 @@
     "nationality": "England",
     "seasons": {
       "2025/26": {
-        "appearances": 31,
+        "appearances": 32,
         "goals": 7,
         "assists": 2
       }
     },
-    "totalAppearances": 31,
+    "totalAppearances": 32,
     "totalGoals": 7,
     "totalAssists": 2
   },
@@ -652,12 +652,12 @@
     "nationality": "Spain",
     "seasons": {
       "2025/26": {
-        "appearances": 37,
+        "appearances": 38,
         "goals": 5,
         "assists": 1
       }
     },
-    "totalAppearances": 37,
+    "totalAppearances": 38,
     "totalGoals": 5,
     "totalAssists": 1
   },
@@ -729,7 +729,7 @@
     "displayName": "Reiss Nelson",
     "firstName": "Reiss",
     "lastName": "Nelson",
-    "position": "Striker",
+    "position": "Forward",
     "nationality": "England",
     "seasons": {
       "2019/20": {
@@ -771,7 +771,7 @@
     "displayName": "Ethan Nwaneri",
     "firstName": "Ethan",
     "lastName": "Nwaneri",
-    "position": "Attacking Midfielder",
+    "position": "Left/Centre Attacking Midfielder",
     "nationality": "England",
     "seasons": {
       "2022/23": {
@@ -839,12 +839,12 @@
         "assists": 1
       },
       "2025/26": {
-        "appearances": 25,
+        "appearances": 26,
         "goals": 1,
         "assists": 2
       }
     },
-    "totalAppearances": 44,
+    "totalAppearances": 45,
     "totalGoals": 3,
     "totalAssists": 3
   },
@@ -867,6 +867,23 @@
       }
     },
     "totalAppearances": 53,
+    "totalGoals": 3,
+    "totalAssists": 1
+  },
+  {
+    "displayName": "Noni Madueke",
+    "firstName": "Noni",
+    "lastName": "Madueke",
+    "position": "Right Winger",
+    "nationality": "England",
+    "seasons": {
+      "2025/26": {
+        "appearances": 26,
+        "goals": 3,
+        "assists": 1
+      }
+    },
+    "totalAppearances": 26,
     "totalGoals": 3,
     "totalAssists": 1
   },
@@ -923,7 +940,7 @@
     "displayName": "Takehiro Tomiyasu",
     "firstName": "Takehiro",
     "lastName": "Tomiyasu",
-    "position": "Defender",
+    "position": "Central Defender",
     "nationality": "Japan",
     "seasons": {
       "2021/22": {
@@ -1043,23 +1060,6 @@
     "totalAssists": 1
   },
   {
-    "displayName": "Noni Madueke",
-    "firstName": "Noni",
-    "lastName": "Madueke",
-    "position": "Right Winger",
-    "nationality": "England",
-    "seasons": {
-      "2025/26": {
-        "appearances": 25,
-        "goals": 2,
-        "assists": 1
-      }
-    },
-    "totalAppearances": 25,
-    "totalGoals": 2,
-    "totalAssists": 1
-  },
-  {
     "displayName": "Sokratis Papastathopoulos",
     "firstName": "Sokratis",
     "lastName": "Papastathopoulos",
@@ -1173,16 +1173,16 @@
     "displayName": "Piero Hincapié",
     "firstName": "Piero",
     "lastName": "Hincapié",
-    "position": "Central Defender",
+    "position": "Centre Central Defender",
     "nationality": "Ecuador",
     "seasons": {
       "2025/26": {
-        "appearances": 24,
+        "appearances": 25,
         "goals": 1,
         "assists": 2
       }
     },
-    "totalAppearances": 24,
+    "totalAppearances": 25,
     "totalGoals": 1,
     "totalAssists": 2
   },
@@ -1255,12 +1255,12 @@
         "assists": 0
       },
       "2025/26": {
-        "appearances": 19,
+        "appearances": 20,
         "goals": 0,
         "assists": 0
       }
     },
-    "totalAppearances": 42,
+    "totalAppearances": 43,
     "totalGoals": 1,
     "totalAssists": 0
   },
@@ -1268,16 +1268,16 @@
     "displayName": "Max Dowman",
     "firstName": "Max",
     "lastName": "Dowman",
-    "position": "Attacking Midfielder",
+    "position": "Right Winger",
     "nationality": "England",
     "seasons": {
       "2025/26": {
-        "appearances": 5,
+        "appearances": 6,
         "goals": 1,
         "assists": 0
       }
     },
-    "totalAppearances": 5,
+    "totalAppearances": 6,
     "totalGoals": 1,
     "totalAssists": 0
   },
@@ -1285,7 +1285,7 @@
     "displayName": "Dani Ceballos",
     "firstName": "Dani",
     "lastName": "Ceballos",
-    "position": "Left/Centre/Right Attacking Midfielder",
+    "position": "Centre/Right Attacking Midfielder",
     "nationality": "Spain",
     "seasons": {
       "2019/20": {
@@ -1388,7 +1388,7 @@
     "displayName": "Raheem Sterling",
     "firstName": "Raheem",
     "lastName": "Sterling",
-    "position": "Left/Centre/Right Second Striker",
+    "position": "Forward",
     "nationality": "England",
     "seasons": {
       "2024/25": {
@@ -1680,12 +1680,12 @@
     "nationality": "Spain",
     "seasons": {
       "2025/26": {
-        "appearances": 19,
+        "appearances": 20,
         "goals": 0,
         "assists": 0
       }
     },
-    "totalAppearances": 19,
+    "totalAppearances": 20,
     "totalGoals": 0,
     "totalAssists": 0
   },
@@ -1697,12 +1697,29 @@
     "nationality": "Denmark",
     "seasons": {
       "2025/26": {
-        "appearances": 6,
+        "appearances": 7,
         "goals": 0,
         "assists": 0
       }
     },
-    "totalAppearances": 6,
+    "totalAppearances": 7,
+    "totalGoals": 0,
+    "totalAssists": 0
+  },
+  {
+    "displayName": "Kepa Arrizabalaga",
+    "firstName": "Kepa",
+    "lastName": "Arrizabalaga",
+    "position": "Goalkeeper",
+    "nationality": "Spain",
+    "seasons": {
+      "2025/26": {
+        "appearances": 1,
+        "goals": 0,
+        "assists": 0
+      }
+    },
+    "totalAppearances": 1,
     "totalGoals": 0,
     "totalAssists": 0
   }
