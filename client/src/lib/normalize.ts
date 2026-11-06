@@ -25,6 +25,7 @@ export const PL_MONONYMS: Record<string, string> = {
   gabriel: "gabrielmagalhaes",
   eduardo: "eduardodasilva",
   kepa: "arrizabalaga",
+  bernardo: "bernardosilva",
 };
 
 // Players known by a single name — when the normalized key matches,
@@ -33,6 +34,7 @@ export const PL_MONONYMS: Record<string, string> = {
 export const PL_PRIORITY_MONONYMS: Record<string, string> = {
   anderson: "Anderson",
   cisse: "Djibril Cissé",
+  bernardo: "Bernardo Silva",
 };
 
 export const PL_ALTERNATES: Record<string, string> = {
@@ -40,4 +42,5 @@ export const PL_ALTERNATES: Record<string, string> = {
   nistelrooij: "nistelrooy",
   kuyt: "kuijt",
   dirkkuyt: "dirkkuijt",
+  savinho: "savio",
 };
