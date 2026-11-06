@@ -531,8 +531,12 @@ export default function Griddle() {
     });
 
     if (validCandidates.length === 0) {
-      const playerName = candidates[0].displayName;
-      const matchCount = Object.keys(candidates[0].clubs).filter(c => boardSet.has(c)).length;
+      // Name whichever namesake got closest, so a miss on "Phillips" talks about
+      // Kalvin (one board club) rather than whoever happens to be first.
+      const boardHits = (p: PLPlayer) => Object.keys(p.clubs).filter(c => boardSet.has(c)).length;
+      const closest = candidates.reduce((a, b) => (boardHits(b) > boardHits(a) ? b : a));
+      const playerName = closest.displayName;
+      const matchCount = boardHits(closest);
       if (matchCount === 1) {
         playNeutral();
         showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board` });
