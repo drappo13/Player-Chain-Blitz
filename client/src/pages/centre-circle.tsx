@@ -962,35 +962,34 @@ function addTo(c: HintCount, a: Answer, got: boolean) {
   if (a.legend) { c.legends++; if (got) c.legendsFound++; }
 }
 
-// NYT-style hints: answers by first letter and length, then by first two letters.
+// NYT-style hints: answers by first letter and length, then by first two letters
+// (split into answers that use the centre letter and those that don't).
 function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; found: Set<string> }) {
-  const { rows, colTotals, all, pairs, pangrams } = useMemo(() => {
-    const rowMap = new Map<string, { cells: HintCount[]; total: HintCount }>();
-    const colTotals = LENGTH_COLS.map(emptyCount);
+  const { rows, all, pairs, pangrams } = useMemo(() => {
+    const rowMap = new Map<string, HintCount[]>();
     const all = emptyCount();
-    const pairMap = new Map<string, HintCount>();
+    const pairMap = new Map<string, { centre: HintCount; other: HintCount }>();
     const pangrams = { total: 0, found: 0 };
     for (const a of answers) {
       const got = found.has(a.key);
       const first = a.key[0];
-      let row = rowMap.get(first);
-      if (!row) { row = { cells: LENGTH_COLS.map(emptyCount), total: emptyCount() }; rowMap.set(first, row); }
-      const col = lengthCol(a.key.length);
-      addTo(row.cells[col], a, got);
-      addTo(row.total, a, got);
-      addTo(colTotals[col], a, got);
+      let cells = rowMap.get(first);
+      if (!cells) { cells = LENGTH_COLS.map(emptyCount); rowMap.set(first, cells); }
+      addTo(cells[lengthCol(a.key.length)], a, got);
       addTo(all, a, got);
       const pair = a.key.slice(0, 2);
-      if (!pairMap.has(pair)) pairMap.set(pair, emptyCount());
-      addTo(pairMap.get(pair)!, a, got);
+      if (!pairMap.has(pair)) pairMap.set(pair, { centre: emptyCount(), other: emptyCount() });
+      const p = pairMap.get(pair)!;
+      addTo(a.usesCentre ? p.centre : p.other, a, got);
       if (a.pangram) { pangrams.total++; if (got) pangrams.found++; }
     }
     const rows = Array.from(rowMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
     const pairs = Array.from(pairMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
-    return { rows, colTotals, all, pairs, pangrams };
+    return { rows, all, pairs, pangrams };
   }, [answers, found]);
 
   const pairGroups = rows.map(([letter]) => [letter, pairs.filter(([p]) => p[0] === letter)] as const);
+  const centreUpper = board.centre.toUpperCase();
 
   return (
     <div className="w-full mb-3 rounded-xl border border-border bg-card/40 p-3 space-y-3">
@@ -1009,22 +1008,15 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
           <tr className="text-[10px] text-muted-foreground">
             <th className="w-5" />
             {LENGTH_COLS.map(n => <th key={n} className="font-medium pb-0.5">{lengthLabel(n)}</th>)}
-            <th className="font-semibold pb-0.5">Σ</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(([letter, row]) => (
+          {rows.map(([letter, cells]) => (
             <tr key={letter}>
               <th className={`text-sm font-black uppercase ${letter === board.centre ? "text-green-300" : "text-foreground"}`}>{letter}</th>
-              {row.cells.map((c, i) => <HintCell key={i} c={c} />)}
-              <HintCell c={row.total} total />
+              {cells.map((c, i) => <HintCell key={i} c={c} />)}
             </tr>
           ))}
-          <tr>
-            <th className="text-xs font-semibold text-muted-foreground">Σ</th>
-            {colTotals.map((c, i) => <HintCell key={i} c={c} total />)}
-            <HintCell c={all} total />
-          </tr>
         </tbody>
       </table>
 
@@ -1033,14 +1025,23 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
         <div className="space-y-1">
           {pairGroups.map(([letter, group]) => (
             <div key={letter} className="flex flex-wrap gap-1">
-              {group.map(([pair, c]) => {
-                const done = c.found === c.total;
+              {group.map(([pair, { centre, other }]) => {
+                const done = centre.found === centre.total && other.found === other.total;
+                const legends = centre.legends + other.legends;
+                const legendsFound = centre.legendsFound + other.legendsFound;
                 return (
-                  <span key={pair} className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md border transition-colors ${
+                  <span key={pair} className={`inline-flex items-center gap-1 text-[11px] tabular-nums px-1.5 py-0.5 rounded-md border transition-colors ${
                     done ? "border-green-500 bg-green-600 text-white" : "border-border/60 bg-background/40 text-foreground"}`}>
-                    <span className="font-bold uppercase">{pair}</span>{" "}
-                    {done ? "✓" : <>{c.found}<span className="text-muted-foreground">/{c.total}</span></>}
-                    {c.legends > 0 && <span className={`ml-1 text-[9px] ${c.legendsFound === c.legends ? "text-green-300" : "text-muted-foreground"}`}>★{c.legends > 1 ? c.legends : ""}</span>}
+                    <span className="font-bold uppercase">{pair}</span>
+                    {done ? "✓" : <>
+                      {centre.total > 0 && <PairCount c={centre} centre />}
+                      {other.total > 0 && <PairCount c={other} />}
+                    </>}
+                    {legends > 0 && (
+                      <span className={`text-[9px] ${done || legendsFound === legends ? "text-white" : "text-muted-foreground"}`}>
+                        ★{legends > 1 ? legends : ""}
+                      </span>
+                    )}
                   </span>
                 );
               })}
@@ -1048,13 +1049,34 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
           ))}
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <span className="px-1 rounded border border-white/70 text-foreground tabular-nums">1/3</span>
+          uses {centreUpper} · double points
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-white">★</span>
+          legend: {LEGEND_APPS}+ PL apps or {LEGEND_GOALS}+ PL goals · double again
+        </span>
+      </div>
     </div>
+  );
+}
+
+// Found/total for one side of a two-letter start; the centre-letter side is outlined.
+function PairCount({ c, centre = false }: { c: HintCount; centre?: boolean }) {
+  const done = c.found === c.total;
+  return (
+    <span className={`px-1 rounded ${centre ? "border border-white/70" : ""} ${done ? "text-green-300" : ""}`}>
+      {done ? "✓" : <>{c.found}<span className="text-muted-foreground">/{c.total}</span></>}
+    </span>
   );
 }
 
 // One hints-grid cell: fills from the bottom as its answers are found, ticked when
 // done, with a star per legend in the corner that lights up once found.
-function HintCell({ c, total = false }: { c: HintCount; total?: boolean }) {
+function HintCell({ c }: { c: HintCount }) {
   if (c.total === 0) {
     return <td className="h-8 rounded text-[10px] text-muted-foreground/25">·</td>;
   }
@@ -1062,7 +1084,7 @@ function HintCell({ c, total = false }: { c: HintCount; total?: boolean }) {
   const fill = c.found === 0 ? 0 : Math.max(c.found / c.total, 0.08);
   return (
     <td className={`relative h-8 p-0 rounded overflow-hidden border ${
-      done ? "border-green-500" : "border-border/50"} ${total ? "bg-muted/30" : "bg-background/40"}`}>
+      done ? "border-green-500" : "border-border/50"} bg-background/40`}>
       <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-green-600" : "bg-green-700/70"}`}
         style={{ height: `${fill * 100}%` }} />
       {c.legends > 0 && (
@@ -1073,7 +1095,7 @@ function HintCell({ c, total = false }: { c: HintCount; total?: boolean }) {
             : <span className={c.legendsFound === c.legends ? "text-green-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
         </span>
       )}
-      <span className={`relative text-[10px] leading-none ${total ? "font-bold" : "font-semibold"} ${
+      <span className={`relative text-[10px] leading-none font-semibold ${
         done ? "text-white" : c.found ? "text-foreground" : "text-muted-foreground"}`}>
         {done ? "✓" : <>{c.found}<span className="opacity-60">/{c.total}</span></>}
       </span>
