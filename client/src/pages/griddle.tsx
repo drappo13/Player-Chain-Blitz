@@ -35,7 +35,7 @@ const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Tottenham", "Man Ut
 // submitted. Boards before LIVES_FROM keep the old points-penalty rules so a day is
 // never played under two rule sets.
 const LIVES = 20;
-const LIVES_FROM = "2026-11-10";
+const LIVES_FROM = "2026-11-09";
 const LIFE_COST_ONE_CLUB = 1;
 const LIFE_COST_NO_CLUBS = 5;
 
