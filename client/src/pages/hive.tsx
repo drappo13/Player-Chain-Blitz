@@ -375,7 +375,6 @@ export default function Hive() {
   const [pangramHit, setPangramHit] = useState<string | null>(null);
   const [pulse, setPulse] = useState(0);
   const [popped, setPopped] = useState<{ id: number; word: string; gold: boolean } | null>(null);
-  const streak = useRef(0);
   const [showTracker, setShowTracker] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -432,7 +431,7 @@ export default function Hive() {
 
   const reject = useCallback((message: string, sound: () => void = playWrong) => {
     sound();
-    if (sound === playWrong) { streak.current = 0; buzz([20, 30, 20]); }
+    if (sound === playWrong) buzz([20, 30, 20]);
     setShake(s => s + 1);
     showFeedbackMsg({ type: "neutral", message });
   }, [showFeedbackMsg]);
@@ -471,10 +470,8 @@ export default function Hive() {
     const popId = floatId.current;
     setPopped({ id: popId, word, gold: answer.pangram });
     setTimeout(() => setPopped(cur => (cur?.id === popId ? null : cur)), 700);
-    streak.current += 1;
     const tags: string[] = [];
     if (answer.legend) tags.push(`★ Legend +${LEGEND_BONUS}`);
-    if (streak.current % 3 === 0) tags.push(streak.current === 3 ? "⚽ Hat-trick" : `⚽ ${streak.current} in a row`);
     setFlashColor(answer.pangram ? "bg-amber-400" : "bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
