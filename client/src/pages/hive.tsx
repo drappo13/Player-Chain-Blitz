@@ -20,11 +20,19 @@ const BOARD_VERSION = 1;
 const HIVE_EPOCH = "2026-11-09";
 
 // --- Board rules ---
-const MIN_ANSWERS = 40;
-const MAX_ANSWERS = 130;
-const KNOWN_APPS = 100;      // a player most fans could name
-const MIN_KNOWN_ANSWERS = 15; // so every board has a solid core of gettable answers
-const PANGRAM_BONUS = 9;
+// A hive is the letters of one surname that uses 8–10 different letters (the pangram).
+// That player must be the only answer using every letter, and a modern, well-known
+// one: born STAR_BORN or later with STAR_APPS+ PL apps. The other answers can be
+// anyone with a PL appearance.
+const HIVE_SIZES = [8, 9, 10];
+const STAR_APPS = 80;
+const STAR_BORN = 1983;
+const KNOWN_APPS = 100; // a player most fans could name
+// Per hive size: fewest answers, and fewest of them by KNOWN_APPS+ players, so every
+// day has a solid core of gettable names.
+const MIN_ANSWERS: Record<number, number> = { 8: 25, 9: 35, 10: 40 };
+const MIN_KNOWN_ANSWERS: Record<number, number> = { 8: 10, 9: 12, 10: 12 };
+const MAX_ANSWERS = 150;
 
 // --- Ranks (% of the day's maximum score) ---
 const RANKS = [
@@ -138,37 +146,49 @@ function surnameGroups(): SurnameGroup[] {
 
 // --- Boards ---
 interface Board {
-  letters: string[]; // all nine, alphabetical
+  letters: string[]; // 8–10, alphabetical
   centre: string;
 }
 
 let boardOrderCache: Board[] | null = null;
 
-// Every nine-letter set that some surname uses in full, with each centre letter that
+function birthYear(p: PLPlayer): number {
+  const m = p.dob.match(/\d{4}/);
+  return m ? Number(m[0]) : 0;
+}
+
+// Every letter set that qualifies (see Board rules), with each centre letter that
 // gives a fair day: enough answers, not too many, and a core of well-known players.
 function boardOrder(): Board[] {
   if (boardOrderCache) return boardOrderCache;
   const groups = surnameGroups();
+  const usersOfSet = new Map<number, number>();
+  for (const g of groups) usersOfSet.set(g.mask, (usersOfSet.get(g.mask) || 0) + 1);
   const sets = new Set<number>();
-  for (const g of groups) if (bitCount(g.mask) === 9) sets.add(g.mask);
+  for (const g of groups) {
+    const star = g.players[0];
+    if (HIVE_SIZES.includes(bitCount(g.mask)) && g.players.length === 1 && usersOfSet.get(g.mask) === 1
+      && star.totalAppearances >= STAR_APPS && birthYear(star) >= STAR_BORN) sets.add(g.mask);
+  }
 
   const bySet: Board[][] = [];
   Array.from(sets).sort((a, b) => a - b).forEach(set => {
+    const size = bitCount(set);
     const inSet = groups.filter(g => (g.mask & ~set) === 0);
     const boards: Board[] = [];
     for (const centre of lettersOf(set)) {
       const bit = letterBit(centre);
       const answers = inSet.filter(g => g.mask & bit);
       const known = answers.filter(g => g.players[0].totalAppearances >= KNOWN_APPS).length;
-      if (answers.length >= MIN_ANSWERS && answers.length <= MAX_ANSWERS && known >= MIN_KNOWN_ANSWERS) {
+      if (answers.length >= MIN_ANSWERS[size] && answers.length <= MAX_ANSWERS && known >= MIN_KNOWN_ANSWERS[size]) {
         boards.push({ letters: lettersOf(set), centre });
       }
     }
     if (boards.length) bySet.push(boards);
   });
 
-  // Shuffle the sets, then deal one centre from each set per round, so the same nine
-  // letters only return (with a new centre) after every other set has been used.
+  // Shuffle the sets, then deal one centre from each set per round, so the same letters
+  // (and pangram) only return, with a new centre, after every other set has been used.
   const rng = mulberry32(hashString(`hive-v${BOARD_VERSION}`));
   shuffleInPlace(bySet, rng);
   bySet.forEach(b => shuffleInPlace(b, rng));
@@ -227,7 +247,7 @@ function answersFor(board: Board): Answer[] {
         label: surnameOf(g.players[0]),
         players: g.players,
         club: topClub(g.players[0]),
-        points: g.key.length + (pangram ? PANGRAM_BONUS : 0),
+        points: g.key.length + (pangram ? board.letters.length : 0),
         pangram,
       };
     })
@@ -293,23 +313,22 @@ function saveState(state: HiveState, username?: string) {
   } catch { /* ignore */ }
 }
 
-// --- Hive geometry: flat-topped hexes in columns of 1, 2, 3, 2, 1 ---
-const HEX_W = 68;
+// --- Hive geometry: the centre hex with the other letters in a ring around it ---
+const HEX_W = 60;
 const HEX_H = HEX_W * 0.866;
-const HEX_GAP = 5;
-const STEP_X = HEX_W * 0.75 + HEX_GAP * 0.866;
-const STEP_Y = HEX_H + HEX_GAP;
-const HIVE_W = STEP_X * 4 + HEX_W;
-const HIVE_H = STEP_Y * 2 + HEX_H;
+const CENTRE_W = 78;
 const HEX_CLIP = "polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)";
-const CENTRE_SLOT = 4;
 
-const HEX_SLOTS: { x: number; y: number }[] = [];
-[1, 2, 3, 2, 1].forEach((n, col) => {
-  for (let i = 0; i < n; i++) {
-    HEX_SLOTS.push({ x: col * STEP_X, y: (HIVE_H - HEX_H) / 2 + (i - (n - 1) / 2) * STEP_Y });
-  }
-});
+function ringLayout(count: number) {
+  // Far enough out that neighbouring hexes and the centre never touch
+  const radius = Math.max((HEX_W + 8) / (2 * Math.sin(Math.PI / count)), CENTRE_W / 2 + HEX_W / 2 + 8);
+  const size = Math.ceil(2 * radius + HEX_W);
+  const slots = Array.from({ length: count }, (_, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / count;
+    return { x: size / 2 + radius * Math.cos(a) - HEX_W / 2, y: size / 2 + radius * Math.sin(a) - HEX_H / 2 };
+  });
+  return { size, slots };
+}
 
 // --- Feedback types ---
 type FeedbackType = "correct" | "pangram" | "wrong" | "neutral" | null;
@@ -443,7 +462,7 @@ export default function Hive() {
       playHighScore();
       setPangramHit(who);
       setTimeout(() => setPangramHit(null), 2400);
-      showFeedbackMsg({ type: "pangram", message: `${who} · all nine letters`, points: answer.points });
+      showFeedbackMsg({ type: "pangram", message: `${who} · all ${board.letters.length} letters`, points: answer.points });
     } else {
       if (answer.key.length >= 8) playComboCorrect(answer.key.length - 5);
       else playCorrect();
@@ -520,7 +539,7 @@ export default function Hive() {
         <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
           <span className="font-semibold text-amber-300">Test build</span>
           <span className="text-muted-foreground">no leaderboard</span>
           <a href={`/hive?day=${shiftDay(dateKey, -1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">← day</a>
@@ -561,9 +580,9 @@ export default function Hive() {
             </div>
 
             <div className="text-left space-y-3 mb-8">
-              <RuleItem icon="🐝" text="Spell the surname of any player with a Premier League appearance, using only the nine letters" />
+              <RuleItem icon="🐝" text={`Spell the surname of any player with a Premier League appearance, using only today's ${board.letters.length} letters`} />
               <RuleItem icon="🟡" text="Every answer must use the centre letter. Letters can be used more than once" />
-              <RuleItem icon="📏" text="1 point per letter. One surname uses all nine letters, worth 9 extra" />
+              <RuleItem icon="📏" text={`1 point per letter. One player's surname uses all ${board.letters.length} letters, worth ${board.letters.length} extra`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
@@ -694,12 +713,12 @@ export default function Hive() {
                 <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.05, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 250, damping: 18 }} className="text-center px-4">
                   <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">
-                    {pangramHit ? "All nine letters" : "Rank up"}
+                    {pangramHit ? `All ${board.letters.length} letters` : "Rank up"}
                   </div>
                   <div className="text-3xl font-black bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text text-transparent">
                     {pangramHit || rankUp}
                   </div>
-                  {pangramHit && <div className="text-sm font-bold text-amber-400 mt-1">+{PANGRAM_BONUS} bonus</div>}
+                  {pangramHit && <div className="text-sm font-bold text-amber-400 mt-1">+{board.letters.length} bonus</div>}
                 </motion.div>
               </motion.div>
             )}
@@ -779,7 +798,7 @@ export default function Hive() {
         ) : (
           <div className="w-full text-center py-6 text-muted-foreground">
             <p className="text-sm">{answers.length} surnames hide in today's hive</p>
-            <p className="text-xs mt-2 opacity-60">Every one uses {centreUpper}. One uses all nine letters.</p>
+            <p className="text-xs mt-2 opacity-60">Every one uses {centreUpper}. One player's uses all {board.letters.length} letters.</p>
           </div>
         )}
       </div>
@@ -795,31 +814,31 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
   disabled?: boolean;
   scale?: number;
 }) {
-  const letters = [...outer.slice(0, CENTRE_SLOT), centre, ...outer.slice(CENTRE_SLOT)];
+  const { size, slots } = ringLayout(outer.length);
+  const hexes = [
+    { ch: centre, isCentre: true, w: CENTRE_W, x: size / 2 - CENTRE_W / 2, y: size / 2 - (CENTRE_W * 0.866) / 2 },
+    ...outer.map((ch, i) => ({ ch, isCentre: false, w: HEX_W, x: slots[i].x, y: slots[i].y })),
+  ];
   return (
-    <div className="relative" style={{ width: HIVE_W * scale, height: HIVE_H * scale }}>
-      <div className="absolute left-0 top-0 origin-top-left" style={{ width: HIVE_W, height: HIVE_H, transform: `scale(${scale})` }}>
-        {letters.map((ch, slot) => {
-          const isCentre = slot === CENTRE_SLOT;
-          const pos = HEX_SLOTS[slot];
-          return (
-            <motion.button key={ch} type="button" disabled={disabled} onClick={() => onLetter(ch)}
-              aria-label={`Letter ${ch.toUpperCase()}${isCentre ? ", centre" : ""}`}
-              initial={{ x: HIVE_W / 2 - HEX_W / 2, y: HIVE_H / 2 - HEX_H / 2, opacity: 0, scale: 0.4 }}
-              animate={celebrate
-                ? { x: pos.x, y: pos.y, opacity: 1, scale: [1, 1.12, 1], rotate: [0, 8, -8, 0], transition: { duration: 0.6, delay: slot * 0.05 } }
-                : { x: pos.x, y: pos.y, opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 320, damping: 26, delay: 0 }}
-              whileTap={{ scale: 0.86 }}
-              style={{ width: HEX_W, height: HEX_H, clipPath: HEX_CLIP, position: "absolute", left: 0, top: 0 }}
-              className={`flex items-center justify-center text-2xl font-black uppercase select-none touch-manipulation transition-colors ${
-                isCentre
-                  ? "bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950"
-                  : "bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-amber-400/25"}`}>
-              {ch}
-            </motion.button>
-          );
-        })}
+    <div className="relative" style={{ width: size * scale, height: size * scale }}>
+      <div className="absolute left-0 top-0 origin-top-left" style={{ width: size, height: size, transform: `scale(${scale})` }}>
+        {hexes.map(({ ch, isCentre, w, x, y }, i) => (
+          <motion.button key={ch} type="button" disabled={disabled} onClick={() => onLetter(ch)}
+            aria-label={`Letter ${ch.toUpperCase()}${isCentre ? ", centre" : ""}`}
+            initial={{ x: size / 2 - w / 2, y: size / 2 - (w * 0.866) / 2, opacity: 0, scale: 0.4 }}
+            animate={celebrate
+              ? { x, y, opacity: 1, scale: [1, 1.14, 1], rotate: [0, 10, -10, 0], transition: { duration: 0.6, delay: i * 0.05 } }
+              : { x, y, opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 26 }}
+            whileTap={{ scale: 0.86 }}
+            style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP, position: "absolute", left: 0, top: 0 }}
+            className={`flex items-center justify-center font-black uppercase select-none touch-manipulation transition-colors ${
+              isCentre
+                ? "text-3xl bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950"
+                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-amber-400/25"}`}>
+            {ch}
+          </motion.button>
+        ))}
       </div>
     </div>
   );
@@ -872,7 +891,17 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
       clubs.set(a.club, c);
       if (a.pangram) { pangrams.total++; if (got) pangrams.found++; }
     }
-    const byClub = Array.from(clubs.entries()).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]));
+    // Clubs with one answer each share a single tile, so the list stays short.
+    const sorted = Array.from(clubs.entries()).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]));
+    const byClub: [string, { total: number; found: number }][] = sorted.filter(([, c]) => c.total > 1);
+    const singles = sorted.filter(([, c]) => c.total === 1);
+    if (singles.length === 1) byClub.push(singles[0]);
+    else if (singles.length > 1) {
+      byClub.push([`${singles.length} other clubs`, {
+        total: singles.length,
+        found: singles.filter(([, c]) => c.found > 0).length,
+      }]);
+    }
     return { byLetter: Array.from(byLetter.entries()), byClub, pangrams };
   }, [board, answers, found]);
 
@@ -882,10 +911,10 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Starts with</span>
           <span className={`text-[10px] tabular-nums ${pangrams.found === pangrams.total ? "text-amber-300" : "text-muted-foreground"}`}>
-            All nine: {pangrams.found === pangrams.total ? "✓ found" : `${pangrams.total - pangrams.found} to find`}
+            All {board.letters.length} letters: {pangrams.found === pangrams.total ? "✓ found" : "not yet"}
           </span>
         </div>
-        <div className="grid grid-cols-9 gap-1">
+        <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${byLetter.length}, minmax(0, 1fr))` }}>
           {byLetter.map(([letter, s]) => (
             <FillTile key={letter} found={s.found} total={s.total} centre={letter === board.centre}
               label={<span className="text-sm font-black uppercase">{letter}</span>} />
@@ -917,9 +946,11 @@ function FillTile({ found, total, label, centre = false }: { found: number; tota
   return (
     <div className={`relative h-11 min-w-0 rounded-md border overflow-hidden ${
       centre ? "border-amber-500/50 bg-amber-500/5" : "border-border/60 bg-background/40"} ${none ? "opacity-35" : ""}`}>
-      <div className={`absolute inset-x-0 bottom-0 border-t-2 transition-[height] duration-500 ease-out ${
-        done ? "bg-emerald-500/35 border-emerald-400" : "bg-amber-500/25 border-amber-400/80"}`}
-        style={{ height: `${fill * 100}%` }} />
+      {found > 0 && (
+        <div className={`absolute inset-x-0 bottom-0 border-t-2 transition-[height] duration-500 ease-out ${
+          done ? "bg-emerald-500/35 border-emerald-400" : "bg-amber-500/25 border-amber-400/80"}`}
+          style={{ height: `${fill * 100}%` }} />
+      )}
       <div className="relative h-full px-1 flex flex-col items-center justify-center leading-tight">
         {label}
         <span className={`text-[10px] font-semibold tabular-nums ${done ? "text-emerald-300" : found ? "text-foreground" : "text-muted-foreground/60"}`}>
@@ -1023,7 +1054,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
                     <span className="text-xs text-muted-foreground ml-1.5">
-                      {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all nine" : ""}
+                      {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
                     </span>
                   </div>
                   <span className="font-bold tabular-nums text-muted-foreground ml-2">+{a.points}</span>
