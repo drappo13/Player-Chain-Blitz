@@ -948,67 +948,103 @@ function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
   );
 }
 
+// Length columns for the hints grid: ≤3, 4 … 9, 10+
+const LENGTH_COLS = [3, 4, 5, 6, 7, 8, 9, 10];
+const lengthCol = (n: number) => Math.min(Math.max(n, 3), 10) - 3;
+const lengthLabel = (n: number) => (n === 3 ? "≤3" : n === 10 ? "10+" : String(n));
+
+interface HintCount { total: number; found: number; legends: number; legendsFound: number }
+const emptyCount = (): HintCount => ({ total: 0, found: 0, legends: 0, legendsFound: 0 });
+
+function addTo(c: HintCount, a: Answer, got: boolean) {
+  c.total++;
+  if (got) c.found++;
+  if (a.legend) { c.legends++; if (got) c.legendsFound++; }
+}
+
+// NYT-style hints: answers by first letter and length, then by first two letters.
 function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; found: Set<string> }) {
-  const { byLetter, byClub, pangrams } = useMemo(() => {
-    const byLetter = new Map<string, { total: number; found: number; legends: number; legendsFound: number }>(
-      board.letters.map(l => [l, { total: 0, found: 0, legends: 0, legendsFound: 0 }] as
-        [string, { total: number; found: number; legends: number; legendsFound: number }]));
-    const clubs = new Map<string, { total: number; found: number }>();
+  const { rows, colTotals, all, pairs, pangrams } = useMemo(() => {
+    const rowMap = new Map<string, { cells: HintCount[]; total: HintCount }>();
+    const colTotals = LENGTH_COLS.map(emptyCount);
+    const all = emptyCount();
+    const pairMap = new Map<string, HintCount>();
     const pangrams = { total: 0, found: 0 };
     for (const a of answers) {
       const got = found.has(a.key);
-      const l = byLetter.get(a.key[0]);
-      if (l) {
-        l.total++;
-        if (got) l.found++;
-        if (a.legend) { l.legends++; if (got) l.legendsFound++; }
-      }
-      const c = clubs.get(a.club) ?? { total: 0, found: 0 };
-      c.total++;
-      if (got) c.found++;
-      clubs.set(a.club, c);
+      const first = a.key[0];
+      let row = rowMap.get(first);
+      if (!row) { row = { cells: LENGTH_COLS.map(emptyCount), total: emptyCount() }; rowMap.set(first, row); }
+      const col = lengthCol(a.key.length);
+      addTo(row.cells[col], a, got);
+      addTo(row.total, a, got);
+      addTo(colTotals[col], a, got);
+      addTo(all, a, got);
+      const pair = a.key.slice(0, 2);
+      if (!pairMap.has(pair)) pairMap.set(pair, emptyCount());
+      addTo(pairMap.get(pair)!, a, got);
       if (a.pangram) { pangrams.total++; if (got) pangrams.found++; }
     }
-    // Clubs with one answer each share a single tile, so the list stays short.
-    const sorted = Array.from(clubs.entries()).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]));
-    const byClub: [string, { total: number; found: number }][] = sorted.filter(([, c]) => c.total > 1);
-    const singles = sorted.filter(([, c]) => c.total === 1);
-    if (singles.length === 1) byClub.push(singles[0]);
-    else if (singles.length > 1) {
-      byClub.push([`${singles.length} other clubs`, {
-        total: singles.length,
-        found: singles.filter(([, c]) => c.found > 0).length,
-      }]);
-    }
-    return { byLetter: Array.from(byLetter.entries()), byClub, pangrams };
-  }, [board, answers, found]);
+    const rows = Array.from(rowMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
+    const pairs = Array.from(pairMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
+    return { rows, colTotals, all, pairs, pangrams };
+  }, [answers, found]);
+
+  const pairGroups = rows.map(([letter]) => [letter, pairs.filter(([p]) => p[0] === letter)] as const);
 
   return (
     <div className="w-full mb-3 rounded-xl border border-border bg-card/40 p-3 space-y-3">
-      <div>
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Starts with</span>
-          <span className={`text-[10px] tabular-nums ${pangrams.found === pangrams.total ? "text-lime-300" : "text-muted-foreground"}`}>
-            All {board.letters.length} letters: {pangrams.found === pangrams.total ? "✓ found" : "not yet"}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hints</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          <span className="text-lime-300">★</span> {all.legendsFound}/{all.legends} legends ·{" "}
+          <span className={pangrams.found === pangrams.total ? "text-lime-300" : ""}>
+            all {board.letters.length} letters {pangrams.found === pangrams.total ? "✓" : "–"}
           </span>
-        </div>
-        <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${byLetter.length}, minmax(0, 1fr))` }}>
-          {byLetter.map(([letter, s]) => (
-            <FillTile key={letter} found={s.found} total={s.total} centre={letter === board.centre}
-              label={<span className="text-sm font-black uppercase">{letter}</span>}
-              note={s.legends > 0 ? `★${s.legendsFound}/${s.legends}` : undefined} />
-          ))}
-        </div>
+        </span>
       </div>
+
+      <table className="w-full table-fixed border-separate border-spacing-[2px] text-center tabular-nums">
+        <thead>
+          <tr className="text-[10px] text-muted-foreground">
+            <th className="w-5" />
+            {LENGTH_COLS.map(n => <th key={n} className="font-medium pb-0.5">{lengthLabel(n)}</th>)}
+            <th className="font-semibold pb-0.5">Σ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([letter, row]) => (
+            <tr key={letter}>
+              <th className={`text-sm font-black uppercase ${letter === board.centre ? "text-lime-300" : "text-foreground"}`}>{letter}</th>
+              {row.cells.map((c, i) => <HintCell key={i} c={c} />)}
+              <HintCell c={row.total} total />
+            </tr>
+          ))}
+          <tr>
+            <th className="text-xs font-semibold text-muted-foreground">Σ</th>
+            {colTotals.map((c, i) => <HintCell key={i} c={c} total />)}
+            <HintCell c={all} total />
+          </tr>
+        </tbody>
+      </table>
+
       <div>
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">By club</span>
-          <span className="text-[10px] text-muted-foreground normal-case">where each player made most apps</span>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
-          {byClub.map(([club, s]) => (
-            <FillTile key={club} found={s.found} total={s.total}
-              label={<span className="max-w-full text-[10px] text-muted-foreground truncate">{club}</span>} />
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Starts with</div>
+        <div className="space-y-1">
+          {pairGroups.map(([letter, group]) => (
+            <div key={letter} className="flex flex-wrap gap-1">
+              {group.map(([pair, c]) => {
+                const done = c.found === c.total;
+                return (
+                  <span key={pair} className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md border transition-colors ${
+                    done ? "border-lime-400/40 bg-lime-400/15 text-lime-200" : "border-border/60 bg-background/40 text-foreground"}`}>
+                    <span className="font-bold uppercase">{pair}</span>{" "}
+                    {done ? "✓" : <>{c.found}<span className="text-muted-foreground">/{c.total}</span></>}
+                    {c.legends > 0 && <span className={`ml-1 text-[9px] ${c.legendsFound === c.legends ? "text-lime-300" : "text-muted-foreground"}`}>★{c.legends > 1 ? c.legends : ""}</span>}
+                  </span>
+                );
+              })}
+            </div>
           ))}
         </div>
       </div>
@@ -1016,28 +1052,32 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
   );
 }
 
-// A tile that fills from the bottom, in one flat colour, as its answers are found.
-// Ticked when done so state never rests on colour alone. An optional note (legends
-// found) sits under the count.
-function FillTile({ found, total, label, note, centre = false }: {
-  found: number; total: number; label: ReactNode; note?: string; centre?: boolean;
-}) {
-  const none = total === 0;
-  const done = !none && found === total;
-  const fill = found === 0 ? 0 : Math.max(found / total, 0.08);
+// One hints-grid cell: fills from the bottom as its answers are found, ticked when
+// done, with a star per legend in the corner that lights up once found.
+function HintCell({ c, total = false }: { c: HintCount; total?: boolean }) {
+  if (c.total === 0) {
+    return <td className="h-8 rounded text-[10px] text-muted-foreground/25">·</td>;
+  }
+  const done = c.found === c.total;
+  const fill = c.found === 0 ? 0 : Math.max(c.found / c.total, 0.08);
   return (
-    <div className={`relative ${note === undefined ? "h-11" : "h-14"} min-w-0 rounded-md border overflow-hidden ${
-      done ? "border-lime-400/60" : centre ? "border-lime-500/40" : "border-border/60"} bg-background/40 ${none ? "opacity-35" : ""}`}>
-      <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-lime-400/25" : "bg-lime-400/15"}`}
+    <td className={`relative h-8 p-0 rounded overflow-hidden border ${
+      done ? "border-lime-400/50" : "border-border/50"} ${total ? "bg-muted/30" : "bg-background/40"}`}>
+      <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-lime-400/30" : "bg-lime-400/15"}`}
         style={{ height: `${fill * 100}%` }} />
-      <div className="relative h-full px-1 flex flex-col items-center justify-center leading-tight">
-        {label}
-        <span className={`text-[11px] font-bold tabular-nums ${done ? "text-lime-200" : found ? "text-foreground" : "text-muted-foreground/70"}`}>
-          {none ? "–" : <>{done ? "✓ " : ""}{found}<span className="font-medium text-muted-foreground">/{total}</span></>}
+      {c.legends > 0 && (
+        <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
+          {c.legends <= 3
+            ? Array.from({ length: c.legends }, (_, i) => (
+                <span key={i} className={i < c.legendsFound ? "text-lime-300" : "text-muted-foreground/40"}>★</span>))
+            : <span className={c.legendsFound === c.legends ? "text-lime-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
         </span>
-        {note && <span className="text-[9px] tabular-nums text-muted-foreground">{note}</span>}
-      </div>
-    </div>
+      )}
+      <span className={`relative text-[10px] leading-none ${total ? "font-bold" : "font-semibold"} ${
+        done ? "text-lime-200" : c.found ? "text-foreground" : "text-muted-foreground"}`}>
+        {done ? "✓" : <>{c.found}<span className="opacity-60">/{c.total}</span></>}
+      </span>
+    </td>
   );
 }
 
