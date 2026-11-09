@@ -14,7 +14,7 @@ import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboa
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
 // Board version — bump to reshuffle the order boards are dealt in
-const BOARD_VERSION = 1;
+const BOARD_VERSION = 2;
 // Day 0 of the rotation. Boards are dealt in a fixed order from here, so no letter set
 // comes back until every other set has had a turn.
 const HIVE_EPOCH = "2026-11-09";
