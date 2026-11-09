@@ -30,6 +30,15 @@ const ELIGIBLE_CLUBS = [
 
 const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Tottenham", "Man Utd", "Man City"]);
 
+// --- Lives ---
+// Wrong guesses cost lives instead of points; at zero the day ends and the score is
+// submitted. Boards before LIVES_FROM keep the old points-penalty rules so a day is
+// never played under two rule sets.
+const LIVES = 20;
+const LIVES_FROM = "2026-11-10";
+const LIFE_COST_ONE_CLUB = 1;
+const LIFE_COST_NO_CLUBS = 5;
+
 // --- Progress tiers (% of total valid answers) ---
 const TIERS = [
   { pct: 0.01, label: "Beginner",       color: "text-white/70",    bg: "bg-white/10 border-white/20" },
@@ -315,6 +324,7 @@ interface GriddleState {
   clubHits: Record<string, number>;
   coverageLevel: number; // next level to achieve (1 = all clubs hit 1x, 2 = all hit 2x, etc.)
   submitted: boolean;
+  livesLeft: number;
 }
 
 function makeBoardHash(clubs: string[]): string {
@@ -346,6 +356,7 @@ function loadState(dateKey: string, clubs: string[], username?: string): Griddle
             clubHits: parsed.clubHits || {},
             submitted: parsed.submitted || false,
             coverageLevel: parsed.coverageLevel || 1,
+            livesLeft: parsed.livesLeft ?? LIVES,
           };
         }
       }
@@ -360,6 +371,7 @@ function loadState(dateKey: string, clubs: string[], username?: string): Griddle
     clubHits: {},
     coverageLevel: 1,
     submitted: false,
+    livesLeft: LIVES,
   };
 }
 
@@ -376,6 +388,7 @@ interface Feedback {
   type: FeedbackType;
   message: string;
   points?: number;
+  lives?: number; // lives this guess cost
   bonuses?: string[];
 }
 
@@ -441,7 +454,10 @@ export default function Griddle() {
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
   const checkedRemote = useRef(false);
 
-  const isFinished = state.submitted;
+  const livesMode = dateKey >= LIVES_FROM;
+  const outOfLives = livesMode && state.livesLeft <= 0;
+  const isFinished = state.submitted || outOfLives;
+  const autoFinishing = useRef(false);
 
   // Check remote submission on load — handles cross-device AND failed writes
   useEffect(() => {
@@ -508,6 +524,18 @@ export default function Griddle() {
     setShowEndScreen(true);
   }, [user?.username, dateKey, state.score, state.foundPlayers.length, totalValid]);
 
+  // Out of lives: submit the score once, after a beat so the last guess's feedback lands.
+  useEffect(() => {
+    if (!outOfLives || state.submitted || autoFinishing.current || !user?.username) return;
+    autoFinishing.current = true;
+    const t = setTimeout(() => { handleFinish(); }, 1200);
+    return () => clearTimeout(t);
+  }, [outOfLives, state.submitted, user?.username, handleFinish]);
+
+  const loseLives = useCallback((n: number) => {
+    setState(prev => ({ ...prev, livesLeft: Math.max(0, prev.livesLeft - n) }));
+  }, []);
+
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (isFinished) return;
@@ -515,23 +543,32 @@ export default function Griddle() {
     if (!raw) return;
     setInput("");
 
+    // Under lives, typos and unknown names are free — only real misses cost.
     const norm = normalizeName(raw);
     if (!norm) {
       playWrong();
-      setFlashColor("bg-red-500");
-      setTimeout(() => setFlashColor(null), 300);
-      showFeedbackMsg({ type: "wrong", message: "Invalid input", points: -1 });
-      setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+      if (livesMode) {
+        showFeedbackMsg({ type: "neutral", message: "Invalid input" });
+      } else {
+        setFlashColor("bg-red-500");
+        setTimeout(() => setFlashColor(null), 300);
+        showFeedbackMsg({ type: "wrong", message: "Invalid input", points: -1 });
+        setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+      }
       return;
     }
 
     const candidates = playerLookup.get(norm);
     if (!candidates || candidates.length === 0) {
       playWrong();
-      setFlashColor("bg-red-500");
-      setTimeout(() => setFlashColor(null), 300);
-      showFeedbackMsg({ type: "wrong", message: "Player not found", points: -1 });
-      setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+      if (livesMode) {
+        showFeedbackMsg({ type: "neutral", message: "Player not found — no life lost" });
+      } else {
+        setFlashColor("bg-red-500");
+        setTimeout(() => setFlashColor(null), 300);
+        showFeedbackMsg({ type: "wrong", message: "Player not found", points: -1 });
+        setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+      }
       return;
     }
 
@@ -550,13 +587,23 @@ export default function Griddle() {
       const matchCount = boardHits(closest);
       if (matchCount === 1) {
         playNeutral();
-        showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board` });
+        if (livesMode) {
+          showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board`, lives: LIFE_COST_ONE_CLUB });
+          loseLives(LIFE_COST_ONE_CLUB);
+        } else {
+          showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board` });
+        }
       } else {
         playWrong();
         setFlashColor("bg-red-500");
         setTimeout(() => setFlashColor(null), 300);
-        showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, points: -1 });
-        setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+        if (livesMode) {
+          showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, lives: LIFE_COST_NO_CLUBS });
+          loseLives(LIFE_COST_NO_CLUBS);
+        } else {
+          showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, points: -1 });
+          setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
+        }
       }
       return;
     }
@@ -680,7 +727,7 @@ export default function Griddle() {
         }, 2500);
       }, 1200);
     }
-  }, [input, playerLookup, boardClubs, state, coveredSet, showFeedbackMsg, isFinished]);
+  }, [input, playerLookup, boardClubs, state, coveredSet, showFeedbackMsg, isFinished, livesMode, loseLives]);
 
   const formatDate = (dateStr: string) => {
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -733,7 +780,11 @@ export default function Griddle() {
               <RuleItem icon="🧠" text="Name players who made Premier League appearances for at least 2 clubs on the board (only PL apps count)" />
               <RuleItem icon="📈" text="Players for 3+ clubs score more" />
               <RuleItem icon="🔗" text="Hitting adjacent tiles, full rows, columns & diagonals for bonus points!" />
-              <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
+              {livesMode ? (
+                <RuleItem icon="♥" text={`You have ${LIVES} lives. A player with only 1 club on the board costs ${LIFE_COST_ONE_CLUB}, a player with none costs ${LIFE_COST_NO_CLUBS}. Typos and repeats are free. Run out and your score is submitted.`} />
+              ) : (
+                <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
+              )}
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
 
@@ -820,7 +871,7 @@ export default function Griddle() {
           <h1 className="text-2xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
           </h1>
-          <div className="relative flex justify-center">
+          <div className="relative flex flex-col items-center">
             <motion.div
               key={state.score}
               animate={scorePulse ? { scale: [1, 1.15, 1] } : {}}
@@ -829,6 +880,20 @@ export default function Griddle() {
             >
               {state.score}
             </motion.div>
+            {livesMode && (
+              <motion.div
+                key={state.livesLeft}
+                initial={{ x: 0 }}
+                animate={state.livesLeft < LIVES ? { x: [0, -4, 4, -2, 0] } : { x: 0 }}
+                transition={{ duration: 0.35 }}
+                aria-label={`${state.livesLeft} lives left`}
+                className={`mt-0.5 text-xs font-bold tabular-nums whitespace-nowrap px-2 py-0.5 rounded-full border ${
+                  state.livesLeft <= 5 ? "text-red-300 bg-red-500/15 border-red-500/40"
+                  : state.livesLeft <= 10 ? "text-amber-300 bg-amber-500/10 border-amber-500/30"
+                  : "text-rose-200/90 bg-rose-500/10 border-rose-500/20"}`}>
+                ♥ {state.livesLeft}
+              </motion.div>
+            )}
             <AnimatePresence>
               {floatingPoints && (
                 <motion.div
@@ -1015,6 +1080,9 @@ export default function Griddle() {
                   <span className={`font-bold tabular-nums ${feedback.points > 0 ? "text-blue-300" : "text-red-300"}`}>
                     {feedback.points > 0 ? "+" : ""}{feedback.points}
                   </span>
+                )}
+                {feedback.lives !== undefined && (
+                  <span className="font-bold tabular-nums text-red-300 whitespace-nowrap">−{feedback.lives} ♥</span>
                 )}
               </div>
               {feedback.bonuses && feedback.bonuses.length > 0 && (
