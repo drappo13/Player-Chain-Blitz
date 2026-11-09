@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Flag, Trophy, ChevronRight, Info, ListChecks, Shuffle, Delete } from "lucide-react";
@@ -14,7 +14,7 @@ import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboa
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
 // Board version — bump to reshuffle the order boards are dealt in
-const BOARD_VERSION = 2;
+const BOARD_VERSION = 3;
 // Day 0 of the rotation. Boards are dealt in a fixed order from here, so no letter set
 // comes back until every other set has had a turn.
 const HIVE_EPOCH = "2026-11-09";
@@ -962,11 +962,10 @@ function addTo(c: HintCount, a: Answer, got: boolean) {
 // NYT-style hints: answers by first letter and length, then by first two letters
 // (split into answers that use the centre letter and those that don't).
 function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; found: Set<string> }) {
-  const { rows, all, pairs, pangrams } = useMemo(() => {
+  const { rows, all, pairs } = useMemo(() => {
     const rowMap = new Map<string, HintCount[]>();
     const all = emptyCount();
-    const pairMap = new Map<string, { centre: HintCount; other: HintCount }>();
-    const pangrams = { total: 0, found: 0 };
+    const pairMap = new Map<string, HintCount>();
     for (const a of answers) {
       const got = found.has(a.key);
       const first = a.key[0];
@@ -975,28 +974,22 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
       addTo(cells[lengthCol(a.key.length)], a, got);
       addTo(all, a, got);
       const pair = a.key.slice(0, 2);
-      if (!pairMap.has(pair)) pairMap.set(pair, { centre: emptyCount(), other: emptyCount() });
-      const p = pairMap.get(pair)!;
-      addTo(a.usesCentre ? p.centre : p.other, a, got);
-      if (a.pangram) { pangrams.total++; if (got) pangrams.found++; }
+      if (!pairMap.has(pair)) pairMap.set(pair, emptyCount());
+      addTo(pairMap.get(pair)!, a, got);
     }
     const rows = Array.from(rowMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
     const pairs = Array.from(pairMap.entries()).sort((x, y) => x[0].localeCompare(y[0]));
-    return { rows, all, pairs, pangrams };
+    return { rows, all, pairs };
   }, [answers, found]);
 
   const pairGroups = rows.map(([letter]) => [letter, pairs.filter(([p]) => p[0] === letter)] as const);
-  const centreUpper = board.centre.toUpperCase();
 
   return (
     <div className="w-full mb-3 rounded-xl border border-border bg-card/40 p-3 space-y-3">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hints</span>
         <span className="text-[10px] tabular-nums text-muted-foreground">
-          <span className="text-green-300">★</span> {all.legendsFound}/{all.legends} legends ·{" "}
-          <span className={pangrams.found === pangrams.total ? "text-green-300" : ""}>
-            all {board.letters.length} letters {pangrams.found === pangrams.total ? "✓" : "–"}
-          </span>
+          <span className="text-green-300">★</span> {all.legendsFound}/{all.legends} legends found
         </span>
       </div>
 
@@ -1022,21 +1015,18 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
         <div className="space-y-1">
           {pairGroups.map(([letter, group]) => (
             <div key={letter} className="flex flex-wrap gap-1">
-              {group.map(([pair, { centre, other }]) => {
-                const done = centre.found === centre.total && other.found === other.total;
-                const legends = centre.legends + other.legends;
-                const legendsFound = centre.legendsFound + other.legendsFound;
+              {group.map(([pair, c]) => {
+                const done = c.found === c.total;
                 return (
                   <span key={pair} className={`inline-flex items-center gap-1 text-[11px] tabular-nums px-1.5 py-0.5 rounded-md border transition-colors ${
                     done ? "border-green-500 bg-green-600 text-white" : "border-border/60 bg-background/40 text-foreground"}`}>
                     <span className="font-bold uppercase">{pair}</span>
-                    {done ? "✓" : <>
-                      {centre.total > 0 && <PairCount c={centre} centre />}
-                      {other.total > 0 && <PairCount c={other} />}
-                    </>}
-                    {legends > 0 && (
-                      <span className={`text-[9px] ${done || legendsFound === legends ? "text-white" : "text-muted-foreground"}`}>
-                        ★{legends > 1 ? legends : ""}
+                    {done ? "✓" : <span>{c.found}<span className="text-muted-foreground">/{c.total}</span></span>}
+                    {c.legends > 0 && (
+                      <span className="text-[9px] tracking-tighter">
+                        {Array.from({ length: c.legends }, (_, i) => (
+                          <span key={i} className={done || i < c.legendsFound ? "text-white" : "text-muted-foreground/60"}>★</span>
+                        ))}
                       </span>
                     )}
                   </span>
@@ -1049,25 +1039,11 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="px-1 rounded border border-white/70 text-foreground tabular-nums">1/3</span>
-          uses {centreUpper} · double points
-        </span>
-        <span className="inline-flex items-center gap-1">
           <span className="text-white">★</span>
-          legend: {LEGEND_APPS}+ PL apps or {LEGEND_GOALS}+ PL goals · double again
+          legend: {LEGEND_APPS}+ PL apps or {LEGEND_GOALS}+ PL goals · double points
         </span>
       </div>
     </div>
-  );
-}
-
-// Found/total for one side of a two-letter start; the centre-letter side is outlined.
-function PairCount({ c, centre = false }: { c: HintCount; centre?: boolean }) {
-  const done = c.found === c.total;
-  return (
-    <span className={`px-1 rounded ${centre ? "border border-white/70" : ""} ${done ? "text-green-300" : ""}`}>
-      {done ? "✓" : <>{c.found}<span className="text-muted-foreground">/{c.total}</span></>}
-    </span>
   );
 }
 
