@@ -1154,30 +1154,27 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
         </div>
       </div>
 
-      <div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">
-          5× lines <span className="normal-case tracking-normal font-normal">· players who cover a whole row, column or diagonal</span>
+      {/* Mini board: row counts on the right, column counts below, and each diagonal's
+          count at the corner where it ends — ↗ top right, ↘ bottom right */}
+      <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-1 items-center">
+        <div className="col-span-3 self-end text-[10px] uppercase tracking-widest text-muted-foreground font-semibold pb-0.5">
+          5× lines <span className="normal-case tracking-normal font-normal">· whole row, column or diagonal</span>
         </div>
-        {/* Mini board: row counts on the right, column counts below, diagonals in the corner */}
-        <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-1 items-center">
-          {[0, 1, 2].map(r => (
-            <Fragment key={r}>
-              {[0, 1, 2].map(c => (
-                <div key={c} className="h-7 min-w-0 rounded-md border border-border/60 bg-background/40 px-1.5 flex items-center justify-center">
-                  <span className="text-[10px] text-muted-foreground truncate">{boardClubs[r * 3 + c]}</span>
-                </div>
-              ))}
-              <LineBadge line={lines[r]} />
-            </Fragment>
-          ))}
-          {[3, 4, 5].map(i => (
-            <div key={i} className="flex justify-center"><LineBadge line={lines[i]} /></div>
-          ))}
-          <div className="flex flex-col gap-0.5">
-            <LineBadge line={lines[6]} prefix="↘ " />
-            <LineBadge line={lines[7]} prefix="↗ " />
-          </div>
-        </div>
+        <div className="flex justify-center"><LineBadge line={lines[7]} prefix="↗ " /></div>
+        {[0, 1, 2].map(r => (
+          <Fragment key={r}>
+            {[0, 1, 2].map(c => (
+              <div key={c} className="h-7 min-w-0 rounded-md border border-border/60 bg-background/40 px-1.5 flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground truncate">{boardClubs[r * 3 + c]}</span>
+              </div>
+            ))}
+            <div className="flex justify-center"><LineBadge line={lines[r]} /></div>
+          </Fragment>
+        ))}
+        {[3, 4, 5].map(i => (
+          <div key={i} className="flex justify-center"><LineBadge line={lines[i]} /></div>
+        ))}
+        <div className="flex justify-center"><LineBadge line={lines[6]} prefix="↘ " /></div>
       </div>
     </div>
   );
