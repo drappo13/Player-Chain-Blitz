@@ -33,6 +33,10 @@ const KNOWN_APPS = 100; // a player most fans could name
 const MIN_ANSWERS: Record<number, number> = { 8: 25, 9: 35, 10: 40 };
 const MIN_KNOWN_ANSWERS: Record<number, number> = { 8: 10, 9: 12, 10: 12 };
 const MAX_ANSWERS = 150;
+// A small bonus for naming a PL great. Shared surnames qualify if any namesake does.
+const LEGEND_APPS = 250;
+const LEGEND_GOALS = 75;
+const LEGEND_BONUS = 3;
 
 // --- Ranks (% of the day's maximum score) ---
 const RANKS = [
@@ -224,6 +228,7 @@ interface Answer {
   club: string;    // best-known player's club with the most appearances
   points: number;
   pangram: boolean;
+  legend: boolean;
 }
 
 function topClub(p: PLPlayer): string {
@@ -242,13 +247,15 @@ function answersFor(board: Board): Answer[] {
     .filter(g => (g.mask & ~set) === 0 && (g.mask & bit))
     .map(g => {
       const pangram = g.mask === set;
+      const legend = g.players.some(p => p.totalAppearances >= LEGEND_APPS || p.totalGoals >= LEGEND_GOALS);
       return {
         key: g.key,
         label: surnameOf(g.players[0]),
         players: g.players,
         club: topClub(g.players[0]),
-        points: g.key.length + (pangram ? board.letters.length : 0),
+        points: g.key.length + (pangram ? board.letters.length : 0) + (legend ? LEGEND_BONUS : 0),
         pangram,
+        legend,
       };
     })
     .sort((a, b) => b.players[0].totalAppearances - a.players[0].totalAppearances);
@@ -337,6 +344,12 @@ interface Feedback {
   type: FeedbackType;
   message: string;
   points?: number;
+  tags?: string[];
+}
+
+// A light tap on phones that support it (Android); silently nothing elsewhere.
+function buzz(pattern: number | number[]) {
+  try { navigator.vibrate?.(pattern); } catch { /* unsupported */ }
 }
 
 const finePointer = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: fine)").matches;
@@ -361,6 +374,8 @@ export default function Hive() {
   const [rankUp, setRankUp] = useState<string | null>(null);
   const [pangramHit, setPangramHit] = useState<string | null>(null);
   const [pulse, setPulse] = useState(0);
+  const [popped, setPopped] = useState<{ id: number; word: string; gold: boolean } | null>(null);
+  const streak = useRef(0);
   const [showTracker, setShowTracker] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -417,6 +432,7 @@ export default function Hive() {
 
   const reject = useCallback((message: string, sound: () => void = playWrong) => {
     sound();
+    if (sound === playWrong) { streak.current = 0; buzz([20, 30, 20]); }
     setShake(s => s + 1);
     showFeedbackMsg({ type: "neutral", message });
   }, [showFeedbackMsg]);
@@ -452,6 +468,13 @@ export default function Hive() {
     setFloatingPoints({ id: ++floatId.current, value: answer.points });
     setTimeout(() => setFloatingPoints(null), 1200);
     setPulse(p => p + 1);
+    const popId = floatId.current;
+    setPopped({ id: popId, word, gold: answer.pangram });
+    setTimeout(() => setPopped(cur => (cur?.id === popId ? null : cur)), 700);
+    streak.current += 1;
+    const tags: string[] = [];
+    if (answer.legend) tags.push(`★ Legend +${LEGEND_BONUS}`);
+    if (streak.current % 3 === 0) tags.push(streak.current === 3 ? "⚽ Hat-trick" : `⚽ ${streak.current} in a row`);
     setFlashColor(answer.pangram ? "bg-amber-400" : "bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
@@ -460,13 +483,15 @@ export default function Hive() {
       : answer.players[0].displayName;
     if (answer.pangram) {
       playHighScore();
+      buzz([40, 30, 80]);
       setPangramHit(who);
       setTimeout(() => setPangramHit(null), 2400);
-      showFeedbackMsg({ type: "pangram", message: `${who} · all ${board.letters.length} letters`, points: answer.points });
+      showFeedbackMsg({ type: "pangram", message: `${who} · all ${board.letters.length} letters`, points: answer.points, tags });
     } else {
-      if (answer.key.length >= 8) playComboCorrect(answer.key.length - 5);
+      if (answer.key.length >= 8 || tags.length) playComboCorrect(Math.max(answer.key.length - 5, 3));
       else playCorrect();
-      showFeedbackMsg({ type: "correct", message: `${who} · ${answer.club}`, points: answer.points });
+      buzz(15);
+      showFeedbackMsg({ type: "correct", message: `${who} · ${answer.club}`, points: answer.points, tags });
     }
 
     if (nextRank.index > prevRank.index) {
@@ -480,6 +505,7 @@ export default function Hive() {
 
   const typeLetter = useCallback((ch: string) => {
     if (isFinished) return;
+    buzz(6);
     setInput(v => (v + ch).slice(0, 24));
     if (finePointer()) inputRef.current?.focus();
   }, [isFinished]);
@@ -583,6 +609,7 @@ export default function Hive() {
               <RuleItem icon="🐝" text={`Spell the surname of any player with a Premier League appearance, using only today's ${board.letters.length} letters`} />
               <RuleItem icon="🟡" text="Every answer must use the centre letter. Letters can be used more than once" />
               <RuleItem icon="📏" text={`1 point per letter. One player's surname uses all ${board.letters.length} letters, worth ${board.letters.length} extra`} />
+              <RuleItem icon="★" text={`Legend bonus: +${LEGEND_BONUS} for anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
@@ -673,7 +700,16 @@ export default function Hive() {
             <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
               {input ? Array.from(input).map((ch, i) => (
                 <span key={i} className={ch === board.centre ? "text-amber-400" : board.letters.includes(ch) ? "text-foreground" : "text-muted-foreground/35"}>{ch}</span>
-              )) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
+              )) : popped ? (
+                // The word just scored lifts off letter by letter
+                <span key={popped.id} className="inline-flex">
+                  {Array.from(popped.word).map((ch, i) => (
+                    <motion.span key={i} initial={{ y: 0, opacity: 1, scale: 1 }} animate={{ y: -22, opacity: 0, scale: 1.3 }}
+                      transition={{ duration: 0.45, delay: i * 0.025, ease: "easeOut" }}
+                      className={popped.gold ? "text-amber-300" : "text-emerald-300"}>{ch}</motion.span>
+                  ))}
+                </span>
+              ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
             </div>
             <input ref={inputRef} value={input} aria-label="Surname"
               onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
@@ -694,7 +730,13 @@ export default function Hive() {
                   : feedback.type === "correct" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
                   : "bg-muted/60 text-muted-foreground border border-border"}`}>
                 <span className="truncate">{feedback.message}</span>
-                {feedback.points !== undefined && <span className="font-bold tabular-nums">+{feedback.points}</span>}
+                {feedback.tags?.map(t => (
+                  <motion.span key={t} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 18, delay: 0.12 }}
+                    className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                      feedback.type === "pangram" ? "bg-amber-950/15" : "bg-amber-400/20 text-amber-300"}`}>{t}</motion.span>
+                ))}
+                {feedback.points !== undefined && <span className="shrink-0 font-bold tabular-nums">+{feedback.points}</span>}
               </motion.div>
             )}
           </AnimatePresence>
@@ -705,6 +747,7 @@ export default function Hive() {
           <motion.div key={`hive-${pulse}`} animate={pulse ? { scale: [1, 1.03, 1] } : {}} transition={{ duration: 0.3 }}>
             <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished} />
           </motion.div>
+          {pangramHit && <BeeBurst />}
 
           <AnimatePresence>
             {(pangramHit || rankUp) && (
@@ -790,6 +833,7 @@ export default function Hive() {
                   ? "bg-amber-400/20 border-amber-400/60 text-amber-200"
                   : "bg-card/50 border-border text-foreground"}`}>
                 <span className="font-medium">{answerName(a)}</span>
+                {a.legend && <span className="ml-1 text-[11px] text-amber-300" title="Legend bonus">★</span>}
                 <span className="ml-1.5 text-[11px] text-muted-foreground">{a.club}</span>
                 <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-amber-300" : "text-amber-400/80"}`}>+{a.points}</span>
               </motion.div>
@@ -830,7 +874,7 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
               ? { x, y, opacity: 1, scale: [1, 1.14, 1], rotate: [0, 10, -10, 0], transition: { duration: 0.6, delay: i * 0.05 } }
               : { x, y, opacity: 1, scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
-            whileTap={{ scale: 0.86 }}
+            whileTap={{ scale: 0.86, filter: "brightness(1.7)" }}
             style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP, position: "absolute", left: 0, top: 0 }}
             className={`flex items-center justify-center font-black uppercase select-none touch-manipulation transition-colors ${
               isCentre
@@ -840,6 +884,28 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
           </motion.button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// A one-off burst of bees from the centre of the hive.
+const BEES = Array.from({ length: 14 }, (_, i) => {
+  const a = (i / 14) * 2 * Math.PI + (i % 2) * 0.2;
+  const d = 120 + (i % 3) * 40;
+  return { x: Math.cos(a) * d, y: Math.sin(a) * d, r: (i % 2 ? 1 : -1) * (20 + i * 7), size: 16 + (i % 4) * 5, delay: (i % 5) * 0.04 };
+});
+
+function BeeBurst() {
+  return (
+    <div className="absolute left-1/2 top-1/2 z-30 pointer-events-none">
+      {BEES.map((b, i) => (
+        <motion.span key={i} className="absolute select-none" style={{ fontSize: b.size, left: -b.size / 2, top: -b.size / 2 }}
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0.3, rotate: 0 }}
+          animate={{ x: b.x, y: b.y, opacity: [0, 1, 1, 0], scale: [0.3, 1.1, 1, 0.8], rotate: b.r }}
+          transition={{ duration: 1.4, delay: b.delay, ease: "easeOut" }}>
+          🐝
+        </motion.span>
+      ))}
     </div>
   );
 }
@@ -1053,6 +1119,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
                   a.pangram ? "bg-amber-400/15 border-amber-400/50" : "bg-card/50 border-border"}`}>
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
+                    {a.legend && <span className="ml-1 text-xs text-amber-300">★</span>}
                     <span className="text-xs text-muted-foreground ml-1.5">
                       {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
                     </span>
