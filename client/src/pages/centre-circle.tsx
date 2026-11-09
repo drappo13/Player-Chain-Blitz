@@ -608,9 +608,6 @@ export default function CentreCircle() {
             </h1>
             <p className="text-sm text-muted-foreground mb-6">Daily PL surname spelling game</p>
 
-            <div className="mb-6 flex justify-center pointer-events-none select-none">
-              <HiveBoard centre={board.centre} outer={outer} onLetter={() => {}} scale={0.7} />
-            </div>
 
             <div className="text-left space-y-3 mb-8">
               <RuleItem icon="⚽" text={`Spell the surname of any player with a Premier League appearance, using only today's ${board.letters.length} letters. Letters can be used more than once`} />
@@ -618,7 +615,7 @@ export default function CentreCircle() {
               <RuleItem icon="🟢" text={`Use the centre letter (${board.centre.toUpperCase()}) for double points`} />
               <RuleItem icon="★" text={`Legends double it again: anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
-              <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
+              <RuleItem icon="🏁" text="When you're done, tap Submit (the flag, next to the hints button) to post your score to the leaderboard" />
             </div>
 
             <Button className="w-full text-lg py-6 shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
@@ -810,8 +807,8 @@ export default function CentreCircle() {
               </button>
               {state.found.length > 0 && (
                 <button type="button" onClick={() => setShowConfirm(true)} title="I'm done — submit score"
-                  className="p-2 rounded-lg bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors">
-                  <Flag className="w-4 h-4" />
+                  className="h-[34px] px-2.5 inline-flex items-center gap-1.5 rounded-lg bg-card/80 border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-green-500/50 transition-colors">
+                  <Flag className="w-4 h-4" /> Submit
                 </button>
               )}
             </div>
