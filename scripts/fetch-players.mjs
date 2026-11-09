@@ -1,5 +1,7 @@
-// Fetches every PL player with per-club appearances, goals, assists + bio data.
+// Fetches every PL player with per-club appearances, goals, assists + bio data, and
+// the last season they played (lastSeason: start year, e.g. 2025 for 2025/26).
 // Usage: node scripts/fetch-players.mjs
+//        node scripts/fetch-players.mjs --seasons-only   (just refresh lastSeason)
 // Output: client/src/data/pl-players.json
 
 const TEAMS = [
@@ -102,6 +104,40 @@ async function fetchStatForTeam(stat, teamId) {
   return results;
 }
 
+// Each player's most recent PL season with an appearance, by playerId.
+async function fetchLastSeasons() {
+  const res = await fetch("https://footballapi.pulselive.com/football/competitions/1/compseasons?page=0&pageSize=100", {
+    headers: { Origin: "https://www.premierleague.com" },
+  });
+  const seasons = (await res.json()).content
+    .map((s) => ({ id: Math.round(s.id), year: Number((s.label.match(/(\d{4})\/\d{2}/) || [])[1]) }))
+    .filter((s) => s.year);
+  const last = new Map();
+  for (const { id, year } of seasons) {
+    let page = 0;
+    let totalPages = 1;
+    let count = 0;
+    while (page < totalPages) {
+      const url = `https://footballapi.pulselive.com/football/stats/ranked/players/appearances?page=${page}&pageSize=${PAGE_SIZE}&comps=1&compSeasons=${id}&altIds=true`;
+      const r = await fetch(url, { headers: { Origin: "https://www.premierleague.com" } });
+      if (!r.ok) { console.error(`  FAIL season ${year} page ${page}: ${r.status}`); break; }
+      const data = await r.json();
+      if (page === 0) totalPages = Math.ceil((data.stats?.pageInfo?.numEntries || 0) / PAGE_SIZE);
+      for (const entry of data.stats?.content || []) {
+        if (!(entry.value > 0)) continue;
+        const pid = entry.owner.playerId || entry.owner.id;
+        if (!(last.get(pid) >= year)) last.set(pid, year);
+        count++;
+      }
+      page++;
+      await new Promise((r) => setTimeout(r, DELAY_MS));
+    }
+    process.stdout.write(`  ${year}/${String(year + 1).slice(2)} (${count}) `);
+  }
+  console.log();
+  return last;
+}
+
 // Pair each fetched player with their record in the previous file and keep its name
 // fields. By playerId when the previous file has one; otherwise by birthday plus clubs
 // (every old club still present with at least as many apps), using shared name words
@@ -143,6 +179,24 @@ function carryOverNames(fresh, previous) {
 }
 
 async function main() {
+  const { readFileSync, existsSync, writeFileSync } = await import("fs");
+  const { fileURLToPath } = await import("url");
+  const outPath = fileURLToPath(new URL("../client/src/data/pl-players.json", import.meta.url));
+
+  if (process.argv.includes("--seasons-only")) {
+    console.log("Fetching last seasons...");
+    const last = await fetchLastSeasons();
+    const players = JSON.parse(readFileSync(outPath, "utf8"));
+    let set = 0;
+    for (const p of players) {
+      p.lastSeason = last.get(p.playerId) ?? null;
+      if (p.lastSeason) set++;
+    }
+    writeFileSync(outPath, JSON.stringify(players, null, 2));
+    console.log(`lastSeason set for ${set} of ${players.length} players`);
+    return;
+  }
+
   // playerMap: playerId -> full player object
   const playerMap = new Map();
 
@@ -199,12 +253,13 @@ async function main() {
 
   console.log(`\nTotal API pages fetched: ~${requestCount}`);
 
+  console.log("\nFetching last seasons...");
+  const last = await fetchLastSeasons();
+  for (const p of playerMap.values()) p.lastSeason = last.get(p.playerId) ?? null;
+
   // Names in the existing file have been corrected by hand ("Savinho", "van Nistelrooy"),
   // and the API renames players between pulls. Carry those names over so a refresh only
   // moves the numbers. --names-from <file> reads them from another copy instead.
-  const { readFileSync, existsSync, writeFileSync } = await import("fs");
-  const { fileURLToPath } = await import("url");
-  const outPath = fileURLToPath(new URL("../client/src/data/pl-players.json", import.meta.url));
   const flag = process.argv.indexOf("--names-from");
   const namesPath = flag > -1 ? process.argv[flag + 1] : outPath;
   const previous = existsSync(namesPath) ? JSON.parse(readFileSync(namesPath, "utf8")) : [];
