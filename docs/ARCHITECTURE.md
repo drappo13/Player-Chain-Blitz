@@ -23,7 +23,7 @@ client/src/
 ├── pages/
 │   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
 │   ├── griddle.tsx              # Griddle (daily)
-│   ├── centre-circle.tsx        # Centre Circle (daily surname spelling)
+│   ├── centre-circle.tsx        # CentreCircle (daily surname spelling)
 │   ├── target-man.tsx           # TargetMan (arcade)
 │   ├── overlap.tsx              # Overlap (arcade)
 │   ├── club-ladder.tsx          # ClubLadder (arcade)
@@ -220,7 +220,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 
 ### Persistence
 - `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
-- Centre Circle follows the same pattern (`centrecircle-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each board is the 8–10 letters of one surname (the pangram), which must be the only surname using every letter and belong to a player people know (50+ apps in the last 10 seasons, 100+ in the last 20, or 100+ goals; uses `lastSeason` in pl-players.json). A board needs 40–250 answers, 15+ by 100+ app players and 5+ legends; the centre is any letter 15+ answers use. A set only repeats (with a new centre) after every other set has been used. Any surname from the letters counts; score is 1 point per letter (+ board size for the pangram), ×2 for using the centre letter, ×2 for a legend (250+ apps or 75+ goals). Wrong guesses are free
+- CentreCircle follows the same pattern (`centrecircle-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each board is the 8–10 letters of one surname (the pangram), which must be the only surname using every letter and belong to a player people know (50+ apps in the last 10 seasons, 100+ in the last 20, or 100+ goals; uses `lastSeason` in pl-players.json). A board needs 40–250 answers, 15+ by 100+ app players and 5+ legends; the centre is any letter 15+ answers use. A set only repeats (with a new centre) after every other set has been used. Any surname from the letters counts; score is 1 point per letter (+ board size for the pangram), ×2 for using the centre letter, ×2 for a legend (250+ apps or 75+ goals). Wrong guesses are free
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
