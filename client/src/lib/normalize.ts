@@ -37,10 +37,17 @@ export const PL_PRIORITY_MONONYMS: Record<string, string> = {
   bernardo: "Bernardo Silva",
 };
 
+// Alternate spelling -> the key the data actually uses. An entry only applies when its
+// target exists, so pairs are listed both ways: pl-players.json spells him
+// "Nistelrooij" while players.ts spells him "Nistelrooy".
 export const PL_ALTERNATES: Record<string, string> = {
   vannistelrooij: "vannistelrooy",
   nistelrooij: "nistelrooy",
+  ruudvannistelrooij: "ruudvannistelrooy",
+  vannistelrooy: "vannistelrooij",
+  nistelrooy: "nistelrooij",
+  ruudvannistelrooy: "ruudvannistelrooij",
   kuyt: "kuijt",
   dirkkuyt: "dirkkuijt",
-  savinho: "savio",
+  savio: "savinho",
 };

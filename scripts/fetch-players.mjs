@@ -102,6 +102,46 @@ async function fetchStatForTeam(stat, teamId) {
   return results;
 }
 
+// Pair each fetched player with their record in the previous file and keep its name
+// fields. By playerId when the previous file has one; otherwise by birthday plus clubs
+// (every old club still present with at least as many apps), using shared name words
+// to separate two players born the same day.
+function carryOverNames(fresh, previous) {
+  const words = (p) => new Set(`${p.displayName} ${p.firstName} ${p.lastName}`
+    .normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .split(/[^a-z]+/).filter((w) => w.length > 1));
+  const byId = new Map(previous.filter((p) => p.playerId != null).map((p) => [p.playerId, p]));
+  const byDob = new Map();
+  for (const p of previous) {
+    if (!byDob.has(p.dob)) byDob.set(p.dob, []);
+    byDob.get(p.dob).push(p);
+  }
+  const used = new Set();
+  let matched = 0;
+  let renamed = 0;
+  for (const f of fresh) {
+    let old = byId.get(f.playerId);
+    if (!old) {
+      const fw = words(f);
+      const cands = (byDob.get(f.dob) || [])
+        .filter((o) => !used.has(o) && Object.entries(o.clubs)
+          .every(([c, s]) => f.clubs[c] && f.clubs[c].appearances >= s.appearances))
+        .map((o) => ({ o, shared: [...words(o)].filter((w) => fw.has(w)).length }))
+        .sort((a, b) => b.shared - a.shared);
+      if (cands.length === 1 || (cands.length > 1 && cands[0].shared > cands[1].shared)) old = cands[0].o;
+    }
+    if (!old || used.has(old)) continue;
+    used.add(old);
+    matched++;
+    if (old.displayName !== f.displayName || old.firstName !== f.firstName || old.lastName !== f.lastName) renamed++;
+    f.displayName = old.displayName;
+    f.firstName = old.firstName;
+    f.lastName = old.lastName;
+  }
+  const unmatched = previous.filter((p) => !used.has(p)).map((p) => p.displayName);
+  return { matched, renamed, unmatched };
+}
+
 async function main() {
   // playerMap: playerId -> full player object
   const playerMap = new Map();
@@ -159,9 +199,23 @@ async function main() {
 
   console.log(`\nTotal API pages fetched: ~${requestCount}`);
 
-  // Build final output (drop playerId, sort by total appearances)
+  // Names in the existing file have been corrected by hand ("Savinho", "van Nistelrooy"),
+  // and the API renames players between pulls. Carry those names over so a refresh only
+  // moves the numbers. --names-from <file> reads them from another copy instead.
+  const { readFileSync, existsSync, writeFileSync } = await import("fs");
+  const { fileURLToPath } = await import("url");
+  const outPath = fileURLToPath(new URL("../client/src/data/pl-players.json", import.meta.url));
+  const flag = process.argv.indexOf("--names-from");
+  const namesPath = flag > -1 ? process.argv[flag + 1] : outPath;
+  const previous = existsSync(namesPath) ? JSON.parse(readFileSync(namesPath, "utf8")) : [];
+  const kept = carryOverNames([...playerMap.values()], previous);
+  console.log(`\nKept existing names for ${kept.matched} of ${previous.length} players (${kept.renamed} differ from the API)`);
+  if (kept.unmatched.length) console.log(`  No match for: ${kept.unmatched.slice(0, 20).join(", ")}${kept.unmatched.length > 20 ? " …" : ""}`);
+
+  // Build final output (sort by total appearances). playerId stays so the next refresh
+  // can match players exactly instead of by birthday and clubs.
   const result = [...playerMap.values()]
-    .map(({ playerId, ...rest }) => ({
+    .map((rest) => ({
       ...rest,
       totalAppearances: Object.values(rest.clubs).reduce((s, c) => s + c.appearances, 0),
       totalGoals: Object.values(rest.clubs).reduce((s, c) => s + c.goals, 0),
@@ -180,9 +234,6 @@ async function main() {
   }
 
   // Write output
-  const { writeFileSync } = await import("fs");
-  const { fileURLToPath } = await import("url");
-  const outPath = fileURLToPath(new URL("../client/src/data/pl-players.json", import.meta.url));
   writeFileSync(outPath, JSON.stringify(result, null, 2));
   console.log(`\nWritten to client/src/data/pl-players.json`);
 }
