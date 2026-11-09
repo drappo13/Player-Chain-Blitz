@@ -17,7 +17,7 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 const theme = gameThemes.overlap;
 
 // Board version — bump to regenerate all daily boards
-const BOARD_VERSION = 7;
+const BOARD_VERSION = 8;
 
 // --- Top 25 PL clubs by total appearances ---
 const ELIGIBLE_CLUBS = [
@@ -1169,13 +1169,18 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
   validAnswers: PLPlayer[];
   foundNames: Set<string>;
 }) {
-  const { buckets, lines } = useMemo(() => {
+  const { buckets, lines, perClub } = useMemo(() => {
     const cellOf = new Map<string, number>(boardClubs.map((c, i) => [c, i] as [string, number]));
     const byCount = new Map<number, { total: number; found: number }>();
     const lines = BONUS_LINES.map(l => ({ ...l, total: 0, found: 0 }));
+    const perClub = boardClubs.map(() => ({ total: 0, found: 0 }));
     for (const p of validAnswers) {
       const cells = new Set(Object.keys(p.clubs).filter(c => cellOf.has(c)).map(c => cellOf.get(c)!));
       const got = foundNames.has(p.displayName);
+      cells.forEach(i => {
+        perClub[i].total++;
+        if (got) perClub[i].found++;
+      });
       const key = Math.min(cells.size, 6); // 6+ share a points band
       const b = byCount.get(key) ?? { total: 0, found: 0 };
       b.total++;
@@ -1188,7 +1193,7 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
         }
       }
     }
-    return { buckets: Array.from(byCount.entries()).sort((a, b) => a[0] - b[0]), lines };
+    return { buckets: Array.from(byCount.entries()).sort((a, b) => a[0] - b[0]), lines, perClub };
   }, [boardClubs, validAnswers, foundNames]);
 
   const found = buckets.reduce((s, [, b]) => s + b.found, 0);
@@ -1222,20 +1227,35 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
         </div>
       </div>
 
-      {/* Mini board: row counts on the right, column counts below, and each diagonal's
-          count at the corner where it ends — ↗ top right, ↘ bottom right */}
+      {/* Mini board: each club fills from the bottom as you find its players; row counts
+          on the right, column counts below, and each diagonal's count at the corner where
+          it ends — ↗ top right, ↘ bottom right */}
       <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-1 items-center">
         <div className="col-span-3 self-end text-[10px] uppercase tracking-widest text-muted-foreground font-semibold pb-0.5">
-          5× lines <span className="normal-case tracking-normal font-normal">· whole row, column or diagonal</span>
+          By club & 5× lines <span className="normal-case tracking-normal font-normal">· row, column, diagonal</span>
         </div>
         <div className="flex justify-center"><LineBadge line={lines[7]} prefix="↗ " /></div>
         {[0, 1, 2].map(r => (
           <Fragment key={r}>
-            {[0, 1, 2].map(c => (
-              <div key={c} className="h-7 min-w-0 rounded-md border border-border/60 bg-background/40 px-1.5 flex items-center justify-center">
-                <span className="text-[10px] text-muted-foreground truncate">{boardClubs[r * 3 + c]}</span>
-              </div>
-            ))}
+            {[0, 1, 2].map(c => {
+              const i = r * 3 + c;
+              const club = perClub[i];
+              const done = club.total > 0 && club.found === club.total;
+              // A club with any finds always shows a sliver, so early progress is visible.
+              const fill = club.found === 0 ? 0 : Math.max(club.found / club.total, 0.08);
+              return (
+                <div key={c} className="relative h-10 min-w-0 rounded-md border border-border/60 bg-background/40 overflow-hidden">
+                  <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-emerald-500/30" : "bg-blue-500/25"}`}
+                    style={{ height: `${fill * 100}%` }} />
+                  <div className="relative h-full px-1.5 flex flex-col items-center justify-center leading-tight">
+                    <span className="max-w-full text-[10px] text-muted-foreground truncate">{boardClubs[i]}</span>
+                    <span className={`text-[10px] font-semibold tabular-nums ${done ? "text-emerald-300" : club.found ? "text-foreground" : "text-muted-foreground/60"}`}>
+                      {club.found}<span className="opacity-60">/{club.total}</span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
             <div className="flex justify-center"><LineBadge line={lines[r]} /></div>
           </Fragment>
         ))}
