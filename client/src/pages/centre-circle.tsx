@@ -20,29 +20,33 @@ const BOARD_VERSION = 1;
 const HIVE_EPOCH = "2026-11-09";
 
 // --- Board rules ---
-// A hive is the letters of one surname that uses 8–10 different letters (the pangram).
-// That player must be the only answer using every letter, and a modern, well-known
-// one: born STAR_BORN or later with STAR_APPS+ PL apps. The other answers can be
-// anyone with a PL appearance.
+// A board is the letters of one surname that uses 8–10 different letters (the pangram).
+// That player must be the only answer using every letter, and someone people know:
+// 50+ PL apps in the last 10 seasons, 100+ apps in the last 20, or 100+ PL goals ever.
+// Every other answer can be anyone with a PL appearance.
 const HIVE_SIZES = [8, 9, 10];
-const STAR_APPS = 80;
-const STAR_BORN = 1983;
 const KNOWN_APPS = 100; // a player most fans could name
-// Per hive size: fewest answers, and fewest of them by KNOWN_APPS+ players, so every
-// day has a solid core of gettable names.
-const MIN_ANSWERS: Record<number, number> = { 8: 25, 9: 35, 10: 40 };
-const MIN_KNOWN_ANSWERS: Record<number, number> = { 8: 10, 9: 12, 10: 12 };
-const MAX_ANSWERS = 150;
-// A small bonus for naming a PL great. Shared surnames qualify if any namesake does.
-// Every board has MIN_LEGENDS–MAX_LEGENDS of them.
+const MIN_ANSWERS = 40;
+const MAX_ANSWERS = 250;
+const MIN_KNOWN_ANSWERS = 15;
+const MIN_CENTRE_ANSWERS = 15; // a centre letter has to be worth chasing
+// Naming a PL great doubles the points, as does using the centre letter.
+// Shared surnames count as a legend if any namesake is one.
 const LEGEND_APPS = 250;
 const LEGEND_GOALS = 75;
-const LEGEND_BONUS = 3;
 const MIN_LEGENDS = 5;
-const MAX_LEGENDS = 15;
 
 function isLegend(players: PLPlayer[]): boolean {
   return players.some(p => p.totalAppearances >= LEGEND_APPS || p.totalGoals >= LEGEND_GOALS);
+}
+
+const LATEST_SEASON = Math.max(...(plPlayers as PLPlayer[]).map(p => p.lastSeason || 0));
+
+function isStar(p: PLPlayer): boolean {
+  const last = p.lastSeason || 0;
+  return (last > LATEST_SEASON - 10 && p.totalAppearances >= 50)
+    || (last > LATEST_SEASON - 20 && p.totalAppearances >= 100)
+    || p.totalGoals >= 100;
 }
 
 // --- Ranks (% of the day's maximum score) ---
@@ -163,13 +167,9 @@ interface Board {
 
 let boardOrderCache: Board[] | null = null;
 
-function birthYear(p: PLPlayer): number {
-  const m = p.dob.match(/\d{4}/);
-  return m ? Number(m[0]) : 0;
-}
-
-// Every letter set that qualifies (see Board rules), with each centre letter that
-// gives a fair day: enough answers, not too many, and a core of well-known players.
+// Every letter set that qualifies (see Board rules) and gives a fair day — enough
+// answers, not too many, a core of well-known players and some legends — with each
+// centre letter that enough answers use.
 function boardOrder(): Board[] {
   if (boardOrderCache) return boardOrderCache;
   const groups = surnameGroups();
@@ -179,23 +179,19 @@ function boardOrder(): Board[] {
   for (const g of groups) {
     const star = g.players[0];
     if (HIVE_SIZES.includes(bitCount(g.mask)) && g.players.length === 1 && usersOfSet.get(g.mask) === 1
-      && star.totalAppearances >= STAR_APPS && birthYear(star) >= STAR_BORN) sets.add(g.mask);
+      && isStar(star)) sets.add(g.mask);
   }
 
   const bySet: Board[][] = [];
   Array.from(sets).sort((a, b) => a - b).forEach(set => {
-    const size = bitCount(set);
-    const inSet = groups.filter(g => (g.mask & ~set) === 0);
+    const answers = groups.filter(g => (g.mask & ~set) === 0);
+    const known = answers.filter(g => g.players[0].totalAppearances >= KNOWN_APPS).length;
+    const legends = answers.filter(g => isLegend(g.players)).length;
+    if (answers.length < MIN_ANSWERS || answers.length > MAX_ANSWERS || known < MIN_KNOWN_ANSWERS || legends < MIN_LEGENDS) return;
     const boards: Board[] = [];
     for (const centre of lettersOf(set)) {
       const bit = letterBit(centre);
-      const answers = inSet.filter(g => g.mask & bit);
-      const known = answers.filter(g => g.players[0].totalAppearances >= KNOWN_APPS).length;
-      const legends = answers.filter(g => isLegend(g.players)).length;
-      if (answers.length >= MIN_ANSWERS[size] && answers.length <= MAX_ANSWERS && known >= MIN_KNOWN_ANSWERS[size]
-        && legends >= MIN_LEGENDS && legends <= MAX_LEGENDS) {
-        boards.push({ letters: lettersOf(set), centre });
-      }
+      if (answers.filter(g => g.mask & bit).length >= MIN_CENTRE_ANSWERS) boards.push({ letters: lettersOf(set), centre });
     }
     if (boards.length) bySet.push(boards);
   });
@@ -238,6 +234,7 @@ interface Answer {
   points: number;
   pangram: boolean;
   legend: boolean;
+  usesCentre: boolean;
 }
 
 function topClub(p: PLPlayer): string {
@@ -253,18 +250,22 @@ function answersFor(board: Board): Answer[] {
   const set = board.letters.reduce((m, ch) => m | letterBit(ch), 0);
   const bit = letterBit(board.centre);
   return surnameGroups()
-    .filter(g => (g.mask & ~set) === 0 && (g.mask & bit))
+    .filter(g => (g.mask & ~set) === 0)
     .map(g => {
       const pangram = g.mask === set;
       const legend = isLegend(g.players);
+      const usesCentre = (g.mask & bit) !== 0;
+      // 1 point a letter (+ the board size for the pangram), doubled for the centre
+      // letter and doubled again for a legend
       return {
         key: g.key,
         label: surnameOf(g.players[0]),
         players: g.players,
         club: topClub(g.players[0]),
-        points: g.key.length + (pangram ? board.letters.length : 0) + (legend ? LEGEND_BONUS : 0),
+        points: (g.key.length + (pangram ? board.letters.length : 0)) * (usesCentre ? 2 : 1) * (legend ? 2 : 1),
         pangram,
         legend,
+        usesCentre,
       };
     })
     .sort((a, b) => b.players[0].totalAppearances - a.players[0].totalAppearances);
@@ -463,7 +464,6 @@ export default function CentreCircle() {
 
     const stray = Array.from(word).find(ch => !board.letters.includes(ch));
     if (stray) return reject(`${stray.toUpperCase()} isn't one of today's letters`);
-    if (!word.includes(board.centre)) return reject(`Needs the centre ${board.centre.toUpperCase()}`);
     const answer = answerByKey.get(word);
     if (!answer) return reject(`No PL player called ${word.charAt(0).toUpperCase()}${word.slice(1)}`);
     if (foundSet.has(word)) return reject(`${answerName(answer)} — already found`, playNeutral);
@@ -480,7 +480,8 @@ export default function CentreCircle() {
     setPopped({ id: popId, word, gold: answer.pangram });
     setTimeout(() => setPopped(cur => (cur?.id === popId ? null : cur)), 700);
     const tags: string[] = [];
-    if (answer.legend) tags.push(`★ Legend +${LEGEND_BONUS}`);
+    if (answer.usesCentre) tags.push(`${board.centre.toUpperCase()} ×2`);
+    if (answer.legend) tags.push("★ Legend ×2");
     setFlashColor(answer.pangram ? "bg-lime-400" : "bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
@@ -612,10 +613,10 @@ export default function CentreCircle() {
             </div>
 
             <div className="text-left space-y-3 mb-8">
-              <RuleItem icon="🐝" text={`Spell the surname of any player with a Premier League appearance, using only today's ${board.letters.length} letters`} />
-              <RuleItem icon="🟡" text="Every answer must use the centre letter. Letters can be used more than once" />
+              <RuleItem icon="⚽" text={`Spell the surname of any player with a Premier League appearance, using only today's ${board.letters.length} letters. Letters can be used more than once`} />
               <RuleItem icon="📏" text={`1 point per letter. One player's surname uses all ${board.letters.length} letters, worth ${board.letters.length} extra`} />
-              <RuleItem icon="★" text={`Legend bonus: +${LEGEND_BONUS} for anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
+              <RuleItem icon="🟢" text={`Use the centre letter (${board.centre.toUpperCase()}) for double points`} />
+              <RuleItem icon="★" text={`Legends double it again: anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
@@ -796,7 +797,7 @@ export default function CentreCircle() {
         <div className="w-full flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-muted-foreground">
             Found <span className="tabular-nums">{state.found.length}</span>
-            <span className="font-normal"> · must use {centreUpper}</span>
+            <span className="font-normal"> · {centreUpper} scores double</span>
           </h3>
           {!isFinished && (
             <div className="flex items-center gap-1.5">
@@ -848,7 +849,7 @@ export default function CentreCircle() {
         ) : (
           <div className="w-full text-center py-6 text-muted-foreground">
             <p className="text-sm">{answers.length} surnames hide in today's letters</p>
-            <p className="text-xs mt-2 opacity-60">Every one uses {centreUpper}. One player's uses all {board.letters.length} letters.</p>
+            <p className="text-xs mt-2 opacity-60">Names with {centreUpper} score double, legends double again. One player's uses all {board.letters.length} letters.</p>
           </div>
         )}
       </div>
