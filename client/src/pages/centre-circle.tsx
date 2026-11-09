@@ -783,6 +783,13 @@ export default function CentreCircle() {
               className="h-11 w-11 rounded-full border border-border bg-card/60 text-muted-foreground hover:text-foreground active:scale-95 transition flex items-center justify-center">
               <Shuffle className="w-5 h-5" />
             </button>
+            <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
+              aria-label="Hints" title="Tracker — what's left to find"
+              className={`h-11 w-11 rounded-full border active:scale-95 transition flex items-center justify-center ${showTracker
+                ? "bg-green-500/15 border-green-500/40 text-green-300"
+                : "border-border bg-card/60 text-muted-foreground hover:text-foreground"}`}>
+              <ListChecks className="w-5 h-5" />
+            </button>
             <button type="button" onClick={submitWord}
               className="h-11 px-6 rounded-full border border-green-500/40 bg-green-500/15 text-green-300 font-semibold hover:bg-green-500/25 active:scale-95 transition">
               Enter
@@ -798,13 +805,6 @@ export default function CentreCircle() {
           </h3>
           {!isFinished && (
             <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
-                title="Tracker — what's left to find"
-                className={`p-2 rounded-lg border transition-colors ${showTracker
-                  ? "bg-green-500/15 border-green-500/40 text-green-300"
-                  : "bg-card/80 border-border text-muted-foreground hover:text-foreground"}`}>
-                <ListChecks className="w-4 h-4" />
-              </button>
               {state.found.length > 0 && (
                 <button type="button" onClick={() => setShowConfirm(true)} title="I'm done — submit score"
                   className="h-[34px] px-2.5 inline-flex items-center gap-1.5 rounded-lg bg-card/80 border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-green-500/50 transition-colors">
