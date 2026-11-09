@@ -238,7 +238,20 @@ function answerName(a: Answer): string {
   return a.players.length > 1 ? `${a.label} ×${a.players.length}` : a.players[0].displayName;
 }
 
+// A copy served from localhost is a test build: ?day=YYYY-MM-DD plays any day's hive
+// and scores never reach the leaderboard.
+const IS_LOCAL = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+function shiftDay(dateKey: string, days: number): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 function getTodayStr(): string {
+  if (IS_LOCAL) {
+    const day = new URLSearchParams(window.location.search).get("day");
+    if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+  }
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
@@ -348,7 +361,7 @@ export default function Hive() {
 
   // Check remote submission on load — handles cross-device AND failed writes
   useEffect(() => {
-    if (checkedRemote.current || !user?.username) return;
+    if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "hive", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
@@ -392,7 +405,7 @@ export default function Hive() {
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
     setSubmitting(true);
-    await submitDailyScore(user.username, "hive", dateKey, state.score, state.found.length, answers.length);
+    if (!IS_LOCAL) await submitDailyScore(user.username, "hive", dateKey, state.score, state.found.length, answers.length);
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
@@ -506,6 +519,14 @@ export default function Hive() {
         </span>
         <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
+      {IS_LOCAL && (
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
+          <span className="font-semibold text-amber-300">Test build</span>
+          <span className="text-muted-foreground">no leaderboard</span>
+          <a href={`/hive?day=${shiftDay(dateKey, -1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">← day</a>
+          <a href={`/hive?day=${shiftDay(dateKey, 1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">day →</a>
+        </div>
+      )}
     </div>
   );
 
