@@ -9,6 +9,7 @@ export type GameSlug =
   | "overlap"
   | "clubladder"
   | "griddle"
+  | "hive"
   | "arsenal-champions-2026";
 
 export async function saveScore(

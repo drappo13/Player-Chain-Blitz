@@ -23,6 +23,7 @@ client/src/
 ├── pages/
 │   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
 │   ├── griddle.tsx              # Griddle (daily)
+│   ├── hive.tsx                 # HiveMind (daily spelling bee)
 │   ├── target-man.tsx           # TargetMan (arcade)
 │   ├── overlap.tsx              # Overlap (arcade)
 │   ├── club-ladder.tsx          # ClubLadder (arcade)
@@ -96,8 +97,8 @@ Config (root):
 ```json
 { "username": "fred", "game": "targetman", "score": 450, "timestamp": "<serverTimestamp>" }
 ```
-- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle`
-- Note: `griddle` is in GameSlug for stats compatibility but Griddle scores go to `daily-scores`
+- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle | hive`
+- Note: `griddle` and `hive` are in GameSlug for stats compatibility but their scores go to `daily-scores`
 - One doc per play. Leaderboard dedup is client-side.
 
 **`daily-scores`** — daily game submissions, auto-generated IDs
@@ -219,6 +220,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 
 ### Persistence
 - `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
+- HiveMind follows the same pattern (`hive-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`: every nine-letter set some surname uses in full, with each centre letter that gives 40–130 answers including 15+ players with 100+ apps. A set only repeats (with a new centre) after every other set has been used. Wrong guesses are free; score is 1 point per letter, +9 for the all-nine-letter surname
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
