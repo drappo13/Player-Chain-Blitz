@@ -482,7 +482,7 @@ export default function CentreCircle() {
     const tags: string[] = [];
     if (answer.usesCentre) tags.push(`${board.centre.toUpperCase()} ×2`);
     if (answer.legend) tags.push("★ Legend ×2");
-    setFlashColor(answer.pangram ? "bg-lime-400" : "bg-emerald-500");
+    setFlashColor(answer.pangram ? "bg-green-400" : "bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
     const who = answer.players.length > 1
@@ -566,14 +566,14 @@ export default function CentreCircle() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-500/15 text-lime-400 text-xs font-semibold">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-xs font-semibold">
           <Calendar className="w-3 h-3" />DAILY
         </span>
         <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-lime-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
-          <span className="font-semibold text-lime-300">Test build</span>
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-green-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
+          <span className="font-semibold text-green-300">Test build</span>
           <span className="text-muted-foreground">no leaderboard</span>
           <a href={`/centrecircle?day=${shiftDay(dateKey, -1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">← day</a>
           <a href={`/centrecircle?day=${shiftDay(dateKey, 1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">day →</a>
@@ -584,7 +584,7 @@ export default function CentreCircle() {
 
   const glow = (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-lime-500/5" />
+      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-green-500/5" />
       <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-emerald-500/5" />
     </div>
   );
@@ -604,7 +604,7 @@ export default function CentreCircle() {
           {header}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center">
             <h1 className="text-3xl font-black tracking-tight mb-1">
-              <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
+              <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
             </h1>
             <p className="text-sm text-muted-foreground mb-6">Daily PL surname spelling game</p>
 
@@ -621,7 +621,7 @@ export default function CentreCircle() {
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
 
-            <Button className="w-full text-lg py-6 shadow-xl shadow-lime-500/20 bg-gradient-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-green-950 font-bold"
+            <Button className="w-full text-lg py-6 shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
               onClick={() => setShowRules(false)}>
               {state.found.length > 0 ? "Back to today's board" : "Play today's board"}
               <ChevronRight className="w-5 h-5 ml-1" />
@@ -639,7 +639,7 @@ export default function CentreCircle() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {glow}
-      <ScreenFlash show={flashColor !== null} color={flashColor || "bg-lime-400"} />
+      <ScreenFlash show={flashColor !== null} color={flashColor || "bg-green-400"} />
 
       <AnimatePresence>
         {showConfirm && (
@@ -649,7 +649,7 @@ export default function CentreCircle() {
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
               className="bg-card border border-border rounded-xl p-6 max-w-sm w-full text-center"
               onClick={e => e.stopPropagation()}>
-              <Flag className="w-8 h-8 text-lime-400 mx-auto mb-3" />
+              <Flag className="w-8 h-8 text-green-400 mx-auto mb-3" />
               <h3 className="text-lg font-bold mb-2">Submit your score?</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Your score of <span className="font-bold text-foreground">{state.score}</span> will be submitted to the leaderboard.
@@ -657,7 +657,7 @@ export default function CentreCircle() {
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>Keep playing</Button>
-                <Button className="flex-1 bg-gradient-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-green-950 font-bold"
+                <Button className="flex-1 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
                   onClick={handleFinish} disabled={submitting}>
                   {submitting ? "Submitting..." : "Submit"}
                 </Button>
@@ -673,11 +673,11 @@ export default function CentreCircle() {
         {/* Title + score + found */}
         <div className="w-full grid grid-cols-3 items-center mb-3">
           <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
-            <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
+            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
           </h1>
           <div className="relative flex flex-col items-center">
             <motion.div key={pulse} animate={pulse ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}
-              className="text-3xl font-black tabular-nums text-lime-400">
+              className="text-3xl font-black tabular-nums text-green-400">
               {state.score}
             </motion.div>
             <AnimatePresence>
@@ -711,10 +711,10 @@ export default function CentreCircle() {
                   <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">
                     {pangramHit ? `All ${board.letters.length} letters` : "Rank up"}
                   </div>
-                  <div className="text-3xl font-black bg-gradient-to-r from-lime-200 to-lime-400 bg-clip-text text-transparent">
+                  <div className="text-3xl font-black bg-gradient-to-r from-green-200 to-green-400 bg-clip-text text-transparent">
                     {pangramHit || rankUp}
                   </div>
-                  {pangramHit && <div className="text-sm font-bold text-lime-400 mt-1">+{board.letters.length} bonus</div>}
+                  {pangramHit && <div className="text-sm font-bold text-green-400 mt-1">+{board.letters.length} bonus</div>}
                 </motion.div>
               </motion.div>
             )}
@@ -724,7 +724,7 @@ export default function CentreCircle() {
         {/* Current word — a transparent input over a coloured copy of the same text */}
         {isFinished ? (
           <button onClick={() => setShowEndScreen(true)}
-            className="w-full mb-4 px-4 py-3 rounded-xl font-semibold text-base bg-gradient-to-r from-lime-400 to-green-500 text-green-950 flex items-center justify-center gap-2">
+            className="w-full mb-4 px-4 py-3 rounded-xl font-semibold text-base bg-gradient-to-r from-green-400 to-emerald-500 text-green-950 flex items-center justify-center gap-2">
             <Trophy className="w-5 h-5" /> View Results & Leaderboard
           </button>
         ) : (
@@ -732,14 +732,14 @@ export default function CentreCircle() {
             className="relative w-full h-14">
             <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
               {input ? Array.from(input).map((ch, i) => (
-                <span key={i} className={ch === board.centre ? "text-lime-400" : board.letters.includes(ch) ? "text-foreground" : "text-muted-foreground/35"}>{ch}</span>
+                <span key={i} className={ch === board.centre ? "text-green-400" : board.letters.includes(ch) ? "text-foreground" : "text-muted-foreground/35"}>{ch}</span>
               )) : popped ? (
                 // The word just scored lifts off letter by letter
                 <span key={popped.id} className="inline-flex">
                   {Array.from(popped.word).map((ch, i) => (
                     <motion.span key={i} initial={{ y: 0, opacity: 1, scale: 1 }} animate={{ y: -22, opacity: 0, scale: 1.3 }}
                       transition={{ duration: 0.45, delay: i * 0.025, ease: "easeOut" }}
-                      className={popped.gold ? "text-lime-300" : "text-emerald-300"}>{ch}</motion.span>
+                      className={popped.gold ? "text-green-300" : "text-emerald-300"}>{ch}</motion.span>
                   ))}
                 </span>
               ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
@@ -748,7 +748,7 @@ export default function CentreCircle() {
               onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } }}
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-              className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-lime-300 outline-none" />
+              className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-green-300 outline-none" />
           </motion.div>
         )}
 
@@ -759,7 +759,7 @@ export default function CentreCircle() {
               <motion.div key={feedback.message} initial={{ opacity: 0, y: -6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}
                 className={`max-w-full inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium truncate ${
-                  feedback.type === "pangram" ? "bg-lime-300 text-green-950"
+                  feedback.type === "pangram" ? "bg-green-300 text-green-950"
                   : feedback.type === "correct" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
                   : "bg-muted/60 text-muted-foreground border border-border"}`}>
                 <span className="truncate">{feedback.message}</span>
@@ -767,7 +767,7 @@ export default function CentreCircle() {
                   <motion.span key={t} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 500, damping: 18, delay: 0.12 }}
                     className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
-                      feedback.type === "pangram" ? "bg-green-950/15" : "bg-lime-400/20 text-lime-300"}`}>{t}</motion.span>
+                      feedback.type === "pangram" ? "bg-green-950/15" : "bg-green-400/20 text-green-300"}`}>{t}</motion.span>
                 ))}
                 {feedback.points !== undefined && <span className="shrink-0 font-bold tabular-nums">+{feedback.points}</span>}
               </motion.div>
@@ -787,7 +787,7 @@ export default function CentreCircle() {
               <Shuffle className="w-5 h-5" />
             </button>
             <button type="button" onClick={submitWord}
-              className="h-11 px-6 rounded-full border border-lime-500/40 bg-lime-500/15 text-lime-300 font-semibold hover:bg-lime-500/25 active:scale-95 transition">
+              className="h-11 px-6 rounded-full border border-green-500/40 bg-green-500/15 text-green-300 font-semibold hover:bg-green-500/25 active:scale-95 transition">
               Enter
             </button>
           </div>
@@ -804,7 +804,7 @@ export default function CentreCircle() {
               <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
                 title="Tracker — what's left to find"
                 className={`p-2 rounded-lg border transition-colors ${showTracker
-                  ? "bg-lime-500/15 border-lime-500/40 text-lime-300"
+                  ? "bg-green-500/15 border-green-500/40 text-green-300"
                   : "bg-card/80 border-border text-muted-foreground hover:text-foreground"}`}>
                 <ListChecks className="w-4 h-4" />
               </button>
@@ -837,12 +837,12 @@ export default function CentreCircle() {
                 transition={{ type: "spring", stiffness: 420, damping: 22 }}
                 title={a.players.map(p => p.displayName).join(", ")}
                 className={`px-2.5 py-1.5 rounded-lg border text-sm leading-tight ${a.pangram
-                  ? "bg-lime-400/20 border-lime-400/60 text-lime-200"
+                  ? "bg-green-400/20 border-green-400/60 text-green-200"
                   : "bg-card/50 border-border text-foreground"}`}>
                 <span className="font-medium">{answerName(a)}</span>
-                {a.legend && <span className="ml-1 text-[11px] text-lime-300" title="Legend bonus">★</span>}
+                {a.legend && <span className="ml-1 text-[11px] text-green-300" title="Legend bonus">★</span>}
                 <span className="ml-1.5 text-[11px] text-muted-foreground">{a.club}</span>
-                <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-lime-300" : "text-lime-400/80"}`}>+{a.points}</span>
+                <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-green-300" : "text-green-400/80"}`}>+{a.points}</span>
               </motion.div>
             ))}
           </div>
@@ -886,7 +886,7 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
             className={`flex items-center justify-center font-black uppercase select-none touch-manipulation transition-colors ${
               isCentre
                 ? "text-3xl bg-gradient-to-br from-lime-300 to-green-500 text-green-950"
-                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-lime-400/25"}`}>
+                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-green-400/25"}`}>
             {ch}
           </motion.button>
         ))}
@@ -928,19 +928,19 @@ function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
     <div className="w-full">
       <div className="flex items-baseline justify-between mb-1.5">
         <motion.span key={rank.label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-          className="text-sm font-bold text-lime-300">{rank.label}</motion.span>
+          className="text-sm font-bold text-green-300">{rank.label}</motion.span>
         <span className="text-[11px] text-muted-foreground tabular-nums">
           {rank.next ? `${rank.toNext} to ${rank.next.label}` : `${maxScore} pts · perfect`}
         </span>
       </div>
       <div className="relative h-2 mx-1">
         <div className="absolute inset-0 rounded-full bg-muted/30" />
-        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-green-500 to-lime-300"
+        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-green-600 to-green-400"
           initial={false} animate={{ width: `${fill * 100}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
         {RANKS.map((r, i) => (
           <div key={r.label} title={`${r.label} · ${Math.ceil(r.pct * maxScore)} pts`}
             className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border transition-colors ${
-              i <= rank.index ? "bg-lime-300 border-green-500" : "bg-background border-border"} ${i === steps ? "w-3 h-3" : "w-2 h-2"}`}
+              i <= rank.index ? "bg-green-300 border-green-500" : "bg-background border-border"} ${i === steps ? "w-3 h-3" : "w-2 h-2"}`}
             style={{ left: `${(i / steps) * 100}%` }} />
         ))}
       </div>
@@ -997,8 +997,8 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hints</span>
         <span className="text-[10px] tabular-nums text-muted-foreground">
-          <span className="text-lime-300">★</span> {all.legendsFound}/{all.legends} legends ·{" "}
-          <span className={pangrams.found === pangrams.total ? "text-lime-300" : ""}>
+          <span className="text-green-300">★</span> {all.legendsFound}/{all.legends} legends ·{" "}
+          <span className={pangrams.found === pangrams.total ? "text-green-300" : ""}>
             all {board.letters.length} letters {pangrams.found === pangrams.total ? "✓" : "–"}
           </span>
         </span>
@@ -1015,7 +1015,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
         <tbody>
           {rows.map(([letter, row]) => (
             <tr key={letter}>
-              <th className={`text-sm font-black uppercase ${letter === board.centre ? "text-lime-300" : "text-foreground"}`}>{letter}</th>
+              <th className={`text-sm font-black uppercase ${letter === board.centre ? "text-green-300" : "text-foreground"}`}>{letter}</th>
               {row.cells.map((c, i) => <HintCell key={i} c={c} />)}
               <HintCell c={row.total} total />
             </tr>
@@ -1037,10 +1037,10 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
                 const done = c.found === c.total;
                 return (
                   <span key={pair} className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md border transition-colors ${
-                    done ? "border-lime-400/40 bg-lime-400/15 text-lime-200" : "border-border/60 bg-background/40 text-foreground"}`}>
+                    done ? "border-green-500 bg-green-600 text-white" : "border-border/60 bg-background/40 text-foreground"}`}>
                     <span className="font-bold uppercase">{pair}</span>{" "}
                     {done ? "✓" : <>{c.found}<span className="text-muted-foreground">/{c.total}</span></>}
-                    {c.legends > 0 && <span className={`ml-1 text-[9px] ${c.legendsFound === c.legends ? "text-lime-300" : "text-muted-foreground"}`}>★{c.legends > 1 ? c.legends : ""}</span>}
+                    {c.legends > 0 && <span className={`ml-1 text-[9px] ${c.legendsFound === c.legends ? "text-green-300" : "text-muted-foreground"}`}>★{c.legends > 1 ? c.legends : ""}</span>}
                   </span>
                 );
               })}
@@ -1062,19 +1062,19 @@ function HintCell({ c, total = false }: { c: HintCount; total?: boolean }) {
   const fill = c.found === 0 ? 0 : Math.max(c.found / c.total, 0.08);
   return (
     <td className={`relative h-8 p-0 rounded overflow-hidden border ${
-      done ? "border-lime-400/50" : "border-border/50"} ${total ? "bg-muted/30" : "bg-background/40"}`}>
-      <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-lime-400/30" : "bg-lime-400/15"}`}
+      done ? "border-green-500" : "border-border/50"} ${total ? "bg-muted/30" : "bg-background/40"}`}>
+      <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-green-600" : "bg-green-700/70"}`}
         style={{ height: `${fill * 100}%` }} />
       {c.legends > 0 && (
         <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
           {c.legends <= 3
             ? Array.from({ length: c.legends }, (_, i) => (
-                <span key={i} className={i < c.legendsFound ? "text-lime-300" : "text-muted-foreground/40"}>★</span>))
-            : <span className={c.legendsFound === c.legends ? "text-lime-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
+                <span key={i} className={i < c.legendsFound ? "text-white" : "text-muted-foreground/40"}>★</span>))
+            : <span className={c.legendsFound === c.legends ? "text-green-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
         </span>
       )}
       <span className={`relative text-[10px] leading-none ${total ? "font-bold" : "font-semibold"} ${
-        done ? "text-lime-200" : c.found ? "text-foreground" : "text-muted-foreground"}`}>
+        done ? "text-white" : c.found ? "text-foreground" : "text-muted-foreground"}`}>
         {done ? "✓" : <>{c.found}<span className="opacity-60">/{c.total}</span></>}
       </span>
     </td>
@@ -1114,7 +1114,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-lime-500/5" />
+        <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-green-500/5" />
         <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-emerald-500/5" />
       </div>
 
@@ -1124,7 +1124,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-500/15 text-lime-400 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-xs font-semibold">
               <Calendar className="w-3 h-3" />DAILY
             </span>
             <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
@@ -1133,14 +1133,14 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <h1 className="text-2xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
+            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
             <span className="text-muted-foreground text-lg ml-2">— Complete</span>
           </h1>
-          <div className="text-5xl font-black tabular-nums text-lime-400">{state.score}</div>
+          <div className="text-5xl font-black tabular-nums text-green-400">{state.score}</div>
           <div className="text-sm text-muted-foreground mt-1">
             {state.found.length} of {answers.length} surnames · letters {board.letters.map(l => l === board.centre ? `[${l.toUpperCase()}]` : l.toUpperCase()).join(" ")}
           </div>
-          <span className="inline-block mt-2 text-sm font-bold px-3 py-1 rounded-full border bg-lime-500/10 border-lime-400/30 text-lime-300">
+          <span className="inline-block mt-2 text-sm font-bold px-3 py-1 rounded-full border bg-green-500/10 border-green-400/30 text-green-300">
             {rank.label}
           </span>
         </motion.div>
@@ -1161,7 +1161,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             </div>
           </div>
           <LeaderboardTable entries={entries} loading={loading} period="today" onPeriodChange={() => {}}
-            currentUser={username} accentBg="bg-lime-500/10 border-lime-500/30" scoreLabel="Score" mini max={10} />
+            currentUser={username} accentBg="bg-green-500/10 border-green-500/30" scoreLabel="Score" mini max={10} />
         </motion.div>
 
         {missed.length > 0 && (
@@ -1170,10 +1170,10 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <div className="space-y-1.5 max-h-80 overflow-y-auto">
               {missed.map(a => (
                 <div key={a.key} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm ${
-                  a.pangram ? "bg-lime-400/15 border-lime-400/50" : "bg-card/50 border-border"}`}>
+                  a.pangram ? "bg-green-400/15 border-green-400/50" : "bg-card/50 border-border"}`}>
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
-                    {a.legend && <span className="ml-1 text-xs text-lime-300">★</span>}
+                    {a.legend && <span className="ml-1 text-xs text-green-300">★</span>}
                     <span className="text-xs text-muted-foreground ml-1.5">
                       {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
                     </span>
