@@ -1245,7 +1245,7 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
               const fill = club.found === 0 ? 0 : Math.max(club.found / club.total, 0.08);
               return (
                 <div key={c} className="relative h-10 min-w-0 rounded-md border border-border/60 bg-background/40 overflow-hidden">
-                  <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-emerald-500/30" : "bg-blue-500/25"}`}
+                  <div className={`absolute inset-x-0 bottom-0 border-t-2 transition-[height] duration-500 ease-out ${done ? "bg-emerald-500/35 border-emerald-400" : "bg-blue-500/30 border-blue-400/80"}`}
                     style={{ height: `${fill * 100}%` }} />
                   <div className="relative h-full px-1.5 flex flex-col items-center justify-center leading-tight">
                     <span className="max-w-full text-[10px] text-muted-foreground truncate">{boardClubs[i]}</span>
