@@ -18,7 +18,7 @@ const TargetMan = lazy(() => import("@/pages/target-man"));
 const Overlap = lazy(() => import("@/pages/overlap"));
 const ClubLadder = lazy(() => import("@/pages/club-ladder"));
 const Griddle = lazy(() => import("@/pages/griddle"));
-const Hive = lazy(() => import("@/pages/hive"));
+const CentreCircle = lazy(() => import("@/pages/centre-circle"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const ArsenalChampions = lazy(() => import("@/pages/arsenal-champions"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -120,7 +120,7 @@ function Router() {
         <Route path="/overlap" component={Overlap} />
         <Route path="/clubladder" component={ClubLadder} />
         <Route path="/griddle" component={Griddle} />
-        <Route path="/hive" component={Hive} />
+        <Route path="/centrecircle" component={CentreCircle} />
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/arsenal-pl-champions-2026" component={ArsenalChampions} />
         <Route component={NotFound} />

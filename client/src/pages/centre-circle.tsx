@@ -34,9 +34,16 @@ const MIN_ANSWERS: Record<number, number> = { 8: 25, 9: 35, 10: 40 };
 const MIN_KNOWN_ANSWERS: Record<number, number> = { 8: 10, 9: 12, 10: 12 };
 const MAX_ANSWERS = 150;
 // A small bonus for naming a PL great. Shared surnames qualify if any namesake does.
+// Every board has MIN_LEGENDS–MAX_LEGENDS of them.
 const LEGEND_APPS = 250;
 const LEGEND_GOALS = 75;
 const LEGEND_BONUS = 3;
+const MIN_LEGENDS = 5;
+const MAX_LEGENDS = 15;
+
+function isLegend(players: PLPlayer[]): boolean {
+  return players.some(p => p.totalAppearances >= LEGEND_APPS || p.totalGoals >= LEGEND_GOALS);
+}
 
 // --- Ranks (% of the day's maximum score) ---
 const RANKS = [
@@ -184,7 +191,9 @@ function boardOrder(): Board[] {
       const bit = letterBit(centre);
       const answers = inSet.filter(g => g.mask & bit);
       const known = answers.filter(g => g.players[0].totalAppearances >= KNOWN_APPS).length;
-      if (answers.length >= MIN_ANSWERS[size] && answers.length <= MAX_ANSWERS && known >= MIN_KNOWN_ANSWERS[size]) {
+      const legends = answers.filter(g => isLegend(g.players)).length;
+      if (answers.length >= MIN_ANSWERS[size] && answers.length <= MAX_ANSWERS && known >= MIN_KNOWN_ANSWERS[size]
+        && legends >= MIN_LEGENDS && legends <= MAX_LEGENDS) {
         boards.push({ letters: lettersOf(set), centre });
       }
     }
@@ -247,7 +256,7 @@ function answersFor(board: Board): Answer[] {
     .filter(g => (g.mask & ~set) === 0 && (g.mask & bit))
     .map(g => {
       const pangram = g.mask === set;
-      const legend = g.players.some(p => p.totalAppearances >= LEGEND_APPS || p.totalGoals >= LEGEND_GOALS);
+      const legend = isLegend(g.players);
       return {
         key: g.key,
         label: surnameOf(g.players[0]),
@@ -297,7 +306,7 @@ function makeBoardHash(board: Board): string {
 }
 
 function storageKey(dateKey: string, username?: string): string {
-  return username ? `hive-${username.toLowerCase()}-${dateKey}` : `hive-${dateKey}`;
+  return username ? `centrecircle-${username.toLowerCase()}-${dateKey}` : `centrecircle-${dateKey}`;
 }
 
 function loadState(dateKey: string, board: Board, username?: string): HiveState {
@@ -355,7 +364,7 @@ function buzz(pattern: number | number[]) {
 const finePointer = () => typeof window !== "undefined" && window.matchMedia?.("(pointer: fine)").matches;
 
 // --- Component ---
-export default function Hive() {
+export default function CentreCircle() {
   const [, navigate] = useLocation();
   const { user } = useUser();
   const dateKey = useMemo(() => getTodayStr(), []);
@@ -396,7 +405,7 @@ export default function Hive() {
   useEffect(() => {
     if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
-    hasDailySubmission(user.username, "hive", dateKey).then(result => {
+    hasDailySubmission(user.username, "centrecircle", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
         setState(prev => ({ ...prev, submitted: true, score: result.score }));
       } else if (!result.submitted && state.submitted) {
@@ -439,7 +448,7 @@ export default function Hive() {
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
     setSubmitting(true);
-    if (!IS_LOCAL) await submitDailyScore(user.username, "hive", dateKey, state.score, state.found.length, answers.length);
+    if (!IS_LOCAL) await submitDailyScore(user.username, "centrecircle", dateKey, state.score, state.found.length, answers.length);
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
@@ -453,7 +462,7 @@ export default function Hive() {
     setInput("");
 
     const stray = Array.from(word).find(ch => !board.letters.includes(ch));
-    if (stray) return reject(`${stray.toUpperCase()} isn't in the hive`);
+    if (stray) return reject(`${stray.toUpperCase()} isn't one of today's letters`);
     if (!word.includes(board.centre)) return reject(`Needs the centre ${board.centre.toUpperCase()}`);
     const answer = answerByKey.get(word);
     if (!answer) return reject(`No PL player called ${word.charAt(0).toUpperCase()}${word.slice(1)}`);
@@ -472,7 +481,7 @@ export default function Hive() {
     setTimeout(() => setPopped(cur => (cur?.id === popId ? null : cur)), 700);
     const tags: string[] = [];
     if (answer.legend) tags.push(`★ Legend +${LEGEND_BONUS}`);
-    setFlashColor(answer.pangram ? "bg-amber-400" : "bg-emerald-500");
+    setFlashColor(answer.pangram ? "bg-lime-400" : "bg-emerald-500");
     setTimeout(() => setFlashColor(null), 300);
 
     const who = answer.players.length > 1
@@ -556,17 +565,17 @@ export default function Hive() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-xs font-semibold">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-500/15 text-lime-400 text-xs font-semibold">
           <Calendar className="w-3 h-3" />DAILY
         </span>
         <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
-          <span className="font-semibold text-amber-300">Test build</span>
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-lime-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
+          <span className="font-semibold text-lime-300">Test build</span>
           <span className="text-muted-foreground">no leaderboard</span>
-          <a href={`/hive?day=${shiftDay(dateKey, -1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">← day</a>
-          <a href={`/hive?day=${shiftDay(dateKey, 1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">day →</a>
+          <a href={`/centrecircle?day=${shiftDay(dateKey, -1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">← day</a>
+          <a href={`/centrecircle?day=${shiftDay(dateKey, 1)}`} className="px-2 py-0.5 rounded-full bg-muted/50 hover:bg-muted">day →</a>
         </div>
       )}
     </div>
@@ -574,8 +583,8 @@ export default function Hive() {
 
   const glow = (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-amber-500/5" />
-      <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-yellow-500/5" />
+      <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-lime-500/5" />
+      <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-emerald-500/5" />
     </div>
   );
 
@@ -594,9 +603,9 @@ export default function Hive() {
           {header}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center">
             <h1 className="text-3xl font-black tracking-tight mb-1">
-              <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">HiveMind</span>
+              <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
             </h1>
-            <p className="text-sm text-muted-foreground mb-6">Daily PL Spelling Bee</p>
+            <p className="text-sm text-muted-foreground mb-6">Daily PL surname spelling game</p>
 
             <div className="mb-6 flex justify-center pointer-events-none select-none">
               <HiveBoard centre={board.centre} outer={outer} onLetter={() => {}} scale={0.7} />
@@ -611,9 +620,9 @@ export default function Hive() {
               <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
             </div>
 
-            <Button className="w-full text-lg py-6 shadow-xl shadow-amber-500/20 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-amber-950 font-bold"
+            <Button className="w-full text-lg py-6 shadow-xl shadow-lime-500/20 bg-gradient-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-green-950 font-bold"
               onClick={() => setShowRules(false)}>
-              {state.found.length > 0 ? "Back to today's hive" : "Play today's hive"}
+              {state.found.length > 0 ? "Back to today's board" : "Play today's board"}
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>
@@ -629,7 +638,7 @@ export default function Hive() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {glow}
-      <ScreenFlash show={flashColor !== null} color={flashColor || "bg-amber-400"} />
+      <ScreenFlash show={flashColor !== null} color={flashColor || "bg-lime-400"} />
 
       <AnimatePresence>
         {showConfirm && (
@@ -639,7 +648,7 @@ export default function Hive() {
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
               className="bg-card border border-border rounded-xl p-6 max-w-sm w-full text-center"
               onClick={e => e.stopPropagation()}>
-              <Flag className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+              <Flag className="w-8 h-8 text-lime-400 mx-auto mb-3" />
               <h3 className="text-lg font-bold mb-2">Submit your score?</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Your score of <span className="font-bold text-foreground">{state.score}</span> will be submitted to the leaderboard.
@@ -647,7 +656,7 @@ export default function Hive() {
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>Keep playing</Button>
-                <Button className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-amber-950 font-bold"
+                <Button className="flex-1 bg-gradient-to-r from-lime-400 to-green-500 hover:from-lime-500 hover:to-green-600 text-green-950 font-bold"
                   onClick={handleFinish} disabled={submitting}>
                   {submitting ? "Submitting..." : "Submit"}
                 </Button>
@@ -663,11 +672,11 @@ export default function Hive() {
         {/* Title + score + found */}
         <div className="w-full grid grid-cols-3 items-center mb-3">
           <h1 className="text-2xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">HiveMind</span>
+            <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
           </h1>
           <div className="relative flex flex-col items-center">
             <motion.div key={pulse} animate={pulse ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}
-              className="text-3xl font-black tabular-nums text-amber-400">
+              className="text-3xl font-black tabular-nums text-lime-400">
               {state.score}
             </motion.div>
             <AnimatePresence>
@@ -685,62 +694,8 @@ export default function Hive() {
 
         <RankBar score={state.score} maxScore={maxScore} />
 
-        {/* Current word — a transparent input over a coloured copy of the same text */}
-        {isFinished ? (
-          <button onClick={() => setShowEndScreen(true)}
-            className="w-full my-4 px-4 py-3 rounded-xl font-semibold text-base bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 flex items-center justify-center gap-2">
-            <Trophy className="w-5 h-5" /> View Results & Leaderboard
-          </button>
-        ) : (
-          <motion.div key={shake} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
-            className="relative w-full h-14 mt-3">
-            <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
-              {input ? Array.from(input).map((ch, i) => (
-                <span key={i} className={ch === board.centre ? "text-amber-400" : board.letters.includes(ch) ? "text-foreground" : "text-muted-foreground/35"}>{ch}</span>
-              )) : popped ? (
-                // The word just scored lifts off letter by letter
-                <span key={popped.id} className="inline-flex">
-                  {Array.from(popped.word).map((ch, i) => (
-                    <motion.span key={i} initial={{ y: 0, opacity: 1, scale: 1 }} animate={{ y: -22, opacity: 0, scale: 1.3 }}
-                      transition={{ duration: 0.45, delay: i * 0.025, ease: "easeOut" }}
-                      className={popped.gold ? "text-amber-300" : "text-emerald-300"}>{ch}</motion.span>
-                  ))}
-                </span>
-              ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
-            </div>
-            <input ref={inputRef} value={input} aria-label="Surname"
-              onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } }}
-              autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-              className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-amber-400 outline-none" />
-          </motion.div>
-        )}
-
-        {/* Feedback */}
-        <div className="w-full h-9 mb-1 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {feedback && (
-              <motion.div key={feedback.message} initial={{ opacity: 0, y: -6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}
-                className={`max-w-full inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium truncate ${
-                  feedback.type === "pangram" ? "bg-amber-400 text-amber-950"
-                  : feedback.type === "correct" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                  : "bg-muted/60 text-muted-foreground border border-border"}`}>
-                <span className="truncate">{feedback.message}</span>
-                {feedback.tags?.map(t => (
-                  <motion.span key={t} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 18, delay: 0.12 }}
-                    className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
-                      feedback.type === "pangram" ? "bg-amber-950/15" : "bg-amber-400/20 text-amber-300"}`}>{t}</motion.span>
-                ))}
-                {feedback.points !== undefined && <span className="shrink-0 font-bold tabular-nums">+{feedback.points}</span>}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Hive + overlays */}
-        <div className="relative w-full flex justify-center mb-4">
+        <div className="relative w-full flex justify-center mt-4 mb-1">
           <motion.div key={`hive-${pulse}`} animate={pulse ? { scale: [1, 1.03, 1] } : {}} transition={{ duration: 0.3 }}>
             <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished} />
           </motion.div>
@@ -755,11 +710,65 @@ export default function Hive() {
                   <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">
                     {pangramHit ? `All ${board.letters.length} letters` : "Rank up"}
                   </div>
-                  <div className="text-3xl font-black bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text text-transparent">
+                  <div className="text-3xl font-black bg-gradient-to-r from-lime-200 to-lime-400 bg-clip-text text-transparent">
                     {pangramHit || rankUp}
                   </div>
-                  {pangramHit && <div className="text-sm font-bold text-amber-400 mt-1">+{board.letters.length} bonus</div>}
+                  {pangramHit && <div className="text-sm font-bold text-lime-400 mt-1">+{board.letters.length} bonus</div>}
                 </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Current word — a transparent input over a coloured copy of the same text */}
+        {isFinished ? (
+          <button onClick={() => setShowEndScreen(true)}
+            className="w-full mb-4 px-4 py-3 rounded-xl font-semibold text-base bg-gradient-to-r from-lime-400 to-green-500 text-green-950 flex items-center justify-center gap-2">
+            <Trophy className="w-5 h-5" /> View Results & Leaderboard
+          </button>
+        ) : (
+          <motion.div key={shake} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
+            className="relative w-full h-14">
+            <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
+              {input ? Array.from(input).map((ch, i) => (
+                <span key={i} className={ch === board.centre ? "text-lime-400" : board.letters.includes(ch) ? "text-foreground" : "text-muted-foreground/35"}>{ch}</span>
+              )) : popped ? (
+                // The word just scored lifts off letter by letter
+                <span key={popped.id} className="inline-flex">
+                  {Array.from(popped.word).map((ch, i) => (
+                    <motion.span key={i} initial={{ y: 0, opacity: 1, scale: 1 }} animate={{ y: -22, opacity: 0, scale: 1.3 }}
+                      transition={{ duration: 0.45, delay: i * 0.025, ease: "easeOut" }}
+                      className={popped.gold ? "text-lime-300" : "text-emerald-300"}>{ch}</motion.span>
+                  ))}
+                </span>
+              ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
+            </div>
+            <input ref={inputRef} value={input} aria-label="Surname"
+              onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } }}
+              autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+              className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-lime-300 outline-none" />
+          </motion.div>
+        )}
+
+        {/* Feedback */}
+        <div className="w-full h-9 mb-1 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {feedback && (
+              <motion.div key={feedback.message} initial={{ opacity: 0, y: -6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}
+                className={`max-w-full inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium truncate ${
+                  feedback.type === "pangram" ? "bg-lime-300 text-green-950"
+                  : feedback.type === "correct" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                  : "bg-muted/60 text-muted-foreground border border-border"}`}>
+                <span className="truncate">{feedback.message}</span>
+                {feedback.tags?.map(t => (
+                  <motion.span key={t} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 18, delay: 0.12 }}
+                    className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                      feedback.type === "pangram" ? "bg-green-950/15" : "bg-lime-400/20 text-lime-300"}`}>{t}</motion.span>
+                ))}
+                {feedback.points !== undefined && <span className="shrink-0 font-bold tabular-nums">+{feedback.points}</span>}
               </motion.div>
             )}
           </AnimatePresence>
@@ -777,7 +786,7 @@ export default function Hive() {
               <Shuffle className="w-5 h-5" />
             </button>
             <button type="button" onClick={submitWord}
-              className="h-11 px-6 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-300 font-semibold hover:bg-amber-500/25 active:scale-95 transition">
+              className="h-11 px-6 rounded-full border border-lime-500/40 bg-lime-500/15 text-lime-300 font-semibold hover:bg-lime-500/25 active:scale-95 transition">
               Enter
             </button>
           </div>
@@ -794,7 +803,7 @@ export default function Hive() {
               <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
                 title="Tracker — what's left to find"
                 className={`p-2 rounded-lg border transition-colors ${showTracker
-                  ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
+                  ? "bg-lime-500/15 border-lime-500/40 text-lime-300"
                   : "bg-card/80 border-border text-muted-foreground hover:text-foreground"}`}>
                 <ListChecks className="w-4 h-4" />
               </button>
@@ -827,18 +836,18 @@ export default function Hive() {
                 transition={{ type: "spring", stiffness: 420, damping: 22 }}
                 title={a.players.map(p => p.displayName).join(", ")}
                 className={`px-2.5 py-1.5 rounded-lg border text-sm leading-tight ${a.pangram
-                  ? "bg-amber-400/20 border-amber-400/60 text-amber-200"
+                  ? "bg-lime-400/20 border-lime-400/60 text-lime-200"
                   : "bg-card/50 border-border text-foreground"}`}>
                 <span className="font-medium">{answerName(a)}</span>
-                {a.legend && <span className="ml-1 text-[11px] text-amber-300" title="Legend bonus">★</span>}
+                {a.legend && <span className="ml-1 text-[11px] text-lime-300" title="Legend bonus">★</span>}
                 <span className="ml-1.5 text-[11px] text-muted-foreground">{a.club}</span>
-                <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-amber-300" : "text-amber-400/80"}`}>+{a.points}</span>
+                <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-lime-300" : "text-lime-400/80"}`}>+{a.points}</span>
               </motion.div>
             ))}
           </div>
         ) : (
           <div className="w-full text-center py-6 text-muted-foreground">
-            <p className="text-sm">{answers.length} surnames hide in today's hive</p>
+            <p className="text-sm">{answers.length} surnames hide in today's letters</p>
             <p className="text-xs mt-2 opacity-60">Every one uses {centreUpper}. One player's uses all {board.letters.length} letters.</p>
           </div>
         )}
@@ -875,8 +884,8 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
             style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP, position: "absolute", left: 0, top: 0 }}
             className={`flex items-center justify-center font-black uppercase select-none touch-manipulation transition-colors ${
               isCentre
-                ? "text-3xl bg-gradient-to-br from-amber-300 to-yellow-500 text-amber-950"
-                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-amber-400/25"}`}>
+                ? "text-3xl bg-gradient-to-br from-lime-300 to-green-500 text-green-950"
+                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-lime-400/25"}`}>
             {ch}
           </motion.button>
         ))}
@@ -885,7 +894,7 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
   );
 }
 
-// A one-off burst of bees from the centre of the hive.
+// A one-off burst of footballs from the centre of the board.
 const BEES = Array.from({ length: 14 }, (_, i) => {
   const a = (i / 14) * 2 * Math.PI + (i % 2) * 0.2;
   const d = 120 + (i % 3) * 40;
@@ -900,7 +909,7 @@ function BeeBurst() {
           initial={{ x: 0, y: 0, opacity: 0, scale: 0.3, rotate: 0 }}
           animate={{ x: b.x, y: b.y, opacity: [0, 1, 1, 0], scale: [0.3, 1.1, 1, 0.8], rotate: b.r }}
           transition={{ duration: 1.4, delay: b.delay, ease: "easeOut" }}>
-          🐝
+          ⚽
         </motion.span>
       ))}
     </div>
@@ -918,19 +927,19 @@ function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
     <div className="w-full">
       <div className="flex items-baseline justify-between mb-1.5">
         <motion.span key={rank.label} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-          className="text-sm font-bold text-amber-300">{rank.label}</motion.span>
+          className="text-sm font-bold text-lime-300">{rank.label}</motion.span>
         <span className="text-[11px] text-muted-foreground tabular-nums">
           {rank.next ? `${rank.toNext} to ${rank.next.label}` : `${maxScore} pts · perfect`}
         </span>
       </div>
       <div className="relative h-2 mx-1">
         <div className="absolute inset-0 rounded-full bg-muted/30" />
-        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-500 to-yellow-300"
+        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-green-500 to-lime-300"
           initial={false} animate={{ width: `${fill * 100}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
         {RANKS.map((r, i) => (
           <div key={r.label} title={`${r.label} · ${Math.ceil(r.pct * maxScore)} pts`}
             className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border transition-colors ${
-              i <= rank.index ? "bg-yellow-300 border-amber-500" : "bg-background border-border"} ${i === steps ? "w-3 h-3" : "w-2 h-2"}`}
+              i <= rank.index ? "bg-lime-300 border-green-500" : "bg-background border-border"} ${i === steps ? "w-3 h-3" : "w-2 h-2"}`}
             style={{ left: `${(i / steps) * 100}%` }} />
         ))}
       </div>
@@ -940,14 +949,19 @@ function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
 
 function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; found: Set<string> }) {
   const { byLetter, byClub, pangrams } = useMemo(() => {
-    const byLetter = new Map<string, { total: number; found: number }>(
-      board.letters.map(l => [l, { total: 0, found: 0 }] as [string, { total: number; found: number }]));
+    const byLetter = new Map<string, { total: number; found: number; legends: number; legendsFound: number }>(
+      board.letters.map(l => [l, { total: 0, found: 0, legends: 0, legendsFound: 0 }] as
+        [string, { total: number; found: number; legends: number; legendsFound: number }]));
     const clubs = new Map<string, { total: number; found: number }>();
     const pangrams = { total: 0, found: 0 };
     for (const a of answers) {
       const got = found.has(a.key);
       const l = byLetter.get(a.key[0]);
-      if (l) { l.total++; if (got) l.found++; }
+      if (l) {
+        l.total++;
+        if (got) l.found++;
+        if (a.legend) { l.legends++; if (got) l.legendsFound++; }
+      }
       const c = clubs.get(a.club) ?? { total: 0, found: 0 };
       c.total++;
       if (got) c.found++;
@@ -973,14 +987,15 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Starts with</span>
-          <span className={`text-[10px] tabular-nums ${pangrams.found === pangrams.total ? "text-amber-300" : "text-muted-foreground"}`}>
+          <span className={`text-[10px] tabular-nums ${pangrams.found === pangrams.total ? "text-lime-300" : "text-muted-foreground"}`}>
             All {board.letters.length} letters: {pangrams.found === pangrams.total ? "✓ found" : "not yet"}
           </span>
         </div>
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${byLetter.length}, minmax(0, 1fr))` }}>
           {byLetter.map(([letter, s]) => (
             <FillTile key={letter} found={s.found} total={s.total} centre={letter === board.centre}
-              label={<span className="text-sm font-black uppercase">{letter}</span>} />
+              label={<span className="text-sm font-black uppercase">{letter}</span>}
+              note={s.legends > 0 ? `★${s.legendsFound}/${s.legends}` : undefined} />
           ))}
         </div>
       </div>
@@ -1000,25 +1015,26 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
   );
 }
 
-// A tile that fills from the bottom as its answers are found. Ticked when done so
-// state never rests on colour alone.
-function FillTile({ found, total, label, centre = false }: { found: number; total: number; label: ReactNode; centre?: boolean }) {
+// A tile that fills from the bottom, in one flat colour, as its answers are found.
+// Ticked when done so state never rests on colour alone. An optional note (legends
+// found) sits under the count.
+function FillTile({ found, total, label, note, centre = false }: {
+  found: number; total: number; label: ReactNode; note?: string; centre?: boolean;
+}) {
   const none = total === 0;
   const done = !none && found === total;
   const fill = found === 0 ? 0 : Math.max(found / total, 0.08);
   return (
-    <div className={`relative h-11 min-w-0 rounded-md border overflow-hidden ${
-      centre ? "border-amber-500/50 bg-amber-500/5" : "border-border/60 bg-background/40"} ${none ? "opacity-35" : ""}`}>
-      {found > 0 && (
-        <div className={`absolute inset-x-0 bottom-0 border-t-2 transition-[height] duration-500 ease-out ${
-          done ? "bg-emerald-500/35 border-emerald-400" : "bg-amber-500/25 border-amber-400/80"}`}
-          style={{ height: `${fill * 100}%` }} />
-      )}
+    <div className={`relative ${note === undefined ? "h-11" : "h-14"} min-w-0 rounded-md border overflow-hidden ${
+      done ? "border-lime-400/60" : centre ? "border-lime-500/40" : "border-border/60"} bg-background/40 ${none ? "opacity-35" : ""}`}>
+      <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-lime-400/25" : "bg-lime-400/15"}`}
+        style={{ height: `${fill * 100}%` }} />
       <div className="relative h-full px-1 flex flex-col items-center justify-center leading-tight">
         {label}
-        <span className={`text-[10px] font-semibold tabular-nums ${done ? "text-emerald-300" : found ? "text-foreground" : "text-muted-foreground/60"}`}>
-          {none ? "–" : <>{done ? "✓ " : ""}{found}<span className="opacity-60">/{total}</span></>}
+        <span className={`text-[11px] font-bold tabular-nums ${done ? "text-lime-200" : found ? "text-foreground" : "text-muted-foreground/70"}`}>
+          {none ? "–" : <>{done ? "✓ " : ""}{found}<span className="font-medium text-muted-foreground">/{total}</span></>}
         </span>
+        {note && <span className="text-[9px] tabular-nums text-muted-foreground">{note}</span>}
       </div>
     </div>
   );
@@ -1052,13 +1068,13 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
     [answers, found],
   );
   const [lbPeriod, setLbPeriod] = useState<DailyPeriod>("today");
-  const { entries, loading } = useDailyLeaderboard("hive", lbPeriod, 10, 1000);
+  const { entries, loading } = useDailyLeaderboard("centrecircle", lbPeriod, 10, 1000);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-amber-500/5" />
-        <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-yellow-500/5" />
+        <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-lime-500/5" />
+        <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-emerald-500/5" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-8 flex-1">
@@ -1067,7 +1083,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-500/15 text-lime-400 text-xs font-semibold">
               <Calendar className="w-3 h-3" />DAILY
             </span>
             <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
@@ -1076,14 +1092,14 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <h1 className="text-2xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">HiveMind</span>
+            <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
             <span className="text-muted-foreground text-lg ml-2">— Complete</span>
           </h1>
-          <div className="text-5xl font-black tabular-nums text-amber-400">{state.score}</div>
+          <div className="text-5xl font-black tabular-nums text-lime-400">{state.score}</div>
           <div className="text-sm text-muted-foreground mt-1">
             {state.found.length} of {answers.length} surnames · letters {board.letters.map(l => l === board.centre ? `[${l.toUpperCase()}]` : l.toUpperCase()).join(" ")}
           </div>
-          <span className="inline-block mt-2 text-sm font-bold px-3 py-1 rounded-full border bg-amber-500/10 border-amber-400/30 text-amber-300">
+          <span className="inline-block mt-2 text-sm font-bold px-3 py-1 rounded-full border bg-lime-500/10 border-lime-400/30 text-lime-300">
             {rank.label}
           </span>
         </motion.div>
@@ -1104,7 +1120,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             </div>
           </div>
           <LeaderboardTable entries={entries} loading={loading} period="today" onPeriodChange={() => {}}
-            currentUser={username} accentBg="bg-amber-500/10 border-amber-500/30" scoreLabel="Score" mini max={10} />
+            currentUser={username} accentBg="bg-lime-500/10 border-lime-500/30" scoreLabel="Score" mini max={10} />
         </motion.div>
 
         {missed.length > 0 && (
@@ -1113,10 +1129,10 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <div className="space-y-1.5 max-h-80 overflow-y-auto">
               {missed.map(a => (
                 <div key={a.key} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm ${
-                  a.pangram ? "bg-amber-400/15 border-amber-400/50" : "bg-card/50 border-border"}`}>
+                  a.pangram ? "bg-lime-400/15 border-lime-400/50" : "bg-card/50 border-border"}`}>
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
-                    {a.legend && <span className="ml-1 text-xs text-amber-300">★</span>}
+                    {a.legend && <span className="ml-1 text-xs text-lime-300">★</span>}
                     <span className="text-xs text-muted-foreground ml-1.5">
                       {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
                     </span>
@@ -1130,7 +1146,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
           className="w-full text-center py-4 text-muted-foreground">
-          <p className="text-sm">Come back tomorrow for a new hive!</p>
+          <p className="text-sm">Come back tomorrow for new letters!</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/")}>
             <Home className="w-4 h-4 mr-1.5" /> Back to games
           </Button>

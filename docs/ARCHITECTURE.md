@@ -23,7 +23,7 @@ client/src/
 ├── pages/
 │   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
 │   ├── griddle.tsx              # Griddle (daily)
-│   ├── hive.tsx                 # HiveMind (daily spelling bee)
+│   ├── centre-circle.tsx        # Centre Circle (daily surname spelling)
 │   ├── target-man.tsx           # TargetMan (arcade)
 │   ├── overlap.tsx              # Overlap (arcade)
 │   ├── club-ladder.tsx          # ClubLadder (arcade)
@@ -97,8 +97,8 @@ Config (root):
 ```json
 { "username": "fred", "game": "targetman", "score": 450, "timestamp": "<serverTimestamp>" }
 ```
-- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle | hive`
-- Note: `griddle` and `hive` are in GameSlug for stats compatibility but their scores go to `daily-scores`
+- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle | centrecircle`
+- Note: `griddle` and `centrecircle` are in GameSlug for stats compatibility but their scores go to `daily-scores`
 - One doc per play. Leaderboard dedup is client-side.
 
 **`daily-scores`** — daily game submissions, auto-generated IDs
@@ -220,7 +220,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 
 ### Persistence
 - `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
-- HiveMind follows the same pattern (`hive-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each hive is the 8–10 letters of one surname (the pangram), which must belong to exactly one modern, well-known player (born 1983+, 80+ apps) and be the only surname using every letter; centres must give enough answers (25/35/40 for 8/9/10 letters) with a core of 100+ app players. A set only repeats (with a new centre) after every other set has been used. Wrong guesses are free; score is 1 point per letter, plus the hive size for the pangram
+- Centre Circle follows the same pattern (`centrecircle-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each hive is the 8–10 letters of one surname (the pangram), which must belong to exactly one modern, well-known player (born 1983+, 80+ apps) and be the only surname using every letter; centres must give enough answers (25/35/40 for 8/9/10 letters) with a core of 100+ app players and 5–15 legends (250+ apps or 75+ goals, +3 each). A set only repeats (with a new centre) after every other set has been used. Wrong guesses are free; score is 1 point per letter, plus the hive size for the pangram
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
