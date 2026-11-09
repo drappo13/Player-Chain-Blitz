@@ -837,7 +837,7 @@ export default function CentreCircle() {
                   ? "bg-green-400/20 border-green-400/60 text-green-200"
                   : "bg-card/50 border-border text-foreground"}`}>
                 <span className="font-medium">{answerName(a)}</span>
-                {a.legend && <span className="ml-1 text-[11px] text-green-300" title="Legend bonus">★</span>}
+                {a.legend && <span className="ml-1 text-[11px] text-amber-300" title="Legend bonus">★</span>}
                 <span className="ml-1.5 text-[11px] text-muted-foreground">{a.club}</span>
                 <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-green-300" : "text-green-400/80"}`}>+{a.points}</span>
               </motion.div>
@@ -989,7 +989,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Hints</span>
         <span className="text-[10px] tabular-nums text-muted-foreground">
-          <span className="text-green-300">★</span> {all.legendsFound}/{all.legends} legends found
+          <span className="text-amber-300">★</span> {all.legendsFound}/{all.legends} legends found
         </span>
       </div>
 
@@ -1025,7 +1025,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
                     {c.legends > 0 && (
                       <span className="text-[9px] tracking-tighter">
                         {Array.from({ length: c.legends }, (_, i) => (
-                          <span key={i} className={done || i < c.legendsFound ? "text-white" : "text-muted-foreground/60"}>★</span>
+                          <span key={i} className={done || i < c.legendsFound ? "text-amber-300" : "text-muted-foreground/60"}>★</span>
                         ))}
                       </span>
                     )}
@@ -1039,7 +1039,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="text-white">★</span>
+          <span className="text-amber-300">★</span>
           legend: {LEGEND_APPS}+ PL apps or {LEGEND_GOALS}+ PL goals · double points
         </span>
       </div>
@@ -1064,8 +1064,8 @@ function HintCell({ c }: { c: HintCount }) {
         <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
           {c.legends <= 3
             ? Array.from({ length: c.legends }, (_, i) => (
-                <span key={i} className={i < c.legendsFound ? "text-white" : "text-muted-foreground/40"}>★</span>))
-            : <span className={c.legendsFound === c.legends ? "text-green-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
+                <span key={i} className={i < c.legendsFound ? "text-amber-300" : "text-muted-foreground/40"}>★</span>))
+            : <span className={c.legendsFound === c.legends ? "text-amber-300" : "text-muted-foreground"}>★{c.legendsFound}/{c.legends}</span>}
         </span>
       )}
       <span className={`relative text-[10px] leading-none font-semibold ${
@@ -1168,7 +1168,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
                   a.pangram ? "bg-green-400/15 border-green-400/50" : "bg-card/50 border-border"}`}>
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
-                    {a.legend && <span className="ml-1 text-xs text-green-300">★</span>}
+                    {a.legend && <span className="ml-1 text-xs text-amber-300">★</span>}
                     <span className="text-xs text-muted-foreground ml-1.5">
                       {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
                     </span>
