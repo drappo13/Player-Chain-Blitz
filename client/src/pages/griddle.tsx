@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from "react";
 import plPlayers from "@/data/pl-players.json";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Home, Flag, Trophy, ChevronRight, Info } from "lucide-react";
+import { Calendar, Home, Flag, Trophy, ChevronRight, Info, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd, playComboCorrect, playBoostHit } from "@/lib/sounds";
@@ -424,6 +424,7 @@ export default function Griddle() {
   const [showCoverBonus, setShowCoverBonus] = useState(false);
   const [coverBonusInfo, setCoverBonusInfo] = useState<{ level: number; bonus: number; newLevel: number } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTracker, setShowTracker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [floatingPoints, setFloatingPoints] = useState<{ id: number; value: number } | null>(null);
@@ -971,6 +972,13 @@ export default function Griddle() {
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className={`flex-1 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
             />
+            <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
+              className={`px-3 py-3 rounded-xl border transition-colors ${showTracker
+                ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                : "bg-card/80 border-border text-muted-foreground hover:text-foreground"}`}
+              title="Tracker — what's left to find">
+              <ListChecks className="w-5 h-5" />
+            </button>
             {state.foundPlayers.length > 0 && (
               <button type="button" onClick={() => setShowConfirm(true)}
                 className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
@@ -980,6 +988,17 @@ export default function Griddle() {
             )}
           </form>
         )}
+
+        {/* Tracker — opened from the list button beside the flag */}
+        <AnimatePresence initial={false}>
+          {showTracker && !isFinished && (
+            <motion.div key="tracker" className="w-full overflow-hidden"
+              initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}>
+              <AnswerBreakdown boardClubs={boardClubs} validAnswers={validAnswers} foundNames={foundNames} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Feedback */}
         <AnimatePresence mode="wait">
@@ -1037,9 +1056,6 @@ export default function Griddle() {
             </div>
           );
         })()}
-
-        {/* What's left to find, by clubs matched and by 5x line */}
-        <AnswerBreakdown boardClubs={boardClubs} validAnswers={validAnswers} foundNames={foundNames} />
 
         {/* Found players list */}
         {state.foundPlayers.length > 0 && (
@@ -1107,10 +1123,15 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
     return { buckets: Array.from(byCount.entries()).sort((a, b) => a[0] - b[0]), lines };
   }, [boardClubs, validAnswers, foundNames]);
 
+  const found = buckets.reduce((s, [, b]) => s + b.found, 0);
+
   return (
-    <div className="w-full mb-4 rounded-xl border border-border bg-card/40 p-3 space-y-3">
+    <div className="w-full mb-3 rounded-xl border border-border bg-card/40 p-3 space-y-3">
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">By clubs matched</div>
+        <div className="flex items-baseline justify-between mb-1.5">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">By clubs matched</span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">{found} / {validAnswers.length} found</span>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {buckets.map(([count, b]) => {
             const done = b.found === b.total;
@@ -1134,26 +1155,46 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
       </div>
 
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">5× lines · players covering a whole row, column or diagonal</div>
-        <div className="flex flex-wrap gap-1.5">
-          {lines.map(l => {
-            const none = l.total === 0;
-            const done = !none && l.found === l.total;
-            return (
-              <span key={l.label}
-                className={`text-xs tabular-nums px-2 py-1 rounded-md border ${
-                  none ? "border-border/50 text-muted-foreground/40"
-                  : done ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                  : l.found > 0 ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
-                  : "border-border bg-background/40 text-foreground"}`}>
-                <span className="font-semibold">{l.label}</span>{" "}
-                {none ? "–" : <>{l.found}<span className="opacity-60">/{l.total}</span></>}
-              </span>
-            );
-          })}
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">
+          5× lines <span className="normal-case tracking-normal font-normal">· players who cover a whole row, column or diagonal</span>
+        </div>
+        {/* Mini board: row counts on the right, column counts below, diagonals in the corner */}
+        <div className="grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-1 items-center">
+          {[0, 1, 2].map(r => (
+            <Fragment key={r}>
+              {[0, 1, 2].map(c => (
+                <div key={c} className="h-7 min-w-0 rounded-md border border-border/60 bg-background/40 px-1.5 flex items-center justify-center">
+                  <span className="text-[10px] text-muted-foreground truncate">{boardClubs[r * 3 + c]}</span>
+                </div>
+              ))}
+              <LineBadge line={lines[r]} />
+            </Fragment>
+          ))}
+          {[3, 4, 5].map(i => (
+            <div key={i} className="flex justify-center"><LineBadge line={lines[i]} /></div>
+          ))}
+          <div className="flex flex-col gap-0.5">
+            <LineBadge line={lines[6]} prefix="↘ " />
+            <LineBadge line={lines[7]} prefix="↗ " />
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// One 5x line's count. Ticked when done so state never rests on colour alone.
+function LineBadge({ line, prefix = "" }: { line: { total: number; found: number }; prefix?: string }) {
+  const none = line.total === 0;
+  const done = !none && line.found === line.total;
+  return (
+    <span className={`text-[11px] font-semibold tabular-nums whitespace-nowrap text-center px-1.5 py-0.5 rounded-md ${
+      none ? "text-muted-foreground/30"
+      : done ? "bg-emerald-500/15 text-emerald-300"
+      : line.found > 0 ? "bg-yellow-500/15 text-yellow-300"
+      : "bg-background/50 text-foreground/80"}`}>
+      {prefix}{none ? "–" : <>{done ? "✓ " : ""}{line.found}<span className="opacity-60">/{line.total}</span></>}
+    </span>
   );
 }
 
