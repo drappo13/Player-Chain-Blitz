@@ -1040,7 +1040,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="text-[9px]">⚽</span>
+          <Trophy className="w-3 h-3 text-green-300" />
           the star player: their surname uses every letter
         </span>
         <span className="inline-flex items-center gap-1">
@@ -1066,7 +1066,7 @@ function HintCell({ c }: { c: HintCount }) {
       <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-green-600" : "bg-green-700/70"}`}
         style={{ height: `${fill * 100}%` }} />
       {c.pangram && (
-        <span className={`absolute top-0 left-0.5 text-[8px] leading-none ${c.pangramFound ? "" : "grayscale opacity-40"}`}>⚽</span>
+        <Trophy className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 ${c.pangramFound ? "text-green-300" : "text-muted-foreground/60"}`} />
       )}
       {c.legends > 0 && (
         <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
