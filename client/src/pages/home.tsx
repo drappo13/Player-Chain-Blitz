@@ -41,7 +41,7 @@ const footballGames: GameCard[] = [
     emoji: "\u26AA",
     iconGradient: "from-green-500/20 to-emerald-500/5",
     iconBorder: "border-green-500/20",
-    title: ["Centre ", "Circle"],
+    title: ["Centre", "Circle"],
     titleGradient: "from-green-400 to-emerald-300",
     description: "Daily letters around a centre spot. Spell every PL surname you can — all must use the middle one.",
     playColor: "text-green-400",

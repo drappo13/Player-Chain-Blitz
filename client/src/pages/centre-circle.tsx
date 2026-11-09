@@ -604,7 +604,7 @@ export default function CentreCircle() {
           {header}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full text-center">
             <h1 className="text-3xl font-black tracking-tight mb-1">
-              <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
+              <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">CentreCircle</span>
             </h1>
             <p className="text-sm text-muted-foreground mb-6">Daily PL surname spelling game</p>
 
@@ -673,7 +673,7 @@ export default function CentreCircle() {
         {/* Title + score + found */}
         <div className="w-full grid grid-cols-3 items-center mb-3">
           <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
-            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
+            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">CentreCircle</span>
           </h1>
           <div className="relative flex flex-col items-center">
             <motion.div key={pulse} animate={pulse ? { scale: [1, 1.15, 1] } : {}} transition={{ duration: 0.3, ease: "easeOut" }}
@@ -1155,7 +1155,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <h1 className="text-2xl font-bold tracking-tight mb-2">
-            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">Centre Circle</span>
+            <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">CentreCircle</span>
             <span className="text-muted-foreground text-lg ml-2">— Complete</span>
           </h1>
           <div className="text-5xl font-black tabular-nums text-green-400">{state.score}</div>
