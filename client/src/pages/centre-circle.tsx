@@ -671,7 +671,7 @@ export default function CentreCircle() {
 
         {/* Title + score + found */}
         <div className="w-full grid grid-cols-3 items-center mb-3">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">
             <span className="bg-gradient-to-r from-lime-300 to-emerald-400 bg-clip-text text-transparent">Centre Circle</span>
           </h1>
           <div className="relative flex flex-col items-center">
