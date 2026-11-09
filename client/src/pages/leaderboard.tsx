@@ -23,7 +23,7 @@ const ARCADE_TABS: { slug: GameSlug; label: string; accent: string }[] = [
 
 const DAILY_TABS: { slug: DailyGameSlug; label: string; accent: string }[] = [
   { slug: "griddle", label: "Griddle", accent: "bg-blue-500/10 border-blue-500/30" },
-  { slug: "centrecircle", label: "Centre Circle", accent: "bg-lime-500/10 border-lime-500/30" },
+  { slug: "centrecircle", label: "Centre Circle", accent: "bg-green-500/10 border-green-500/30" },
 ];
 
 export default function Leaderboard() {
