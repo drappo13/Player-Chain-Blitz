@@ -1138,12 +1138,12 @@ function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
             return (
               <div key={count}
                 className={`flex-1 min-w-[58px] rounded-lg border px-2 py-1.5 ${done ? "border-emerald-500/40 bg-emerald-500/10" : "border-border bg-background/40"}`}>
-                <div className="flex items-baseline justify-between gap-1 text-[10px] text-muted-foreground">
-                  <span>{count === 6 ? "6+" : count} clubs</span>
-                  <span>{getBasePoints(count)}pt</span>
-                </div>
-                <div className={`text-sm font-bold tabular-nums ${done ? "text-emerald-300" : "text-foreground"}`}>
-                  {b.found}<span className="text-muted-foreground font-medium">/{b.total}</span>
+                <div className="text-[10px] text-muted-foreground whitespace-nowrap">{count === 6 ? "6+" : count} clubs</div>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className={`text-sm font-bold tabular-nums ${done ? "text-emerald-300" : "text-foreground"}`}>
+                    {b.found}<span className="text-muted-foreground font-medium">/{b.total}</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{getBasePoints(count)}pt</span>
                 </div>
                 <div className="h-1 mt-1 rounded-full bg-muted/30 overflow-hidden">
                   <div className={`h-full rounded-full ${done ? "bg-emerald-400" : "bg-blue-400"}`} style={{ width: `${(b.found / b.total) * 100}%` }} />
