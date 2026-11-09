@@ -950,13 +950,14 @@ const LENGTH_COLS = [3, 4, 5, 6, 7, 8, 9, 10];
 const lengthCol = (n: number) => Math.min(Math.max(n, 3), 10) - 3;
 const lengthLabel = (n: number) => (n === 3 ? "≤3" : n === 10 ? "10+" : String(n));
 
-interface HintCount { total: number; found: number; legends: number; legendsFound: number }
-const emptyCount = (): HintCount => ({ total: 0, found: 0, legends: 0, legendsFound: 0 });
+interface HintCount { total: number; found: number; legends: number; legendsFound: number; pangram: boolean; pangramFound: boolean }
+const emptyCount = (): HintCount => ({ total: 0, found: 0, legends: 0, legendsFound: 0, pangram: false, pangramFound: false });
 
 function addTo(c: HintCount, a: Answer, got: boolean) {
   c.total++;
   if (got) c.found++;
   if (a.legend) { c.legends++; if (got) c.legendsFound++; }
+  if (a.pangram) { c.pangram = true; if (got) c.pangramFound = true; }
 }
 
 // NYT-style hints: answers by first letter and length, then by first two letters
@@ -1039,6 +1040,10 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
+          <span className="text-[9px]">⚽</span>
+          the star player: their surname uses every letter
+        </span>
+        <span className="inline-flex items-center gap-1">
           <span className="text-amber-300">★</span>
           legend: {LEGEND_APPS}+ PL apps or {LEGEND_GOALS}+ PL goals · double points
         </span>
@@ -1060,6 +1065,9 @@ function HintCell({ c }: { c: HintCount }) {
       done ? "border-green-500" : "border-border/50"} bg-background/40`}>
       <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-green-600" : "bg-green-700/70"}`}
         style={{ height: `${fill * 100}%` }} />
+      {c.pangram && (
+        <span className={`absolute top-0 left-0.5 text-[8px] leading-none ${c.pangramFound ? "" : "grayscale opacity-40"}`}>⚽</span>
+      )}
       {c.legends > 0 && (
         <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
           {c.legends <= 3
