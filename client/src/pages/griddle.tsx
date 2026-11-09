@@ -164,6 +164,14 @@ const GRID_ROWS = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
 const GRID_COLS = [[0, 3, 6], [1, 4, 7], [2, 5, 8]];
 const GRID_DIAGS = [[0, 4, 8], [2, 4, 6]];
 
+// Every line that earns the 5x bonus, labelled for the breakdown panel.
+const BONUS_LINES: { label: string; cells: number[] }[] = [
+  ...GRID_ROWS.map((cells, i) => ({ label: `R${i + 1}`, cells })),
+  ...GRID_COLS.map((cells, i) => ({ label: `C${i + 1}`, cells })),
+  { label: "↘", cells: GRID_DIAGS[0] },
+  { label: "↗", cells: GRID_DIAGS[1] },
+];
+
 const ADJACENCY: number[][] = [
   [1, 3], [0, 2, 4], [1, 5],
   [0, 4, 6], [1, 3, 5, 7], [2, 4, 8],
@@ -405,7 +413,8 @@ export default function Griddle() {
   const dateKey = useMemo(() => getTodayStr(), []);
   const boardClubs = useMemo(() => generateBoard(dateKey), [dateKey]);
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
-  const totalValid = useMemo(() => getValidAnswers(boardClubs).length, [boardClubs]);
+  const validAnswers = useMemo(() => getValidAnswers(boardClubs), [boardClubs]);
+  const totalValid = validAnswers.length;
 
   const [state, setState] = useState<GriddleState>(() => loadState(dateKey, boardClubs, user?.username));
   const [input, setInput] = useState("");
@@ -472,6 +481,7 @@ export default function Griddle() {
   }, [isFinished]);
 
   const coveredSet = useMemo(() => new Set(state.coveredClubs), [state.coveredClubs]);
+  const foundNames = useMemo(() => new Set(state.foundPlayers.map(fp => fp.displayName)), [state.foundPlayers]);
   const tierInfo = useMemo(() => getCurrentTier(state.foundPlayers.length, totalValid), [state.foundPlayers.length, totalValid]);
 
   const showFeedbackMsg = useCallback((fb: Feedback, duration = 3000) => {
@@ -1028,6 +1038,9 @@ export default function Griddle() {
           );
         })()}
 
+        {/* What's left to find, by clubs matched and by 5x line */}
+        <AnswerBreakdown boardClubs={boardClubs} validAnswers={validAnswers} foundNames={foundNames} />
+
         {/* Found players list */}
         {state.foundPlayers.length > 0 && (
           <div className="w-full flex-1">
@@ -1062,6 +1075,83 @@ export default function Griddle() {
             <p className="text-xs mt-2 opacity-60">More clubs = more points. Adjacent clubs 2x, complete row/col/diag 5x.</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function AnswerBreakdown({ boardClubs, validAnswers, foundNames }: {
+  boardClubs: string[];
+  validAnswers: PLPlayer[];
+  foundNames: Set<string>;
+}) {
+  const { buckets, lines } = useMemo(() => {
+    const cellOf = new Map<string, number>(boardClubs.map((c, i) => [c, i] as [string, number]));
+    const byCount = new Map<number, { total: number; found: number }>();
+    const lines = BONUS_LINES.map(l => ({ ...l, total: 0, found: 0 }));
+    for (const p of validAnswers) {
+      const cells = new Set(Object.keys(p.clubs).filter(c => cellOf.has(c)).map(c => cellOf.get(c)!));
+      const got = foundNames.has(p.displayName);
+      const key = Math.min(cells.size, 6); // 6+ share a points band
+      const b = byCount.get(key) ?? { total: 0, found: 0 };
+      b.total++;
+      if (got) b.found++;
+      byCount.set(key, b);
+      for (const l of lines) {
+        if (l.cells.every(i => cells.has(i))) {
+          l.total++;
+          if (got) l.found++;
+        }
+      }
+    }
+    return { buckets: Array.from(byCount.entries()).sort((a, b) => a[0] - b[0]), lines };
+  }, [boardClubs, validAnswers, foundNames]);
+
+  return (
+    <div className="w-full mb-4 rounded-xl border border-border bg-card/40 p-3 space-y-3">
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">By clubs matched</div>
+        <div className="flex flex-wrap gap-1.5">
+          {buckets.map(([count, b]) => {
+            const done = b.found === b.total;
+            return (
+              <div key={count}
+                className={`flex-1 min-w-[58px] rounded-lg border px-2 py-1.5 ${done ? "border-emerald-500/40 bg-emerald-500/10" : "border-border bg-background/40"}`}>
+                <div className="flex items-baseline justify-between gap-1 text-[10px] text-muted-foreground">
+                  <span>{count === 6 ? "6+" : count} clubs</span>
+                  <span>{getBasePoints(count)}pt</span>
+                </div>
+                <div className={`text-sm font-bold tabular-nums ${done ? "text-emerald-300" : "text-foreground"}`}>
+                  {b.found}<span className="text-muted-foreground font-medium">/{b.total}</span>
+                </div>
+                <div className="h-1 mt-1 rounded-full bg-muted/30 overflow-hidden">
+                  <div className={`h-full rounded-full ${done ? "bg-emerald-400" : "bg-blue-400"}`} style={{ width: `${(b.found / b.total) * 100}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">5× lines · players covering a whole row, column or diagonal</div>
+        <div className="flex flex-wrap gap-1.5">
+          {lines.map(l => {
+            const none = l.total === 0;
+            const done = !none && l.found === l.total;
+            return (
+              <span key={l.label}
+                className={`text-xs tabular-nums px-2 py-1 rounded-md border ${
+                  none ? "border-border/50 text-muted-foreground/40"
+                  : done ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                  : l.found > 0 ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
+                  : "border-border bg-background/40 text-foreground"}`}>
+                <span className="font-semibold">{l.label}</span>{" "}
+                {none ? "–" : <>{l.found}<span className="opacity-60">/{l.total}</span></>}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
