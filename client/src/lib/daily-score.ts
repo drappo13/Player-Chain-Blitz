@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type DailyGameSlug = "griddle";
+export type DailyGameSlug = "griddle" | "hive";
 
 export interface DailyScoreDoc {
   username: string;

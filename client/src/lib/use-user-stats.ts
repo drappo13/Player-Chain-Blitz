@@ -20,6 +20,7 @@ const ALL_GAMES: GameSlug[] = [
   "overlap",
   "clubladder",
   "griddle",
+  "hive",
 ];
 
 const CACHE_KEY_PREFIX = "pcb-stats-";
