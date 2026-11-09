@@ -220,7 +220,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 
 ### Persistence
 - `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
-- HiveMind follows the same pattern (`hive-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`: every nine-letter set some surname uses in full, with each centre letter that gives 40–130 answers including 15+ players with 100+ apps. A set only repeats (with a new centre) after every other set has been used. Wrong guesses are free; score is 1 point per letter, +9 for the all-nine-letter surname
+- HiveMind follows the same pattern (`hive-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each hive is the 8–10 letters of one surname (the pangram), which must belong to exactly one modern, well-known player (born 1983+, 80+ apps) and be the only surname using every letter; centres must give enough answers (25/35/40 for 8/9/10 letters) with a core of 100+ app players. A set only repeats (with a new centre) after every other set has been used. Wrong guesses are free; score is 1 point per letter, plus the hive size for the pangram
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
