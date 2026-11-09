@@ -486,7 +486,7 @@ export default function Hive() {
       buzz([40, 30, 80]);
       setPangramHit(who);
       setTimeout(() => setPangramHit(null), 2400);
-      showFeedbackMsg({ type: "pangram", message: `${who} · all ${board.letters.length} letters`, points: answer.points, tags });
+      showFeedbackMsg({ type: "pangram", message: who, points: answer.points, tags });
     } else {
       if (answer.key.length >= 8 || tags.length) playComboCorrect(Math.max(answer.key.length - 5, 3));
       else playCorrect();
