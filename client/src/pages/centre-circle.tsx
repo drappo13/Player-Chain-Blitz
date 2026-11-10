@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Flag, Trophy, ChevronRight, Info, ListChecks, Shuffle, Delete } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playWrong, playNeutral, playHighScore, playGameEnd, playComboCorrect, playBoostHit } from "@/lib/sounds";
+import { playCorrect, playNeutral, playHighScore, playGameEnd, playComboCorrect, playBoostHit } from "@/lib/sounds";
 import { normalizeName } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
@@ -439,11 +439,11 @@ export default function CentreCircle() {
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
   }, []);
 
-  const reject = useCallback((message: string, sound: () => void = playWrong) => {
-    sound();
-    if (sound === playWrong) buzz([20, 30, 20]);
+  // Misses are silent (just a shake, a buzz and a red pill); repeats get the soft blip.
+  const reject = useCallback((message: string, sound?: () => void) => {
+    if (sound) sound(); else buzz([20, 30, 20]);
     setShake(s => s + 1);
-    showFeedbackMsg({ type: "neutral", message });
+    showFeedbackMsg({ type: sound ? "neutral" : "wrong", message });
   }, [showFeedbackMsg]);
 
   const handleFinish = useCallback(async () => {
@@ -695,7 +695,8 @@ export default function CentreCircle() {
         {/* Hive + overlays */}
         <div className="relative w-full flex justify-center mt-4 mb-1">
           <motion.div key={`hive-${pulse}`} animate={pulse ? { scale: [1, 1.03, 1] } : {}} transition={{ duration: 0.3 }}>
-            <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished} />
+            <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished}
+              scale={boardScale(outer.length)} />
           </motion.div>
           {pangramHit && <BeeBurst />}
 
@@ -741,7 +742,8 @@ export default function CentreCircle() {
                 </span>
               ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
             </div>
-            <input ref={inputRef} value={input} aria-label="Surname"
+            {/* Read-only on phones: letters come from the board, so the keyboard never pops up over it */}
+            <input ref={inputRef} value={input} aria-label="Surname" readOnly={!finePointer()}
               onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } }}
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
@@ -758,6 +760,7 @@ export default function CentreCircle() {
                 className={`max-w-full inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium truncate ${
                   feedback.type === "pangram" ? "bg-green-300 text-green-950"
                   : feedback.type === "correct" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                  : feedback.type === "wrong" ? "bg-red-500/15 text-red-300 border border-red-500/30"
                   : "bg-muted/60 text-muted-foreground border border-border"}`}>
                 <span className="truncate">{feedback.message}</span>
                 {feedback.tags?.map(t => (
@@ -833,13 +836,12 @@ export default function CentreCircle() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 420, damping: 22 }}
                 title={a.players.map(p => p.displayName).join(", ")}
-                className={`px-2.5 py-1.5 rounded-lg border text-sm leading-tight ${a.pangram
-                  ? "bg-green-400/20 border-green-400/60 text-green-200"
-                  : "bg-card/50 border-border text-foreground"}`}>
+                className="px-2.5 py-1.5 rounded-lg border text-sm leading-tight bg-card/50 border-border text-foreground">
                 <span className="font-medium">{answerName(a)}</span>
+                {a.pangram && <span title="The star player" className="ml-1 inline-flex align-[-1px]"><Trophy className="w-3 h-3 text-sky-300" /></span>}
                 {a.legend && <span className="ml-1 text-[11px] text-amber-300" title="Legend bonus">★</span>}
                 <span className="ml-1.5 text-[11px] text-muted-foreground">{a.club}</span>
-                <span className={`ml-1.5 text-[11px] font-bold tabular-nums ${a.pangram ? "text-green-300" : "text-green-400/80"}`}>+{a.points}</span>
+                <span className="ml-1.5 text-[11px] font-bold tabular-nums text-green-400/80">+{a.points}</span>
               </motion.div>
             ))}
           </div>
@@ -853,6 +855,17 @@ export default function CentreCircle() {
     </div>
   );
 }
+
+// Grow the board to fill a phone's width (it is small at 8 letters), capped so it
+// doesn't balloon on desktop.
+function boardScale(count: number) {
+  const width = Math.min(typeof window === "undefined" ? 512 : window.innerWidth, 512) - 32;
+  return Math.min(1.4, Math.max(1, width / ringLayout(count).size));
+}
+
+// Each letter's tap target is a circle a little wider than its hex; the gaps
+// between hexes leave room for that without neighbours overlapping.
+const TAP_PAD = 4;
 
 function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = false, scale = 1 }: {
   centre: string;
@@ -873,18 +886,21 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
         {hexes.map(({ ch, isCentre, w, x, y }, i) => (
           <motion.button key={ch} type="button" disabled={disabled} onClick={() => onLetter(ch)}
             aria-label={`Letter ${ch.toUpperCase()}${isCentre ? ", centre" : ""}`}
-            initial={{ x: size / 2 - w / 2, y: size / 2 - (w * 0.866) / 2, opacity: 0, scale: 0.4 }}
+            initial={{ x: size / 2 - w / 2 - TAP_PAD, y: size / 2 - w / 2 - TAP_PAD, opacity: 0, scale: 0.4 }}
             animate={celebrate
-              ? { x, y, opacity: 1, scale: [1, 1.14, 1], rotate: [0, 10, -10, 0], transition: { duration: 0.6, delay: i * 0.05 } }
-              : { x, y, opacity: 1, scale: 1, rotate: 0 }}
+              ? { x: x - TAP_PAD, y: y - (w * 0.134) / 2 - TAP_PAD, opacity: 1, scale: [1, 1.14, 1], rotate: [0, 10, -10, 0], transition: { duration: 0.6, delay: i * 0.05 } }
+              : { x: x - TAP_PAD, y: y - (w * 0.134) / 2 - TAP_PAD, opacity: 1, scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
             whileTap={{ scale: 0.86, filter: "brightness(1.7)" }}
-            style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP, position: "absolute", left: 0, top: 0 }}
-            className={`flex items-center justify-center font-black uppercase select-none touch-manipulation transition-colors ${
-              isCentre
-                ? "text-3xl bg-gradient-to-br from-lime-300 to-green-500 text-green-950"
-                : "text-2xl bg-white/[0.09] text-foreground hover:bg-white/[0.15] active:bg-green-400/25"}`}>
-            {ch}
+            style={{ width: w + 2 * TAP_PAD, height: w + 2 * TAP_PAD, position: "absolute", left: 0, top: 0, WebkitTapHighlightColor: "transparent" }}
+            className="group rounded-full flex items-center justify-center select-none touch-manipulation outline-none">
+            <span style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP }}
+              className={`flex items-center justify-center font-black uppercase transition-colors ${
+                isCentre
+                  ? "text-3xl bg-gradient-to-br from-lime-300 to-green-500 text-green-950"
+                  : "text-2xl bg-white/[0.09] text-foreground group-hover:bg-white/[0.15] group-active:bg-green-400/25"}`}>
+              {ch}
+            </span>
           </motion.button>
         ))}
       </div>
@@ -1040,7 +1056,7 @@ function Tracker({ board, answers, found }: { board: Board; answers: Answer[]; f
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <Trophy className="w-3 h-3 text-green-300" />
+          <Trophy className="w-3 h-3 text-sky-300" />
           the star player: their surname uses every letter
         </span>
         <span className="inline-flex items-center gap-1">
@@ -1066,7 +1082,7 @@ function HintCell({ c }: { c: HintCount }) {
       <div className={`absolute inset-x-0 bottom-0 transition-[height] duration-500 ease-out ${done ? "bg-green-600" : "bg-green-700/70"}`}
         style={{ height: `${fill * 100}%` }} />
       {c.pangram && (
-        <Trophy className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 ${c.pangramFound ? "text-green-300" : "text-muted-foreground/60"}`} />
+        <Trophy className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 ${c.pangramFound ? "text-sky-300" : "text-muted-foreground/60"}`} />
       )}
       {c.legends > 0 && (
         <span className="absolute top-0 right-0.5 text-[7px] leading-none tracking-tighter">
@@ -1172,13 +1188,13 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">The {missed.length} you missed</h3>
             <div className="space-y-1.5 max-h-80 overflow-y-auto">
               {missed.map(a => (
-                <div key={a.key} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm ${
-                  a.pangram ? "bg-green-400/15 border-green-400/50" : "bg-card/50 border-border"}`}>
+                <div key={a.key} className="flex items-center justify-between px-3 py-2 rounded-lg border text-sm bg-card/50 border-border">
                   <div className="flex-1 min-w-0 truncate">
                     <span className="font-medium text-foreground">{answerName(a)}</span>
+                    {a.pangram && <span className="ml-1 inline-flex align-[-1px]"><Trophy className="w-3 h-3 text-sky-300" /></span>}
                     {a.legend && <span className="ml-1 text-xs text-amber-300">★</span>}
                     <span className="text-xs text-muted-foreground ml-1.5">
-                      {a.club} · {a.players[0].totalAppearances} apps{a.pangram ? " · all letters" : ""}
+                      {a.club} · {a.players[0].totalAppearances} apps
                     </span>
                   </div>
                   <span className="font-bold tabular-nums text-muted-foreground ml-2">+{a.points}</span>
