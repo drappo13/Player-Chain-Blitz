@@ -31,8 +31,8 @@ const PLAYERS = new Map((plPlayers as (PLPlayer & { playerId: number })[]).map(p
 const ROUNDS = 5;
 const MULTIPLIERS = [1, 1.5, 2, 2.5, 3];
 const WINDOW = 5;
-const MAX_STAGE = 5; // 0 = numbers only … 5 = initials; a miss at 5 ends the round
-const BASE_POINTS = MAX_STAGE + 1; // 6 with no clues, down to 1 with every clue
+const MAX_STAGE = 4; // 0 = numbers only … 4 = initials; a miss at 4 ends the round (5 guesses)
+const BASE_POINTS = MAX_STAGE + 1; // 5 with no clues, down to 1 with every clue
 const MAX_SCORE = MULTIPLIERS.reduce((s, m) => s + m * BASE_POINTS, 0);
 const ROUND_VERSION = 2;
 const CP_EPOCH = "2026-11-10";
@@ -40,7 +40,6 @@ const CP_EPOCH = "2026-11-10";
 const CLUES = [
   { label: "Numbers", full: "Just the numbers" },
   { label: "1st club", full: "First club" },
-  { label: "Last club", full: "Last club" },
   { label: "All clubs", full: "All clubs" },
   { label: "Profile", full: "Position & nation" },
   { label: "Initials", full: "Initials" },
@@ -59,11 +58,11 @@ const CLUB_COLOURS: Record<string, string> = {
   Liverpool: "#C8102E", Luton: "#F78F1E", "Man City": "#6CABDD", "Man Utd": "#DA291C", Middlesbrough: "#E11B22",
   Newcastle: "#4a4a4a", Norwich: "#00A650", "Nottingham Forest": "#DD0000", Oldham: "#004A9C", Portsmouth: "#1a3fa0",
   QPR: "#1D5BA4", Reading: "#004494", "Sheffield Utd": "#EE2737", "Sheffield Wed": "#1E5BA8", Southampton: "#D71920",
-  Stoke: "#E03A3E", Sunderland: "#EB172B", Swansea: "#5a5a5a", Swindon: "#DC161D", Tottenham: "#1d2f6b",
+  Stoke: "#E03A3E", Sunderland: "#EB172B", Swansea: "#e8e8e8", Swindon: "#DC161D", Tottenham: "#1d2f6b",
   Watford: "#FBEE23", "West Brom": "#1F3F7A", "West Ham": "#7A263A", Wigan: "#1D59AF", Wimbledon: "#2b4a8b",
   Wolves: "#FDB913",
 };
-const LIGHT_CLUBS = new Set(["Watford", "Wolves", "Man City", "Coventry", "Hull", "Luton"]);
+const LIGHT_CLUBS = new Set(["Watford", "Wolves", "Man City", "Coventry", "Hull", "Luton", "Swansea"]);
 const clubColour = (c: string) => CLUB_COLOURS[c] || "#666";
 const clubText = (c: string) => (LIGHT_CLUBS.has(c) ? "#111" : "#fff");
 
@@ -256,7 +255,7 @@ const formatDate = (dateStr: string) => {
   return new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 };
 
-const resultEmoji = (r: RoundState) => (r.solved ? ["🟣", "🟣", "🟪", "🟪", "🟨", "🟨"][r.stage] : roundDone(r) ? "🟥" : "⬜");
+const resultEmoji = (r: RoundState) => (r.solved ? ["🟣", "🟪", "🟪", "🟨", "🟨"][r.stage] : roundDone(r) ? "🟥" : "⬜");
 
 // Counts towards a number with an ease-out
 function useCountUp(target: number, ms = 600) {
@@ -403,13 +402,12 @@ export default function CareerPath() {
     }
   };
 
-  // Rows within a season are sorted by apps, so these are the first and last seasons' main clubs
+  // Rows within a season are sorted by apps, so this is the first season's main club.
+  // The first clue opens every season he spent there; the next opens the rest.
   const firstClub = puzzle.rows.find(r => r.year === puzzle.start)?.club;
+  const clubShown = (row: SeasonRow) => done || round.stage >= 2 || (round.stage >= 1 && row.club === firstClub);
+  // The backdrop picks up the colour of the clubs as they're revealed
   const lastClub = puzzle.rows.find(r => r.year === puzzle.start + WINDOW - 1)?.club;
-  const clubShown = (row: SeasonRow) =>
-    done || round.stage >= 3 || (round.stage >= 1 && row.year === puzzle.start && row.club === firstClub)
-    || (round.stage >= 2 && row.year === puzzle.start + WINDOW - 1 && row.club === lastClub);
-  // The backdrop picks up the colour of the latest club revealed
   const tint = done || round.stage >= 2 ? clubColour(lastClub || "") : round.stage >= 1 ? clubColour(firstClub || "") : "#8b5cf6";
 
   const header = (
@@ -469,9 +467,9 @@ export default function CareerPath() {
             </div>
             <div className="text-left space-y-3 mb-8">
               <RuleItem icon="📊" text="Five players a day, each harder than the last. You see five straight Premier League seasons of goals, assists and apps, with the clubs hidden" />
-              <RuleItem icon="🔓" text="Every wrong guess unlocks a clue: first club, last club, all clubs, position & nation, then initials. Or tap to reveal one" />
-              <RuleItem icon="🧭" text="Wrong guesses show what they share with the answer: clubs, era, position, nation, more or fewer goals" />
-              <RuleItem icon="🏆" text={`6 points with no clues, down to 1 with all of them, times the round's multiplier. ${MAX_SCORE} is a perfect day`} />
+              <RuleItem icon="🔓" text="Five guesses per player. Every wrong one unlocks a clue: their first club, then all their clubs, then position & nation, then initials" />
+              <RuleItem icon="🧭" text="Wrong guesses show what they share with the answer: clubs, era, nation, more or fewer goals" />
+              <RuleItem icon="🏆" text={`5 points first time, down to 1 on your last guess, times the round's multiplier. ${MAX_SCORE} is a perfect day`} />
             </div>
             <Button className="w-full text-lg py-6 shadow-xl shadow-fuchsia-500/20 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold border-violet-300/50"
               onClick={() => setShowRules(false)}>
@@ -485,7 +483,6 @@ export default function CareerPath() {
   }
 
   const years = Array.from({ length: WINDOW }, (_, i) => puzzle.start + i);
-  const totals = puzzle.rows.reduce((t, r) => ({ apps: t.apps + r.apps, goals: t.goals + r.goals, assists: t.assists + r.assists }), { apps: 0, goals: 0, assists: 0 });
   const prize = (BASE_POINTS - round.stage) * MULTIPLIERS[current];
 
   // --- Playing Screen ---
@@ -514,61 +511,51 @@ export default function CareerPath() {
 
         <RoundTrack rounds={state.rounds} current={current} total={shownTotal} />
 
-        {/* Prize + clue ladder */}
-        <div className="w-full mt-3 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Round {current + 1} · ×{MULTIPLIERS[current]}</div>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <motion.span key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.4, color: "#f0abfc" }} animate={{ scale: 1, color: "#ffffff" }}
-                  className="text-3xl font-black tabular-nums origin-left">{done ? fmtPts(roundPoints(round, current)) : fmtPts(prize)}</motion.span>
-                <span className="text-sm text-muted-foreground">{done ? (round.solved ? "pts won" : "pts") : "pts up for grabs"}</span>
-              </div>
-            </div>
-            <div className="flex gap-1">
-              {Array.from({ length: BASE_POINTS }, (_, i) => {
-                const alive = done ? round.solved && i < BASE_POINTS - round.stage : i < BASE_POINTS - round.stage;
-                return (
-                  <motion.span key={i} animate={{ scale: alive ? 1 : 0.7, opacity: alive ? 1 : 0.25 }}
-                    className={`w-2.5 h-6 rounded-full ${alive ? "bg-gradient-to-b from-fuchsia-300 to-violet-500 shadow-[0_0_10px_rgba(217,70,239,0.6)]" : "bg-muted"}`} />
-                );
-              })}
+        {/* Round, points and clue ladder in one panel */}
+        <div className="w-full mt-3 rounded-2xl border border-white/10 bg-card/60 px-4 pt-3 pb-2.5">
+          <div className="flex items-baseline justify-between">
+            <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Round {current + 1} <span className="text-violet-300">×{MULTIPLIERS[current]}</span></div>
+            <div className="flex items-baseline gap-1">
+              <motion.span key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.3 }} animate={{ scale: 1 }}
+                className="text-2xl font-black tabular-nums text-white">{done ? fmtPts(roundPoints(round, current)) : fmtPts(prize)}</motion.span>
+              <span className="text-xs text-muted-foreground">{done ? (round.solved ? "won" : "pts") : "pts"}</span>
             </div>
           </div>
-          <div className="grid grid-cols-6 gap-1 mt-3">
-            {CLUES.map((c, i) => (
-              <div key={c.label} className="text-center">
-                <motion.div animate={{ opacity: i <= round.stage || done ? 1 : 0.25 }}
-                  className={`h-1 rounded-full ${i <= round.stage || done ? "bg-gradient-to-r from-violet-400 to-fuchsia-400" : "bg-muted"}`} />
-                <div className={`text-[9px] mt-1 font-semibold uppercase tracking-wide ${i <= round.stage ? "text-fuchsia-200" : "text-muted-foreground/50"}`}>{c.label}</div>
-              </div>
-            ))}
+          <div className="grid grid-cols-5 gap-1.5 mt-2">
+            {CLUES.map((c, i) => {
+              const on = i <= round.stage || done;
+              return (
+                <div key={c.label}>
+                  <div className={`h-1 rounded-full transition-colors duration-300 ${on ? "bg-gradient-to-r from-violet-400 to-fuchsia-400" : "bg-white/10"}`} />
+                  <div className={`text-[9px] mt-1 font-semibold uppercase tracking-wide truncate ${on ? "text-fuchsia-200" : "text-muted-foreground/50"}`}>{c.label}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Season cards */}
+        {/* Season rows */}
         <motion.div key={`cards-${current}-${shake}`} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
-          className="w-full mt-3 space-y-2">
+          className="w-full mt-3 rounded-2xl border border-white/10 bg-card/60 overflow-hidden">
+          <div className="flex items-center gap-3 px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="w-11">Season</span><span className="flex-1">Club</span>
+            <span className="w-9 text-center">Apps</span><span className="w-8 text-center">G</span><span className="w-8 text-center">A</span>
+          </div>
           {years.map((y, idx) => (
-            <SeasonCard key={`${current}-${y}`} index={idx} year={y} rows={puzzle.rows.filter(r => r.year === y)} shown={clubShown} />
+            <SeasonRows key={`${current}-${y}`} index={idx} year={y} rows={puzzle.rows.filter(r => r.year === y)} shown={clubShown} />
           ))}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-            className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
-            <span className="uppercase tracking-wider font-semibold">5-season total</span>
-            <span className="tabular-nums"><b className="text-foreground text-sm">{totals.goals}</b> G · <b className="text-foreground text-sm">{totals.assists}</b> A · {totals.apps} apps</span>
-          </motion.div>
         </motion.div>
 
         {/* Profile clues */}
         <AnimatePresence>
-          {(round.stage >= 4 || done) && answer && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-wrap gap-2">
+          {(round.stage >= 3 || done) && answer && (
+            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-wrap gap-2 mt-2.5">
               {[broadPosition(answer), answer.nationality].map((t, i) => (
                 <motion.span key={t} initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 16, delay: i * 0.08 }}
                   className="px-3 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-100 border border-violet-400/40">{t}</motion.span>
               ))}
-              {(round.stage >= 5 || done) && (
+              {(round.stage >= 4 || done) && (
                 <motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 500, damping: 16, delay: 0.16 }}
                   className="px-3 py-1 rounded-full text-xs font-black tracking-[0.25em] bg-fuchsia-500/25 text-fuchsia-100 border border-fuchsia-400/50">{initialsOf(answer.displayName)}</motion.span>
               )}
@@ -645,19 +632,14 @@ function RoundTrack({ rounds, current, total }: { rounds: RoundState[]; current:
           const isCur = i === current;
           const fill = r.solved ? "bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white border-transparent"
             : r.failed ? "bg-red-500/20 text-red-300 border-red-500/50"
-            : isCur ? "bg-violet-500/15 text-violet-100 border-violet-300" : "bg-card/40 text-muted-foreground border-white/10";
+            : isCur ? "bg-violet-500/20 text-white border-fuchsia-400" : "bg-card/40 text-muted-foreground border-white/10";
           return (
             <div key={i} className="flex items-center flex-1 last:flex-none">
               <div className="relative">
-                {isCur && !roundDone(r) && (
-                  <motion.span className="absolute inset-0 rounded-full border-2 border-fuchsia-400"
-                    animate={{ scale: [1, 1.45], opacity: [0.8, 0] }} transition={{ duration: 1.4, repeat: Infinity }} />
-                )}
-                <motion.div animate={{ scale: isCur ? 1.1 : 1 }}
-                  className={`relative w-10 h-10 rounded-full border-2 flex flex-col items-center justify-center leading-none ${fill}`}>
+                <div className={`relative w-10 h-10 rounded-full border-2 flex flex-col items-center justify-center leading-none transition-all ${fill} ${isCur && !roundDone(r) ? "shadow-[0_0_16px_-2px_rgba(217,70,239,0.7)]" : ""}`}>
                   {r.solved ? <Check className="w-4 h-4" /> : r.failed ? <X className="w-4 h-4" /> : <span className="text-sm font-black">{i + 1}</span>}
                   <span className="text-[8px] font-bold mt-0.5 opacity-80">×{MULTIPLIERS[i]}</span>
-                </motion.div>
+                </div>
               </div>
               {i < rounds.length - 1 && (
                 <div className="flex-1 h-0.5 mx-1 rounded-full bg-white/10 overflow-hidden">
@@ -677,68 +659,43 @@ function RoundTrack({ rounds, current, total }: { rounds: RoundState[]; current:
   );
 }
 
-function SeasonCard({ index, year, rows, shown }: { index: number; year: number; rows: SeasonRow[]; shown: (r: SeasonRow) => boolean }) {
+function SeasonRows({ index, year, rows, shown }: { index: number; year: number; rows: SeasonRow[]; shown: (r: SeasonRow) => boolean }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 22, delay: index * 0.07 }}
-      className="rounded-2xl border border-white/10 bg-card/70 backdrop-blur overflow-hidden">
-      {rows.map((row, k) => {
-        const open = shown(row);
-        return (
-          <div key={row.club} className={`relative flex items-center gap-3 px-3 py-2.5 ${k > 0 ? "border-t border-white/5" : ""}`}>
-            {/* club colour strip on the left edge once revealed */}
-            <motion.div className="absolute left-0 top-0 bottom-0 w-1.5" animate={{ backgroundColor: open ? clubColour(row.club) : "rgba(255,255,255,0.06)" }} />
-            <div className="w-12 shrink-0 pl-1">
-              {k === 0 ? (
-                <div className="text-lg font-black tabular-nums leading-none">{shortSeason(year)}</div>
-              ) : (
-                <div className="text-[10px] font-bold text-fuchsia-300 uppercase tracking-wider">↳ also</div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <ClubBadge club={row.club} open={open} />
-              <div className="mt-1.5 h-1 rounded-full bg-white/5 overflow-hidden">
-                <motion.div className="h-full rounded-full bg-gradient-to-r from-violet-400/70 to-fuchsia-400/70"
-                  initial={{ width: 0 }} animate={{ width: `${Math.min(100, (row.apps / 38) * 100)}%` }}
-                  transition={{ duration: 0.7, delay: 0.2 + index * 0.07, ease: "easeOut" }} />
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">{row.apps} apps</div>
-            </div>
-            <StatBubble value={row.goals} label="G" />
-            <StatBubble value={row.assists} label="A" />
-          </div>
-        );
-      })}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.05 }}
+      className="border-t border-white/5">
+      {rows.map((row, k) => (
+        <div key={row.club} className="flex items-center gap-3 px-3 py-2">
+          <div className="w-11 shrink-0 text-sm font-black tabular-nums">{k === 0 ? shortSeason(year) : <span className="text-[10px] font-bold text-fuchsia-300">+ also</span>}</div>
+          <div className="flex-1 min-w-0"><ClubBadge club={row.club} open={shown(row)} /></div>
+          <Stat value={row.apps} className="w-9 text-muted-foreground" />
+          <Stat value={row.goals} className="w-8" />
+          <Stat value={row.assists} className="w-8" />
+        </div>
+      ))}
     </motion.div>
   );
 }
 
-function StatBubble({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="w-11 shrink-0 text-center">
-      <div className={`text-2xl font-black tabular-nums leading-none ${value === 0 ? "text-muted-foreground/40" : ""}`}>{value}</div>
-      <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{label}</div>
-    </div>
-  );
+function Stat({ value, className = "" }: { value: number; className?: string }) {
+  return <div className={`shrink-0 text-center text-lg font-black tabular-nums ${value === 0 ? "opacity-35" : ""} ${className}`}>{value}</div>;
 }
 
 function ClubBadge({ club, open }: { club: string; open: boolean }) {
   return (
-    <div className="relative h-8 [perspective:600px]">
+    <div className="relative h-7 [perspective:600px]">
       <AnimatePresence mode="wait" initial={false}>
         {open ? (
           <motion.div key="open" initial={{ rotateX: -95, opacity: 0 }} animate={{ rotateX: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 18 }}
-            className="absolute inset-0 flex items-center px-3 rounded-xl text-sm font-black truncate"
+            className="absolute inset-0 flex items-center px-3 rounded-lg text-sm font-black truncate"
             style={{ background: `linear-gradient(135deg, ${clubColour(club)}, ${clubColour(club)}cc)`, color: clubText(club), boxShadow: `0 6px 20px -8px ${clubColour(club)}` }}>
             {club}
           </motion.div>
         ) : (
           <motion.div key="locked" exit={{ rotateX: 95, opacity: 0 }} transition={{ duration: 0.18 }}
-            className="absolute inset-0 flex items-center gap-1.5 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-muted-foreground/60 text-xs font-semibold overflow-hidden">
-            <Lock className="w-3.5 h-3.5" /> Club hidden
-            <motion.span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              animate={{ x: ["-120%", "320%"] }} transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.8 }} />
+            className="absolute inset-0 flex items-center gap-1.5 px-3 rounded-lg bg-white/[0.05] border border-white/10 text-muted-foreground/50 text-xs font-semibold">
+            <Lock className="w-3 h-3" /> Hidden
           </motion.div>
         )}
       </AnimatePresence>
@@ -754,7 +711,6 @@ function GuessRow({ guessId, answerId }: { guessId: number; answerId: number }) 
       ? f.shared.map(c => ({ ok: true, node: <><Check className="w-3 h-3" />{c}</>, style: { background: clubColour(c), color: clubText(c), borderColor: "transparent" } }))
       : [{ ok: false, node: <><X className="w-3 h-3" />No clubs in common</> }]),
     { ok: f.era === "overlap", node: f.era === "overlap" ? <><Check className="w-3 h-3" />Same era · {f.overlap} season{f.overlap === 1 ? "" : "s"}</> : <>{f.era === "earlier" ? <ArrowDown className="w-3 h-3" /> : <ArrowUp className="w-3 h-3" />}Answer's {f.era}</> },
-    { ok: f.samePosition, node: <>{f.samePosition ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}{broadPosition(g)}</> },
     { ok: f.sameNation, node: <>{f.sameNation ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}{g?.nationality || "?"}</> },
     { ok: f.goals === "same", node: <>{f.goals === "more" ? <ArrowUp className="w-3 h-3" /> : f.goals === "fewer" ? <ArrowDown className="w-3 h-3" /> : <Check className="w-3 h-3" />}{f.goals === "same" ? "Same goals" : f.goals === "more" ? "More PL goals" : "Fewer PL goals"}</> },
   ];
