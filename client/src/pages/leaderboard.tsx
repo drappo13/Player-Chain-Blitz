@@ -25,6 +25,7 @@ const DAILY_TABS: { slug: DailyGameSlug; label: string; accent: string }[] = [
   { slug: "griddle", label: "Griddle", accent: "bg-blue-500/10 border-blue-500/30" },
   { slug: "centrecircle", label: "CentreCircle", accent: "bg-green-500/10 border-green-500/30" },
   { slug: "photofinish", label: "Photo Finish", accent: "bg-amber-500/10 border-amber-500/30" },
+  { slug: "careerpath", label: "Career Path", accent: "bg-violet-500/10 border-violet-500/30" },
 ];
 
 export default function Leaderboard() {
