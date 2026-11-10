@@ -1,5 +1,515 @@
 [
  {
+  "season": 1999,
+  "date": "1999-08-14",
+  "score": "Man Utd 2–0 Leeds",
+  "caption": "Yorke is mobbed by his colleagues after scoring United's first goal",
+  "intro": "The Premiership's most fiercely fought battle of the Roses was won for the Lancastrian side by a man called Yorke.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/420000/images/_420543_manuceleb300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/420264.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-08-22",
+  "score": "Arsenal 1–2 Man Utd",
+  "caption": "Roy Keane beats Alex Manninger to put United on level terms",
+  "intro": "Two goals from Roy Keane gave Manchester United a vital victory over their title rivals Arsenal, ending the Gunners' long unbeaten record at Highbury.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/425000/images/_427482_keane_goal300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/427415.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-08-25",
+  "score": "Coventry 1–2 Man Utd",
+  "caption": "Goalscorer Dwight Yorke crashes into Coventry opposite number Noel Whelan",
+  "intro": "Manchester United continued their impressive start to the defence of the Premiership title as they moved three points clear at the top of the table.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/430000/images/_430135_yorke_whe300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/430135.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-08-30",
+  "score": "Manchester United 5–1 Newcastle United",
+  "caption": "Manchester United made sure Newcastle's disastrous season continued",
+  "intro": "Andy Cole turned his former club's disastrous season into a nightmare as he smashed four goals past Newcastle.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/430000/images/_433728_cele300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/433728.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-09-11",
+  "score": "Liverpool 2–3 Man Utd",
+  "caption": "Liverpool players look on in agony after another own-goal",
+  "intro": "A furious Liverpool revival from an opening half which included two own goals was not enough to save them from a 3-2 home defeat at the hands of 10-men Manchester United.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/440000/images/_444617_own_goal2nd300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/444155.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-09-18",
+  "score": "Man United 1–1 Wimbledon",
+  "caption": "Jordi pulls the equalising trigger",
+  "intro": "The depth of resources available to Sir Alex Ferguson was highlighted as the forgotten man of Old Trafford, Jordi Cruyff, saved his side's blushes.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/450000/images/_451182_jordigoal300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/450995.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-09-25",
+  "score": "Manchester United 3–3 Southampton",
+  "caption": "Sheringham scored but United's defending was poor",
+  "intro": "A dreadful goalkeeper error from United's Massimo Taibi helped Saints take a point from Old Trafford.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/455000/images/_457490_sherigoal300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/457692.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-10-16",
+  "score": "Man Utd 4–1 Watford",
+  "caption": "Andy Cole scores a spectacular goal to match Dwight Yorke's effort",
+  "intro": "United scored four goals in 11 minutes either side of half time, as Watford's brave challenge was dismissed by a ruthless home side.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/475000/images/_477144_cole_300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/476765.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-10-23",
+  "score": "Spurs 3–1 Man Utd",
+  "caption": "Giggs scored first but poor defending allowed Spurs back in the game",
+  "intro": "Sir Alex Ferguson blamed the rain for disrupting Manchester United's normally slick rythym after Spurs fought back to claim a 3-1 victory at White Hart Lane.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/480000/images/_483269_giggs_carr300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/483269.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-10-30",
+  "score": "Man Utd 3–0 Aston Villa",
+  "caption": "Dion Dublin tries to sweep the ball away from United maestro David Backham",
+  "intro": "Manchester United moved back into second place in the Premiership, as David Beckham's right-boot brought about Aston Villa's downfall.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/495000/images/_495434_becks_dublin300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/495434.stm",
+  "small": true
+ },
+ {
+  "season": 1999,
+  "date": "1999-11-06",
+  "score": "Manchester United 2–0 Leicester",
+  "caption": "Back in action: Andy Cole bicycle kicks United's opener",
+  "intro": "Andy Cole proved that Kevin Keegan was right to recall him for England's squad for the Euro 2000 showdown with Scotland when he netted twice for Manchester United against Leicester at Old Trafford.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/505000/images/_507419_colegoal300.jpg",
+  "url": "http://news.bbc.co.uk/2/hi/sport/football/fa_carling_premiership/507419.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-08-21",
+  "score": "Arsenal 2–0 Liverpool",
+  "caption": "Lauren's goal was overshadowed with the sendings off",
+  "intro": "Patrick Vieira was sent off for the second successive game as Arsenal ended their 14-match losing streak against Liverpool.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/890000/images/_890559_lauren_celebration300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/890559.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-09-06",
+  "score": "Liverpool 3–1 Aston Villa",
+  "caption": "Michael Owen",
+  "intro": "Michael Owen completed a hat-trick inside the first 33 minutes as Liverpool romped to an easy victory over shell-shocked Aston Villa.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/910000/images/_913538_owen300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/913538.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-09-09",
+  "score": "Manchester United 3–0 Sunderland",
+  "caption": "Paul Scholes",
+  "intro": "Manchester United followed up their 6-0 demolition of Bradford in mid-week with a victory over struggling Sunderland, thanks to an impressive double from Paul Scholes.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/915000/images/_916665_scholes_header300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/916665.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-10-21",
+  "score": "Man United 3–0 Leeds",
+  "caption": "David Beckham scores",
+  "intro": "Dwight Yorke celebrated his return to the Premiership by opening the floodgates in a comprehensive win over arch rivals Leeds United.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/980000/images/_983271_beckham_freekick300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/982022.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-10-28",
+  "score": "Manchester United 5–0 Southampton",
+  "caption": "Teddy Sheringham",
+  "intro": "Teddy Sheringham scored a hat-trick as Manchester United cruised to victory against a porous Southampton side at Old Trafford.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/990000/images/_994822_sheringham300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/994822.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-10-29",
+  "score": "Liverpool 3–1 Everton",
+  "caption": "Liverpool's Nick Barmby",
+  "intro": "Nick Barmby was always going to be the focus of this Merseyside derby - and so it proved as his goal set Liverpool on their way to victory at a soggy Anfield.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/995000/images/_997308_barmbyscores300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/997308.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-12-02",
+  "score": "Manchester United 2–0 Spurs",
+  "caption": "Paul Scholes",
+  "intro": "Manchester United's relentless pursuit of another title continued as Spurs became their eighth successive Premiership victims.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1050000/images/_1051503_scholes_goal300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1051503.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-12-10",
+  "score": "Liverpool 0–1 Ipswich",
+  "caption": "Danny Murphy and Matt Holland",
+  "intro": "Ipswich claimed only their second ever victory at Anfield, as they outplayed an out-of-sorts Liverpool to move into third place in the Premiership.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1060000/images/_1064443_holland_300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1062938.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-12-26",
+  "score": "Arsenal 6–1 Leicester City",
+  "caption": "Robbie Savage and Patrick Vieira",
+  "intro": "Arsenal got their title hopes back on track with a resounding home performance against a poor Leicester City side.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1085000/images/_1088044_vieira_savage300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1085808.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2000-12-30",
+  "score": "Newcastle 1–1 Manchester United",
+  "caption": "David Beckham",
+  "intro": "Substitute Stephen Glass scored a late equaliser to earn Newcastle a deserved draw at icy St James' Park.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1090000/images/_1093994_beckham300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1093021.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-01-30",
+  "score": "Arsenal 2–0 Bradford City",
+  "caption": "Ashley Cole, Lauren, Robert Pires",
+  "intro": "Arsenal moved into second place in the Premiership with a comprehensive victory over Bradford that leaves the Yorkshire side firmly rooted at the foot of the table.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1145000/images/_1145207_lauren_300pa.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1143577.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-02-10",
+  "score": "Sunderland 1–1 Liverpool",
+  "caption": "Emile Heskey",
+  "intro": "Jari Litmanen stroked home a late penalty for Liverpool to cancel out Don Hutchison's second-half rocket in a furiously competitive clash at the Stadium of Light.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1160000/images/_1163966_emile300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1162742.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-02-10",
+  "score": "Chelsea 1–1 Manchester United",
+  "caption": "Hasselbaink celebrates",
+  "intro": "Andy Cole rescued a point for Manchester United with a goal in his final game before suspension as he struck to cancel out Jimmy Floyd Hasselbaink's opener for Chelsea.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1160000/images/_1163782_hasslebaink300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1162803.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-03-17",
+  "score": "Manchester United 2–0 Leicester",
+  "caption": "Ole Gunnar Solskjaer",
+  "intro": "United struck twice late on as more than 67,000 fans at Old Trafford breathed a collective sigh of relief.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1225000/images/_1226695_solskjaer300_pa.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1225492.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-04-14",
+  "score": "Manchester United 4–2 Coventry City",
+  "caption": "John Hartson",
+  "intro": "Ryan Giggs headed Manchester United closer to the Premiership title - and Coventry City towards the relegation trapdoor.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1275000/images/_1277147_hartson_opens300_pa.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1274590.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-04-22",
+  "score": "Liverpool 3–1 Tottenham Hotspur",
+  "caption": "Korsten celebrates his 36th minute equaliser",
+  "intro": "Gary McAllister rescued Liverpool from the penalty spot as Willem Korsten's first goal for Spurs was not enough to save his side from defeat.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1290000/images/_1291302_korsten.pa.300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1290269.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-04-28",
+  "score": "Coventry 0–2 Liverpool",
+  "caption": "McAllister scored for a fourth game in a row",
+  "intro": "Coventry's Premiership survival is hanging by a thread after they were beaten by Liverpool at Highfield Road.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1300000/images/_1301980_mcallister_allsp300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1298566.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-04-28",
+  "score": "Middlesbrough 0–2 Man Utd",
+  "caption": "Quinton Fortune and Phil Neville",
+  "intro": "Manchester United heaped more misery onto former Old Trafford hero Bryan Robson with a comfortable win at the Riverside Stadium.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1300000/images/_1302031_pneville300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1298571.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-05-05",
+  "score": "Liverpool 3–0 Newcastle",
+  "caption": "Michael Owen",
+  "intro": "Michael Owen claimed a hat-trick to continue his impressive scoring run against Newcastle and lead Liverpool to a comfortable victory.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1310000/images/_1314519_owen300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1310327.stm",
+  "small": true
+ },
+ {
+  "season": 2000,
+  "date": "2001-05-13",
+  "score": "Southampton 2–1 Manchester United",
+  "caption": "James Beattie is dumped on the floor by Wes Brown",
+  "intro": "Marian Pahars scored one and supplied the cross for Wes Brown to head spectacularly into his own net as Southampton beat Manchester United.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1325000/images/_1328357_saints300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1326651.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-09-08",
+  "score": "Liverpool 1–3 Aston Villa",
+  "caption": "Liverpool players are dejected, while Villa celebrate",
+  "intro": "Villa inflicted a second successive Premiership defeat on ten-man Liverpool after Steven Gerrard was sent off for a reckless challenge on George Boateng.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1530000/images/_1532928_villa300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1529872.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-09-30",
+  "score": "Newcastle 0–2 Liverpool",
+  "caption": "Liverpool's Jamie Carragher gets a challenge in on Newcastle's Laurent Robert",
+  "intro": "Goals from John Arne Riise and Danny Murphy were enough to give Liverpool a vital victory at St James' Park.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1570000/images/_1571926_carr_robert300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1567793.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-10-13",
+  "score": "Sunderland 1–3 Manchester United",
+  "caption": "Ryan Giggs and Ole Gunnar Solskjaer celebrate United's second goal",
+  "intro": "Manchester United's second string gave an impressive performance away from home to quell the challenge of spirited Sunderland.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1595000/images/_1597610_giggs_goal300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1580236.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-10-20",
+  "score": "Arsenal 3–3 Blackburn",
+  "caption": "Thierry Henry",
+  "intro": "Arsenal went top of the Premiership despite being held by a spirited Blackburn side at Highbury.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1610000/images/_1610780_henry300.jpg",
+  "url": "http://news.bbc.co.uk/sport1/hi/football/eng_prem/1606124.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-10-27",
+  "score": "Sunderland 1–1 Arsenal",
+  "caption": "Thomas Sorenson is unable to deny Kanu as Stanislav Varga looks on",
+  "intro": "Sunderland denied Arsenal the opportunity of taking top spot in the Premiership with a combative performance.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1620000/images/_1620668_kanu300.jpg",
+  "url": "http://news.bbc.co.uk/sport1/hi/football/eng_prem/1623767.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-10-27",
+  "score": "Everton 1–3 Newcastle United",
+  "caption": "Striker Craig Bellamy gave Newcastle a vital lead",
+  "intro": "Newcastle United put a halt to Everton's winning run at Goodison Park as they battled to a vital victory.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1620000/images/_1620596_bellamy300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1620596.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-11-04",
+  "score": "Liverpool 3–1 Manchester United",
+  "caption": "Liverpool striker Michael Owen continues his excellent form with a double against Manchester United",
+  "intro": "Liverpool made it four wins on the trot against Manchester United with an impressive display at Anfield.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1630000/images/_1633402_owenscores300_1.jpg",
+  "url": "https://news.bbc.co.uk/sport1/hi/football/eng_prem/1633402.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-11-25",
+  "score": "Arsenal 3–1 Man Utd",
+  "caption": "Thierry Henry",
+  "intro": "Two calamitous errors from Fabien Barthez gifted Thierry Henry two goals and Arsenal the points at a joyous Highbury.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1675000/images/_1675699_henry300.jpg",
+  "url": "https://news.bbc.co.uk/sport1/hi/football/eng_prem/1671459.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-15",
+  "score": "Newcastle 2–1 Blackburn",
+  "caption": "David Dunn's goal leaves Shay Given downcast",
+  "intro": "Newcastle have moved to within three points of Premiership leaders Liverpool with a hard-fought home victory against Blackburn.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1705000/images/_1709923_dunngoalpa300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1709923.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-16",
+  "score": "Chelsea 4–0 Liverpool",
+  "caption": "Graeme Le Saux scored for Chelsea after three minutes of their match with Liverpool",
+  "intro": "Goals from Graeme Le Saux, Jimmy Floyd Hasselbaink, Sam Dalla Bona and Eidur Gudjohnsen helped Chelsea shrug off their lacklustre recent form and register a deserved win over Liverpool.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1705000/images/_1709992_le_saux300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1709992.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-22",
+  "score": "Leeds 3–4 Newcastle",
+  "caption": "Newcastle's Andy O'Brien runs past Mark Viduka",
+  "intro": "Newcastle stayed top of the Premiership after fighting back from two goals down to beat Leeds at Elland Road.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1720000/images/_1722577_o_brien300.jpg",
+  "url": "https://news.bbc.co.uk/sport1/hi/football/eng_prem/1722577.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-22",
+  "score": "Manchester United 6–1 Southampton",
+  "caption": "Ruud van Nistelrooy turns to Roy Keane to celebrate his second goal against Southampton",
+  "intro": "Ruud van Nistelrooy caught Southampton stone cold with the fastest Premiership goal of the season and went on to complete his first hat-trick for Manchester United.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1720000/images/_1722633_jmruud300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1722633.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-23",
+  "score": "Liverpool 1–2 Arsenal",
+  "caption": "Referee Paul Durkin controversially shows Giovanni Van Bronckhorst a red card",
+  "intro": "Arsenal turned the heat up under the Premiership title race with a gutsy win at Anfield after being reduced to 10 men.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1720000/images/_1723104_jmdurkin300.jpg",
+  "url": "http://news.bbc.co.uk/sport1/hi/football/eng_prem/1723104.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2001-12-26",
+  "score": "Arsenal 2–1 Chelsea",
+  "caption": "Stanic battles with Arsenal's Vieira",
+  "intro": "Arsenal came from behind to beat Chelsea and take top spot in the Premiership after a game of fluctuating fortunes at Highbury.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1725000/images/_1726892_stanic_vieira300.jpg",
+  "url": "http://news.bbc.co.uk/sport1/hi/football/eng_prem/1726892.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-01-02",
+  "score": "Manchester United 3–1 Newcastle",
+  "caption": "Paul Scholes celebrates his second goal with Ole Gunnar Solskjaer as Mikael Silvestre looks on",
+  "intro": "Manchester United recorded their sixth straight Premiership win to quash any lingering doubts about their title credentials.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1730000/images/_1732374_united300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1732374.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-01-13",
+  "score": "Southampton 1–3 Manchester United",
+  "caption": "Ole Gunnar Solskjaer of Manchester United breaks away from the Southampton defence",
+  "intro": "Manchester United moved to the top of the Premiership for the first time this season by beating a lively Southampton at the St Mary's Stadium.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1755000/images/_1758247_solskjaer300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1758247.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-02-03",
+  "score": "Leeds United 0–4 Liverpool",
+  "caption": "Michael Owen celebrates scoring Liverpool's fourth goal against Leeds",
+  "intro": "Liverpool out-played Leeds at Elland Road and deservedly collected three points that lift them to third in the Premier League.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1795000/images/_1798798_owenallsport300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1795094.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-02-09",
+  "score": "Newcastle 3–1 Southampton",
+  "caption": "Newcastle striker Alan Shearer celebrates scoring against Southampton",
+  "intro": "Alan Shearer scored twice against his former club Southampton as Newcastle maintained their Premiership challenge with an excellent win at St James' Park.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1805000/images/_1806931_shearer_pen300.jpg",
+  "url": "https://news.bbc.co.uk/sport2/hi/football/eng_prem/1806931.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-02-23",
+  "score": "Liverpool 1–1 Everton",
+  "caption": "Radzinski (centre) celebrates his goal for Everton",
+  "intro": "Everton halted Liverpool's title bandwagon in its tracks as they earned a battling draw in the Merseyside derby at Anfield.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1830000/images/_1834868_radzin300.jpg",
+  "url": "http://news.bbc.co.uk/sport2/hi/football/eng_prem/1834868.stm",
+  "small": true
+ },
+ {
+  "season": 2001,
+  "date": "2002-03-05",
+  "score": "Arsenal 1–0 Derby",
+  "caption": "Ray Parlour in action against Derby",
+  "intro": "A patient victory took Arsenal to the top of England's Premiership on the day manager Arsene Wenger said his club could become the biggest in the world.",
+  "img": "https://newsimg.bbc.co.uk/olmedia/1845000/images/_1849368_arsparlour150.jpg",
+  "url": "http://news.bbc.co.uk/sport1/hi/football/eng_prem/1849368.stm",
+  "small": true
+ },
+ {
   "season": 2002,
   "date": "2002-12-22",
   "score": "Blackburn 1–0 Man Utd",

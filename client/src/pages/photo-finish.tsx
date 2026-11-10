@@ -123,7 +123,19 @@ function dealFrom(pool: Photo[], salt: string, n: number): Photo {
   return dealCache.get(key)![n - cycle * pool.length];
 }
 
+// Days already played before the pool grew, frozen so their photos don't change
+// under anyone mid-game (by image URL, in the order they were dealt).
+const PINNED_DAYS: Record<string, string[]> = {
+  "2026-11-10": ["https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/13C8B/production/_94853018_getty_kane.jpg","https://ichef.bbci.co.uk/ace/standard/1024/cpsprodpb/cbbb/live/a1ac8400-ac34-11f0-b3b3-c99a905ae914.jpg","https://newsimg.bbc.co.uk/media/images/40930000/jpg/_40930005_drogba_getty_203.jpg","https://newsimg.bbc.co.uk/media/images/45692000/jpg/_45692048_lamps.jpg","https://ichef.bbci.co.uk/ace/standard/976/mcs/media/images/58721000/jpg/_58721561_139817527.jpg","https://news.files.bbci.co.uk/include/extra/shorthand/assets/sport/pf331s01hu/assets/wFq0WmrOmz/cantona_celebrate-800x1200.jpeg","https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/5999/production/_128673922_william_saliba_fabio_vieira_gabriel_martinelli_getty.jpg","https://ichef.bbci.co.uk/ace/standard/976/mcs/media/images/71960000/jpg/_71960128_saints.jpg","https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/5198/production/_111088802_gettyimages-1209476364.jpg","https://ichef.bbci.co.uk/ace/standard/976/cpsprodpb/1578F/production/_97315978_tottenham.jpg"],
+};
+
 function photosFor(dateKey: string): Photo[] {
+  const pinned = PINNED_DAYS[dateKey];
+  if (pinned) {
+    const byImg = new Map([...POOL, ...CLASSICS].map(p => [p.img, p] as [string, Photo]));
+    const photos = pinned.map(img => byImg.get(img));
+    if (photos.every(Boolean)) return photos as Photo[];
+  }
   const n = daysSinceEpoch(dateKey);
   const bands = eraBands();
   const picks = bands.map((b, k) => bandDeal(k, Math.floor(n / b.length))[n - Math.floor(n / b.length) * b.length]);
