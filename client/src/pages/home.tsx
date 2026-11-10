@@ -69,7 +69,7 @@ const footballGames: GameCard[] = [
     iconBorder: "border-violet-500/20",
     title: ["Career ", "Path"],
     titleGradient: "from-violet-300 to-fuchsia-400",
-    description: "Three mystery players a day. Five seasons of their numbers, clubs hidden. Every wrong guess unlocks a clue.",
+    description: "Five mystery players a day, each harder than the last. Five seasons of numbers, clubs hidden. Wrong guesses unlock clues.",
     playColor: "text-violet-400",
   },
   {
