@@ -495,15 +495,18 @@ export default function CareerPath() {
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-fuchsia-400"} />
       {burst && <Confetti key={burst.id} colours={burst.colours} />}
 
-      <AnimatePresence>
-        {toast && (
-          <motion.div key={toast.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12 }}
-            transition={{ type: "spring", stiffness: 500, damping: 26 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-fuchsia-500 text-white text-sm font-bold shadow-xl shadow-fuchsia-500/40 whitespace-nowrap">
-            <Unlock className="w-4 h-4" /> {toast.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Centred by a full-width row: framer's transform would override a translate-x */}
+      <div className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+        <AnimatePresence>
+          {toast && (
+            <motion.div key={toast.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ type: "spring", stiffness: 500, damping: 26 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-fuchsia-500 text-white text-sm font-bold shadow-xl shadow-fuchsia-500/40 max-w-full">
+              <Unlock className="w-4 h-4 shrink-0" /> <span className="truncate">{toast.text}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-24 flex-1">
         {header}
