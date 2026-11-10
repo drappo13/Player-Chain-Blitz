@@ -80,16 +80,26 @@ function shuffleInPlace<T>(arr: T[], rng: () => number) {
 
 // --- Daily rounds ---
 // The pool is sorted by date and cut into ten equal bands, so every day gets one
-// photo from each era; each band deals its photos in a shuffled order day by day.
+// photo from each era. Each band deals its photos in a shuffled order, one a day;
+// once a band runs out it is reshuffled, so later cycles mix photos into new days.
 let bandsCache: Photo[][] | null = null;
 function eraBands(): Photo[][] {
   if (bandsCache) return bandsCache;
   const sorted = [...POOL].sort((a, b) => a.date.localeCompare(b.date));
-  const bands = Array.from({ length: ROUNDS }, (_, k) =>
+  bandsCache = Array.from({ length: ROUNDS }, (_, k) =>
     sorted.slice(Math.floor((k * sorted.length) / ROUNDS), Math.floor(((k + 1) * sorted.length) / ROUNDS)));
-  bands.forEach((b, k) => shuffleInPlace(b, mulberry32(hashString(`photofinish-v${ROUND_VERSION}-${k}`))));
-  bandsCache = bands;
-  return bands;
+  return bandsCache;
+}
+
+const dealCache = new Map<string, Photo[]>();
+function bandDeal(k: number, cycle: number): Photo[] {
+  const key = `${k}:${cycle}`;
+  if (!dealCache.has(key)) {
+    const deal = [...eraBands()[k]];
+    shuffleInPlace(deal, mulberry32(hashString(`photofinish-v${ROUND_VERSION}-${k}-${cycle}`)));
+    dealCache.set(key, deal);
+  }
+  return dealCache.get(key)!;
 }
 
 function daysSinceEpoch(dateKey: string): number {
@@ -100,7 +110,10 @@ function daysSinceEpoch(dateKey: string): number {
 
 function photosFor(dateKey: string): Photo[] {
   const n = daysSinceEpoch(dateKey);
-  const picks = eraBands().map(b => b[((n % b.length) + b.length) % b.length]);
+  const picks = eraBands().map((b, k) => {
+    const cycle = Math.floor(n / b.length);
+    return bandDeal(k, cycle)[n - cycle * b.length];
+  });
   shuffleInPlace(picks, mulberry32(hashString(`photofinish-day-${dateKey}`)));
   return picks;
 }
