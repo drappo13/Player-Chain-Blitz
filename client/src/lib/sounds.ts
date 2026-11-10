@@ -312,3 +312,29 @@ export function playHighScore() {
     osc.stop(ctx.currentTime + i * 0.12 + 0.35);
   });
 }
+
+/** Crowd roar — a swell of filtered noise, like a stand going up for a goal */
+export function playCrowdRoar(duration = 1.4) {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const band = ctx.createBiquadFilter();
+  band.type = "bandpass";
+  band.Q.value = 0.7;
+  band.frequency.setValueAtTime(500, t);
+  band.frequency.linearRampToValueAtTime(1100, t + duration * 0.35);
+  band.frequency.linearRampToValueAtTime(700, t + duration);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.001, t);
+  gain.gain.exponentialRampToValueAtTime(0.09, t + duration * 0.25);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  noise.connect(band);
+  band.connect(gain);
+  gain.connect(ctx.destination);
+  noise.start(t);
+  noise.stop(t + duration);
+}

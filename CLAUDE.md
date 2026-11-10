@@ -23,6 +23,7 @@ Sports trivia game site at **drapk.in** — React SPA deployed via GitHub Pages.
 |-------|------|------|-------------|
 | `/griddle` | `griddle.tsx` | Daily | 3×3 PL club grid, name players for 2+ clubs |
 | `/centrecircle` | `centre-circle.tsx` | Daily | Spell PL surnames from 8–10 letters; centre letter and legends double points |
+| `/photofinish` | `photo-finish.tsx` | Daily | Guess the season of 10 PL match photos (BBC report images) |
 | `/targetman` | `target-man.tsx` | Arcade | Match target goal numbers |
 | `/overlap` | `overlap.tsx` | Arcade | Name players who appeared for both clubs |
 | `/clubladder` | `club-ladder.tsx` | Arcade | Climb goal thresholds across 3 clubs |

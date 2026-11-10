@@ -24,6 +24,7 @@ client/src/
 │   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
 │   ├── griddle.tsx              # Griddle (daily)
 │   ├── centre-circle.tsx        # CentreCircle (daily surname spelling)
+│   ├── photo-finish.tsx         # Photo Finish (daily guess-the-season photos)
 │   ├── target-man.tsx           # TargetMan (arcade)
 │   ├── overlap.tsx              # Overlap (arcade)
 │   ├── club-ladder.tsx          # ClubLadder (arcade)
@@ -97,8 +98,8 @@ Config (root):
 ```json
 { "username": "fred", "game": "targetman", "score": 450, "timestamp": "<serverTimestamp>" }
 ```
-- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle | centrecircle`
-- Note: `griddle` and `centrecircle` are in GameSlug for stats compatibility but their scores go to `daily-scores`
+- `GameSlug`: `goalchain | slamchain | targetman | gridlock | overlap | clubladder | griddle | centrecircle | photofinish`
+- Note: `griddle`, `centrecircle` and `photofinish` are in GameSlug for stats compatibility but their scores go to `daily-scores`
 - One doc per play. Leaderboard dedup is client-side.
 
 **`daily-scores`** — daily game submissions, auto-generated IDs
@@ -221,6 +222,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 ### Persistence
 - `localStorage` key: `griddle-{username}-{dateKey}` (scoped per user), includes `boardHash` for invalidation
 - CentreCircle follows the same pattern (`centrecircle-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each board is the 8–10 letters of one surname (the pangram), which must be the only surname using every letter and belong to a player people know (50+ apps in the last 10 seasons, 100+ in the last 20, or 100+ goals; uses `lastSeason` in pl-players.json). A board needs 40–250 answers, 15+ by 100+ app players and 5+ legends; the centre is any letter 15+ answers use. A set only repeats (with a new centre) after every other set has been used. Any surname from the letters counts; score is 1 point per letter (+ board size for the pangram), ×2 for using the centre letter, ×2 for a legend (250+ apps or 75+ goals). Wrong guesses are free
+- Photo Finish follows the same pattern (`photofinish-{username}-{dateKey}`). Photos are the lead images of BBC Sport PL match reports, hotlinked (not stored): `client/src/data/photo-finish.json` holds 500 (20 per season, 2002/03 onwards, built by `scripts/build-photo-finish.py`) and `photo-finish-classics.json` 24 iconic moments from the BBC's "30 years of the Premier League in pictures". The pool is cut by date into 10 era bands; each day takes one photo per band, dealt from a seeded shuffle starting at `PF_EPOCH`, so 50 days pass before any repeat and later cycles reshuffle. The day's classic replaces the photo from its own era. Score: 100 for the exact season, then 80/60/45/30/15/5 by seasons out (max 1,000). The `entries` field stores the number of exact guesses.
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
