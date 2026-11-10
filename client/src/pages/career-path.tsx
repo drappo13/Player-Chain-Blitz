@@ -6,7 +6,7 @@ import { Calendar, Home, Trophy, ChevronRight, Info, Lock, Lightbulb, Share2, Ch
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playNeutral, playHighScore, playGameEnd, playTick, playBoostHit, playExactMatch, playCrowdRoar } from "@/lib/sounds";
-import { normalizeName } from "@/lib/normalize";
+import { normalizeName, PL_ALTERNATES, PL_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
@@ -188,7 +188,7 @@ function saveState(state: CPState, username?: string) {
 }
 
 // --- Guess search (names only: showing clubs would give the answer away) ---
-interface Candidate { id: number; name: string; key: string; surnameKey: string }
+interface Candidate { id: number; name: string; key: string; surnameKey: string; alts: string[] }
 let candidatesCache: Candidate[] | null = null;
 function candidates(): Candidate[] {
   if (candidatesCache) return candidatesCache;
@@ -196,7 +196,12 @@ function candidates(): Candidate[] {
     .sort((a, b) => b[1].totalAppearances - a[1].totalAppearances)
     .map(([id, p]) => {
       const parts = p.displayName.trim().split(/\s+/);
-      return { id, name: p.displayName, key: normalizeName(p.displayName), surnameKey: normalizeName(parts[parts.length - 1]) };
+      const key = normalizeName(p.displayName);
+      const surnameKey = normalizeName(parts[parts.length - 1]);
+      // Other spellings people type ("Kuyt" for Kuijt, "Gilberto" for Gilberto Silva)
+      const alts = Object.entries({ ...PL_ALTERNATES, ...PL_MONONYMS })
+        .filter(([, target]) => target === key || target === surnameKey).map(([alt]) => alt);
+      return { id, name: p.displayName, key, surnameKey, alts };
     });
   return candidatesCache;
 }
@@ -208,7 +213,7 @@ function search(query: string, exclude: Set<number>): Candidate[] {
   const contains: Candidate[] = [];
   for (const c of candidates()) {
     if (exclude.has(c.id)) continue;
-    if (c.surnameKey.startsWith(q) || c.key.startsWith(q)) starts.push(c);
+    if (c.surnameKey.startsWith(q) || c.key.startsWith(q) || c.alts.some(a => a.startsWith(q))) starts.push(c);
     else if (contains.length < 6 && c.key.includes(q)) contains.push(c);
     if (starts.length >= 6) break;
   }
