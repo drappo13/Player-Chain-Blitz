@@ -344,7 +344,7 @@ export default function PhotoFinish() {
               <RuleItem icon="📰" text="After each guess you'll see the match, the date and the report's opening line" />
             </div>
 
-            <Button className="w-full text-lg py-6 shadow-xl shadow-amber-500/20 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold"
+            <Button className="w-full text-lg py-6 shadow-xl shadow-amber-500/20 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={() => setShowRules(false)}>
               {isFinished ? "See today's results" : state.guesses.length > 0 ? "Back to today's photos" : "Play today's photos"}
               <ChevronRight className="w-5 h-5 ml-1" />
@@ -445,7 +445,7 @@ export default function PhotoFinish() {
                 </span>
               ))}
             </div>
-            <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold"
+            <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={lockIn}>
               Lock in
             </Button>
@@ -489,7 +489,7 @@ export default function PhotoFinish() {
               </a>
             </motion.div>
 
-            <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold"
+            <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={next} disabled={submitting}>
               {round < ROUNDS - 1 ? "Next photo" : submitting ? "Submitting..." : "See your score"}
               <ChevronRight className="w-5 h-5 ml-1" />
