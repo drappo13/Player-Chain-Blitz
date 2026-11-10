@@ -740,7 +740,7 @@ export default function CentreCircle() {
                       className={popped.gold ? "text-green-300" : "text-emerald-300"}>{ch}</motion.span>
                   ))}
                 </span>
-              ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">Type or tap a surname</span>}
+              ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">{finePointer() ? "Type or tap a surname" : "Tap the letters to spell a surname"}</span>}
             </div>
             {/* Read-only on phones: letters come from the board, so the keyboard never pops up over it */}
             <input ref={inputRef} value={input} aria-label="Surname" readOnly={!finePointer()}
