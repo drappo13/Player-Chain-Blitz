@@ -32,8 +32,18 @@ const ROUNDS = 5;
 const MULTIPLIERS = [1, 1.5, 2, 2.5, 3];
 const WINDOW = 5;
 const MAX_STAGE = 4; // 0 = numbers only … 4 = initials; a miss at 4 ends the round (5 guesses)
-const BASE_POINTS = MAX_STAGE + 1; // 5 with no clues, down to 1 with every clue
-const MAX_SCORE = MULTIPLIERS.reduce((s, m) => s + m * BASE_POINTS, 0);
+// Points by guess (first guess 10 … fifth 2), even so every multiplier gives a whole number
+const STAGE_POINTS = [10, 8, 6, 4, 2];
+const MAX_SCORE = MULTIPLIERS.reduce((s, m) => s + m * STAGE_POINTS[0], 0);
+// Each round's colour, warming up as the multiplier grows
+const ROUND_THEMES = [
+  { from: "#8b5cf6", to: "#a855f7" },
+  { from: "#a855f7", to: "#d946ef" },
+  { from: "#d946ef", to: "#ec4899" },
+  { from: "#ec4899", to: "#f97316" },
+  { from: "#f97316", to: "#f59e0b" },
+];
+const roundGradient = (k: number) => `linear-gradient(135deg, ${ROUND_THEMES[k].from}, ${ROUND_THEMES[k].to})`;
 const ROUND_VERSION = 2;
 const CP_EPOCH = "2026-11-10";
 
@@ -46,7 +56,7 @@ const CLUES = [
 ];
 
 const shortSeason = (y: number) => `${String(y).slice(2)}/${String(y + 1).slice(2)}`;
-const fmtPts = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+const fmtPts = (n: number) => String(Math.round(n));
 
 // Main colour of each club, for badges, flips and confetti
 const CLUB_COLOURS: Record<string, string> = {
@@ -162,7 +172,7 @@ interface CPState { dateKey: string; puzzleHash: string; rounds: RoundState[]; s
 const emptyRound = (): RoundState => ({ guesses: [], stage: 0, solved: false, failed: false });
 const makeHash = (ps: Puzzle[]) => ps.map(p => `${p.id}@${p.start}`).join(",");
 const roundDone = (r: RoundState) => r.solved || r.failed;
-const roundPoints = (r: RoundState, k: number) => (r.solved ? (BASE_POINTS - r.stage) * MULTIPLIERS[k] : 0);
+const roundPoints = (r: RoundState, k: number) => (r.solved ? STAGE_POINTS[r.stage] * MULTIPLIERS[k] : 0);
 const totalOf = (rounds: RoundState[]) => rounds.reduce((s, r, k) => s + roundPoints(r, k), 0);
 
 function storageKey(dateKey: string, username?: string): string {
@@ -274,7 +284,7 @@ function useCountUp(target: number, ms = 600) {
     const step = (now: number) => {
       const k = Math.min(1, (now - t0) / ms);
       const v = start + (target - start) * (1 - Math.pow(1 - k, 3));
-      setValue(Math.round(v * 2) / 2);
+      setValue(Math.round(v));
       if (k < 1) raf = requestAnimationFrame(step); else { from.current = target; setValue(target); }
     };
     raf = requestAnimationFrame(step);
@@ -411,9 +421,8 @@ export default function CareerPath() {
   // The first clue opens every season he spent there; the next opens the rest.
   const firstClub = puzzle.rows.find(r => r.year === puzzle.start)?.club;
   const clubShown = (row: SeasonRow) => done || round.stage >= 2 || (round.stage >= 1 && row.club === firstClub);
-  // The backdrop picks up the colour of the clubs as they're revealed
-  const lastClub = puzzle.rows.find(r => r.year === puzzle.start + WINDOW - 1)?.club;
-  const tint = done || round.stage >= 2 ? clubColour(lastClub || "") : round.stage >= 1 ? clubColour(firstClub || "") : "#8b5cf6";
+  // The backdrop takes the round's colour, warming up as the multiplier grows
+  const tint = ROUND_THEMES[current].to;
 
   const header = (
     <div className="w-full flex items-center justify-between mb-4">
@@ -461,12 +470,12 @@ export default function CareerPath() {
               <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent">Career Path</span>
             </h1>
             <p className="text-sm text-muted-foreground mb-6">Name the player from five seasons of their Premier League numbers</p>
-            <div className="flex justify-center gap-2 mb-6">
-              {MULTIPLIERS.map((m, i) => (
+            <div className="flex justify-center gap-3 mb-6">
+              {MULTIPLIERS.map((_, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.06 }}
-                  className="w-14 rounded-xl border border-violet-400/30 bg-violet-500/10 py-2">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Rd {i + 1}</div>
-                  <div className="text-lg font-black text-violet-200">×{m}</div>
+                  className="flex flex-col items-center gap-1.5">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white" style={{ background: roundGradient(i) }}>{i + 1}</div>
+                  <MultBadge k={i} />
                 </motion.div>
               ))}
             </div>
@@ -474,7 +483,7 @@ export default function CareerPath() {
               <RuleItem icon="📊" text="Five players a day, each harder than the last. You see five straight Premier League seasons of goals, assists and apps, with the clubs hidden" />
               <RuleItem icon="🔓" text="Five guesses per player. Every wrong one unlocks a clue: their first club, then all their clubs, then position & nation, then initials" />
               <RuleItem icon="🧭" text="Wrong guesses show what they share with the answer: clubs, era, nation, more or fewer goals" />
-              <RuleItem icon="🏆" text={`5 points first time, down to 1 on your last guess, times the round's multiplier. ${MAX_SCORE} is a perfect day`} />
+              <RuleItem icon="🏆" text={`10 points first time, then 8, 6, 4, 2, times the round's multiplier. ${MAX_SCORE} is a perfect day`} />
             </div>
             <Button className="w-full text-lg py-6 shadow-xl shadow-fuchsia-500/20 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold border-violet-300/50"
               onClick={() => setShowRules(false)}>
@@ -488,7 +497,7 @@ export default function CareerPath() {
   }
 
   const years = Array.from({ length: WINDOW }, (_, i) => puzzle.start + i);
-  const prize = (BASE_POINTS - round.stage) * MULTIPLIERS[current];
+  const prize = STAGE_POINTS[round.stage] * MULTIPLIERS[current];
 
   // --- Playing Screen ---
   return (
@@ -519,12 +528,20 @@ export default function CareerPath() {
         {/* Round, points and clue ladder in one panel */}
         <div className="w-full mt-3 rounded-2xl border border-white/10 bg-card/60 px-4 pt-3 pb-2.5">
           <div className="flex items-baseline justify-between">
-            <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Round {current + 1} <span className="text-violet-300">×{MULTIPLIERS[current]}</span></div>
-            <div className="flex items-baseline gap-1">
-              <motion.span key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.3 }} animate={{ scale: 1 }}
-                className="text-2xl font-black tabular-nums text-white">{done ? fmtPts(roundPoints(round, current)) : fmtPts(prize)}</motion.span>
-              <span className="text-xs text-muted-foreground">{done ? (round.solved ? "won" : "pts") : "pts"}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Round {current + 1}</span>
+              <MultBadge k={current} />
             </div>
+            <motion.div key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="flex items-baseline gap-1 origin-right">
+              {done && !round.solved ? (
+                <span className="text-sm font-bold text-red-300">Missed · 0 pts</span>
+              ) : (
+                <>
+                  <span className="text-2xl font-black tabular-nums text-white">{done ? `+${fmtPts(roundPoints(round, current))}` : fmtPts(prize)}</span>
+                  <span className="text-xs text-muted-foreground">pts</span>
+                </>
+              )}
+            </motion.div>
           </div>
           <div className="grid grid-cols-5 gap-1.5 mt-2">
             {CLUES.map((c, i) => {
@@ -617,38 +634,40 @@ export default function CareerPath() {
   );
 }
 
-// Soft colour wash behind everything, shifting to the latest revealed club's colour
+// Soft colour wash behind everything, in the current round's colour
 function Backdrop({ tint }: { tint: string }) {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <motion.div className="absolute -top-1/3 left-1/2 -translate-x-1/2 w-[140%] h-2/3 rounded-full blur-3xl"
-        animate={{ backgroundColor: tint, opacity: 0.16 }} transition={{ duration: 1.2 }} />
+        animate={{ backgroundColor: tint, opacity: 0.18 }} transition={{ duration: 1.2 }} />
       <div className="absolute bottom-0 -right-1/4 w-2/3 h-1/2 rounded-full blur-3xl bg-fuchsia-600/10" />
       <div className="absolute bottom-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl bg-violet-700/10" />
     </div>
   );
 }
 
+// The day's five rounds: number in the circle, multiplier badge underneath
 function RoundTrack({ rounds, current, total }: { rounds: RoundState[]; current: number; total: number }) {
   return (
-    <div className="w-full flex items-center gap-3">
-      <div className="flex-1 flex items-center">
+    <div className="w-full flex items-start gap-2">
+      <div className="flex-1 flex items-start">
         {rounds.map((r, i) => {
           const isCur = i === current;
-          const fill = r.solved ? "bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white border-transparent"
-            : r.failed ? "bg-red-500/20 text-red-300 border-red-500/50"
-            : isCur ? "bg-violet-500/20 text-white border-fuchsia-400" : "bg-card/40 text-muted-foreground border-white/10";
+          const style: React.CSSProperties = r.solved ? { background: roundGradient(i), borderColor: "transparent" }
+            : isCur && !r.failed ? { borderColor: ROUND_THEMES[i].to, boxShadow: `0 0 16px -2px ${ROUND_THEMES[i].to}` } : {};
           return (
-            <div key={i} className="flex items-center flex-1 last:flex-none">
-              <div className="relative">
-                <div className={`relative w-10 h-10 rounded-full border-2 flex flex-col items-center justify-center leading-none transition-all ${fill} ${isCur && !roundDone(r) ? "shadow-[0_0_16px_-2px_rgba(217,70,239,0.7)]" : ""}`}>
+            <div key={i} className="flex items-start flex-1 last:flex-none">
+              <div className="flex flex-col items-center gap-1">
+                <div style={style}
+                  className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${r.solved ? "text-white"
+                    : r.failed ? "bg-red-500/20 text-red-300 border-red-500/50" : isCur ? "bg-white/[0.06] text-white" : "bg-card/40 text-muted-foreground border-white/10"}`}>
                   {r.solved ? <Check className="w-4 h-4" /> : r.failed ? <X className="w-4 h-4" /> : <span className="text-sm font-black">{i + 1}</span>}
-                  <span className="text-[8px] font-bold mt-0.5 opacity-80">×{MULTIPLIERS[i]}</span>
                 </div>
+                <MultBadge k={i} dim={!isCur && !roundDone(r)} />
               </div>
               {i < rounds.length - 1 && (
-                <div className="flex-1 h-0.5 mx-1 rounded-full bg-white/10 overflow-hidden">
-                  <motion.div className="h-full bg-gradient-to-r from-violet-400 to-fuchsia-400"
+                <div className="flex-1 h-0.5 mx-1 mt-[17px] rounded-full bg-white/10 overflow-hidden">
+                  <motion.div className="h-full" style={{ background: `linear-gradient(90deg, ${ROUND_THEMES[i].to}, ${ROUND_THEMES[i + 1].from})` }}
                     animate={{ width: roundDone(r) ? "100%" : "0%" }} transition={{ duration: 0.5 }} />
                 </div>
               )}
@@ -656,11 +675,21 @@ function RoundTrack({ rounds, current, total }: { rounds: RoundState[]; current:
           );
         })}
       </div>
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 pl-1">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Score</div>
-        <div className="text-xl font-black tabular-nums text-fuchsia-200">{fmtPts(total)}</div>
+        <div className="text-xl font-black tabular-nums text-white">{fmtPts(total)}</div>
       </div>
     </div>
+  );
+}
+
+// "×2" chip in the round's colour
+function MultBadge({ k, dim = false, onDark = false }: { k: number; dim?: boolean; onDark?: boolean }) {
+  return (
+    <span className={`inline-flex items-center px-1.5 py-px rounded-md text-[10px] font-black leading-tight tabular-nums text-white ${dim ? "opacity-40" : ""} ${onDark ? "ring-1 ring-white/40" : ""}`}
+      style={{ background: roundGradient(k) }}>
+      ×{MULTIPLIERS[k]}
+    </span>
   );
 }
 
@@ -765,14 +794,14 @@ function AnswerCard({ puzzle, round, roundIndex, onNext, submitting }: {
         {round.solved && (
           <div className="text-right shrink-0">
             <div className="text-3xl font-black tabular-nums bg-gradient-to-r from-violet-200 to-fuchsia-300 bg-clip-text text-transparent">+{fmtPts(shown)}</div>
-            <div className="text-[10px] text-muted-foreground tabular-nums">{BASE_POINTS - round.stage} × {MULTIPLIERS[roundIndex]}</div>
+            <div className="flex items-center justify-end gap-1 text-[10px] text-muted-foreground tabular-nums">{STAGE_POINTS[round.stage]} <MultBadge k={roundIndex} /></div>
           </div>
         )}
       </div>
       <CareerBar id={puzzle.id} windowStart={puzzle.start} />
       <Button className="w-full mt-5 py-6 text-base bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold border-violet-300/50 shadow-lg shadow-fuchsia-500/20"
         onClick={onNext} disabled={submitting}>
-        {roundIndex < ROUNDS - 1 ? `Round ${roundIndex + 2} · ×${MULTIPLIERS[roundIndex + 1]}` : submitting ? "Submitting..." : "See your score"}
+        {roundIndex < ROUNDS - 1 ? <>Round {roundIndex + 2} <MultBadge k={roundIndex + 1} onDark /></> : submitting ? "Submitting..." : "See your score"}
         <ChevronRight className="w-5 h-5 ml-1" />
       </Button>
     </motion.div>
@@ -932,7 +961,7 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
             <motion.div key={pz.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.08 }}
               className="rounded-2xl border border-white/10 bg-card/60 backdrop-blur px-3.5 py-3">
               <div className="flex items-center justify-between">
-                <span className="font-bold"><span className="text-[10px] text-muted-foreground mr-2 uppercase tracking-wider">Rd {i + 1} ×{MULTIPLIERS[i]}</span>{PLAYERS.get(pz.id)?.displayName}</span>
+                <span className="font-bold inline-flex items-center gap-2"><MultBadge k={i} />{PLAYERS.get(pz.id)?.displayName}</span>
                 <span className="font-black tabular-nums">{resultEmoji(rounds[i])} +{fmtPts(roundPoints(rounds[i], i))}</span>
               </div>
               <CareerBar id={pz.id} windowStart={pz.start} />
