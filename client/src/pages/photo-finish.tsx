@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import photoPool from "@/data/photo-finish.json";
+import classicPool from "@/data/photo-finish-classics.json";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Trophy, ChevronRight, Info, Minus, Plus, ExternalLink, Share2, Check, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,12 @@ interface Photo {
   img: string;
   url: string;
   small: boolean;
+  classic?: boolean; // an iconic moment, from the BBC's 30 years in pictures
 }
 
 const POOL = photoPool as Photo[];
+// One iconic moment a day (Cantona's kick, Aguero v QPR...), dealt like the bands
+const CLASSICS = classicPool as Photo[];
 const ROUNDS = 10;
 const FIRST_SEASON = 1992;
 const LAST_SEASON = Math.max(...POOL.map(p => p.season));
@@ -108,12 +112,27 @@ function daysSinceEpoch(dateKey: string): number {
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(ey, em - 1, ed)) / 86400000);
 }
 
+function dealFrom(pool: Photo[], salt: string, n: number): Photo {
+  const cycle = Math.floor(n / pool.length);
+  const key = `${salt}:${cycle}`;
+  if (!dealCache.has(key)) {
+    const deal = [...pool];
+    shuffleInPlace(deal, mulberry32(hashString(`photofinish-v${ROUND_VERSION}-${salt}-${cycle}`)));
+    dealCache.set(key, deal);
+  }
+  return dealCache.get(key)![n - cycle * pool.length];
+}
+
 function photosFor(dateKey: string): Photo[] {
   const n = daysSinceEpoch(dateKey);
-  const picks = eraBands().map((b, k) => {
-    const cycle = Math.floor(n / b.length);
-    return bandDeal(k, cycle)[n - cycle * b.length];
-  });
+  const bands = eraBands();
+  const picks = bands.map((b, k) => bandDeal(k, Math.floor(n / b.length))[n - Math.floor(n / b.length) * b.length]);
+  // The day's classic takes the slot of its own era, so the spread of years holds
+  if (CLASSICS.length) {
+    const classic = dealFrom(CLASSICS, "classic", n);
+    const k = bands.findIndex(b => classic.date <= b[b.length - 1].date);
+    picks[k === -1 ? bands.length - 1 : k] = classic;
+  }
   shuffleInPlace(picks, mulberry32(hashString(`photofinish-day-${dateKey}`)));
   return picks;
 }
@@ -423,6 +442,7 @@ export default function PhotoFinish() {
 
             <div className="text-left space-y-3 mb-8">
               <RuleItem icon="📸" text={`${ROUNDS} photos from Premier League matches, each with its caption from the BBC match report`} />
+              <RuleItem icon="⭐" text="One a day is a classic: an iconic Premier League moment from 1992 onwards" />
               <RuleItem icon="📅" text="Slide to the season you think each photo was taken in, then lock it in" />
               <RuleItem icon="🎯" text={`Exact season scores ${POINTS[0]}. Then ${POINTS.slice(1).join(", ")} the further out you are. ${MAX_SCORE.toLocaleString()} is a perfect day`} />
               <RuleItem icon="📰" text="After each guess you'll see the match, the date and the report's opening line" />
@@ -570,13 +590,14 @@ export default function PhotoFinish() {
               transition={{ type: "spring", stiffness: 260, damping: 20, delay: animateReveal ? travelMs(off) / 1000 + 0.15 : 0 }}
               className="mt-3 rounded-md bg-[#f3ecdc] text-[#2a2620] px-4 pt-3 pb-3.5 shadow-xl shadow-black/50">
               <div className="flex justify-between border-b border-[#cfc4ad] pb-1.5 text-[10px] uppercase tracking-[0.14em] text-[#7a6f5c]">
-                <span>BBC Sport</span><span>{formatMatchDate(photo.date)}</span>
+                <span className={photo.classic ? "font-bold text-[#b07a00]" : ""}>{photo.classic ? "★ Classic moment" : "BBC Sport"}</span>
+                <span>{formatMatchDate(photo.date)}</span>
               </div>
               <h2 className="font-serif text-2xl font-semibold mt-2 mb-1.5 leading-tight">{photo.score}</h2>
               <p className="font-serif text-[15px] leading-relaxed">{photo.intro}</p>
               <a href={photo.url} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#8a5a00] hover:underline">
-                Read the match report <ExternalLink className="w-3 h-3" />
+                {photo.classic && !photo.url.endsWith(".stm") ? "30 years of the Premier League in pictures" : "Read the match report"} <ExternalLink className="w-3 h-3" />
               </a>
             </motion.div>
 
