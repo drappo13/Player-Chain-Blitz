@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Trophy, ChevronRight, Info, Minus, Plus, ExternalLink, Share2, Check, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playNeutral, playHighScore, playGameEnd, playComboCorrect } from "@/lib/sounds";
+import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, playBoostHit, playCrowdRoar } from "@/lib/sounds";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
@@ -192,6 +192,7 @@ export default function PhotoFinish() {
   const [guess, setGuess] = useState(2009);
   const [flashColor, setFlashColor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [confetti, setConfetti] = useState(0); // bumps on each spot-on guess to replay the burst
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [showRules, setShowRules] = useState(() => {
@@ -203,6 +204,7 @@ export default function PhotoFinish() {
   const score = scoreOf(photos, state.guesses);
   const photo = photos[round];
   const revealed = state.guesses.length > round;
+  const off = revealed ? Math.abs(state.guesses[round] - photo.season) : 0;
   const isFinished = state.submitted;
 
   useEffect(() => {
@@ -239,10 +241,13 @@ export default function PhotoFinish() {
     const off = Math.abs(guess - photo.season);
     setState(prev => ({ ...prev, guesses: [...prev.guesses, guess] }));
     if (off === 0) {
-      playComboCorrect(5);
-      buzz([30, 40, 30]);
+      playExactMatch();
+      playCrowdRoar();
+      setTimeout(playBoostHit, 260);
+      buzz([30, 40, 30, 40, 60]);
       setFlashColor("bg-emerald-400");
       setTimeout(() => setFlashColor(null), 300);
+      setConfetti(c => c + 1);
     } else if (off <= 2) {
       playCorrect();
       buzz(15);
@@ -355,13 +360,13 @@ export default function PhotoFinish() {
     );
   }
 
-  const off = revealed ? Math.abs(state.guesses[round] - photo.season) : 0;
 
   // --- Playing Screen ---
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {glow}
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-amber-400"} />
+      {confetti > 0 && <Confetti key={confetti} />}
       <style>{SLIDER_CSS}</style>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-16 flex-1">
@@ -403,6 +408,13 @@ export default function PhotoFinish() {
                 className={photo.small
                   ? "w-auto max-w-[80%] max-h-[340px] bg-white p-2 pb-7 rounded-sm shadow-2xl shadow-black/70 -rotate-[1.5deg]"
                   : "w-full h-auto"} />
+              {revealed && off === 0 && (
+                <motion.div initial={{ scale: 2.4, opacity: 0, rotate: -4 }} animate={{ scale: 1, opacity: 1, rotate: -12 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 16, delay: 0.15 }}
+                  className="absolute z-10 px-4 py-1.5 rounded-md border-[3px] border-emerald-400 bg-emerald-950/70 text-emerald-300 text-2xl font-black uppercase tracking-[0.15em] shadow-lg shadow-black/60 pointer-events-none">
+                  Spot on
+                </motion.div>
+              )}
               {/* Shutter flash as the photo lands */}
               <AnimatePresence>
                 {loaded && (
@@ -497,6 +509,38 @@ export default function PhotoFinish() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// A one-off burst of confetti from low in the middle of the screen, falling away.
+const CONFETTI_COLOURS = ["#fcd34d", "#fb923c", "#34d399", "#f3ecdc", "#fbbf24", "#6ee7b7"];
+const CONFETTI = Array.from({ length: 56 }, (_, i) => {
+  const a = -Math.PI / 2 + ((i % 14) / 13 - 0.5) * 2.3; // fan upwards
+  const v = 260 + ((i * 37) % 9) * 32;
+  return {
+    x: Math.cos(a) * v,
+    y: Math.sin(a) * v,
+    drift: ((i * 53) % 7 - 3) * 18,
+    rotate: ((i * 71) % 9 - 4) * 140,
+    w: 6 + (i % 3) * 2,
+    h: i % 4 === 0 ? 6 + (i % 3) * 2 : 12 + (i % 3) * 2,
+    round: i % 4 === 0,
+    colour: CONFETTI_COLOURS[i % CONFETTI_COLOURS.length],
+    delay: (i % 6) * 0.02,
+  };
+});
+
+function Confetti() {
+  return (
+    <div className="fixed left-1/2 top-[62%] z-50 pointer-events-none">
+      {CONFETTI.map((c, i) => (
+        <motion.span key={i} className="absolute block"
+          style={{ width: c.w, height: c.h, background: c.colour, borderRadius: c.round ? "50%" : 2 }}
+          initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+          animate={{ x: [0, c.x, c.x + c.drift], y: [0, c.y, c.y + 520], rotate: [0, c.rotate, c.rotate * 2], opacity: [1, 1, 0] }}
+          transition={{ duration: 1.9, delay: c.delay, times: [0, 0.32, 1], ease: ["easeOut", "easeIn"] }} />
+      ))}
     </div>
   );
 }
