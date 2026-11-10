@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, Trophy, ChevronRight, Info, Minus, Plus, ExternalLink, Share2, Check, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, playBoostHit, playCrowdRoar } from "@/lib/sounds";
+import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, playBoostHit, playCrowdRoar, playComboCorrect, playTick } from "@/lib/sounds";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
@@ -180,6 +180,38 @@ const formatMatchDate = (dateStr: string) => {
   return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 };
 
+// Counts a number towards `target` (ease-out), starting from `initial` or from
+// wherever it last was. `onStep` fires on each whole-number change, for ticks.
+function useTween(target: number, ms: number, opts: { delay?: number; initial?: number; onStep?: (v: number) => void } = {}) {
+  const [value, setValue] = useState(opts.initial ?? target);
+  const current = useRef(opts.initial ?? target);
+  const onStep = useRef(opts.onStep);
+  onStep.current = opts.onStep;
+  const delay = opts.delay ?? 0;
+  useEffect(() => {
+    const from = current.current;
+    if (from === target) return;
+    let raf = 0;
+    let start = 0;
+    const step = (now: number) => {
+      if (!start) start = now;
+      const k = ms <= 0 ? 1 : Math.min(1, (now - start - delay) / ms);
+      if (k >= 0) {
+        const v = Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3)));
+        if (v !== current.current) { current.current = v; setValue(v); onStep.current?.(v); }
+      }
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms, delay]);
+  return value;
+}
+
+// How long the real season's marker takes to travel from the guess: longer
+// misses take a little longer, so the ticks have room to run.
+const travelMs = (off: number) => Math.min(250 + off * 70, 1200);
+
 export default function PhotoFinish() {
   const [, navigate] = useLocation();
   const { user } = useUser();
@@ -192,7 +224,12 @@ export default function PhotoFinish() {
   const [guess, setGuess] = useState(2009);
   const [flashColor, setFlashColor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [confetti, setConfetti] = useState(0); // bumps on each spot-on guess to replay the burst
+  const [burst, setBurst] = useState<{ id: number; big: boolean } | null>(null);
+  const [floatPts, setFloatPts] = useState<{ id: number; value: number } | null>(null);
+  const [rankUp, setRankUp] = useState<string | null>(null);
+  const [animateReveal, setAnimateReveal] = useState(false); // false when resuming onto a reveal
+  const [landed, setLanded] = useState(true); // the current reveal's marker has reached the answer
+
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [showRules, setShowRules] = useState(() => {
@@ -202,6 +239,9 @@ export default function PhotoFinish() {
   const checkedRemote = useRef(false);
 
   const score = scoreOf(photos, state.guesses);
+  // The header total waits for the reveal to land before counting up
+  const lastOff = state.guesses.length ? Math.abs(state.guesses[state.guesses.length - 1] - photos[state.guesses.length - 1].season) : 0;
+  const shownScore = useTween(score, 600, { delay: animateReveal ? travelMs(lastOff) + 250 : 0 });
   const photo = photos[round];
   const revealed = state.guesses.length > round;
   const off = revealed ? Math.abs(state.guesses[round] - photo.season) : 0;
@@ -239,23 +279,47 @@ export default function PhotoFinish() {
   const lockIn = useCallback(() => {
     if (revealed || isFinished) return;
     const off = Math.abs(guess - photo.season);
+    const pts = pointsFor(off);
+    setAnimateReveal(true);
+    setLanded(false);
     setState(prev => ({ ...prev, guesses: [...prev.guesses, guess] }));
-    if (off === 0) {
-      playExactMatch();
-      playCrowdRoar();
-      setTimeout(playBoostHit, 260);
-      buzz([30, 40, 30, 40, 60]);
-      setFlashColor("bg-emerald-400");
-      setTimeout(() => setFlashColor(null), 300);
-      setConfetti(c => c + 1);
-    } else if (off <= 2) {
-      playCorrect();
-      buzz(15);
-    } else {
-      playNeutral();
-      buzz(10);
-    }
-  }, [revealed, isFinished, guess, photo]);
+    // Everything lands when the marker arrives on the real season
+    setTimeout(() => {
+      setLanded(true);
+      if (off === 0) {
+        playExactMatch();
+        playCrowdRoar();
+        setTimeout(playBoostHit, 260);
+        buzz([30, 40, 30, 40, 60]);
+        setFlashColor("bg-emerald-400");
+        setTimeout(() => setFlashColor(null), 300);
+        setBurst({ id: Date.now(), big: true });
+      } else if (off === 1) {
+        playComboCorrect(4);
+        buzz([20, 30, 20]);
+        setBurst({ id: Date.now(), big: false });
+      } else if (off === 2) {
+        playCorrect();
+        buzz(15);
+      } else {
+        playNeutral();
+        buzz(10);
+      }
+      if (pts > 0) {
+        setFloatPts({ id: Date.now(), value: pts });
+        setTimeout(() => setFloatPts(null), 1300);
+      }
+      const before = rankFor(score);
+      const after = rankFor(score + pts);
+      if (after.min > before.min) {
+        setTimeout(() => {
+          playBoostHit();
+          setRankUp(after.label);
+          setTimeout(() => setRankUp(null), 1900);
+        }, off === 0 ? 1300 : 700);
+      }
+    }, travelMs(off));
+  }, [revealed, isFinished, guess, photo, score]);
 
   const next = useCallback(() => {
     if (round >= ROUNDS - 1) {
@@ -265,11 +329,13 @@ export default function PhotoFinish() {
     setRound(r => r + 1);
     setGuess(2009);
     setLoaded(false);
+    setBurst(null);
     window.scrollTo({ top: 0 });
   }, [round, state.guesses, handleFinish]);
 
   const nudge = (d: number) => {
     setGuess(g => Math.min(LAST_SEASON, Math.max(FIRST_SEASON, g + d)));
+    playTick();
     buzz(4);
   };
 
@@ -366,7 +432,17 @@ export default function PhotoFinish() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {glow}
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-amber-400"} />
-      {confetti > 0 && <Confetti key={confetti} />}
+      {burst && <Confetti key={burst.id} big={burst.big} />}
+      <AnimatePresence>
+        {rankUp && (
+          <motion.div key={rankUp} initial={{ opacity: 0, y: -30, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-400 text-amber-950 shadow-2xl shadow-amber-500/40 text-center pointer-events-none">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">New rank</div>
+            <div className="text-xl font-black whitespace-nowrap">{rankUp}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <style>{SLIDER_CSS}</style>
 
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-16 flex-1">
@@ -374,15 +450,26 @@ export default function PhotoFinish() {
 
         <div className="w-full flex items-center justify-between mb-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Photo {round + 1} of {ROUNDS}</div>
-          <motion.div key={score} initial={{ scale: 1.25 }} animate={{ scale: 1 }}
-            className="text-sm font-bold tabular-nums text-amber-300">{score} pts</motion.div>
+          <div className="relative">
+            <motion.div key={shownScore === score ? score : "counting"} initial={{ scale: 1.3 }} animate={{ scale: 1 }}
+              className="text-sm font-bold tabular-nums text-amber-300">{shownScore} pts</motion.div>
+            <AnimatePresence>
+              {floatPts && (
+                <motion.span key={floatPts.id} initial={{ opacity: 0, y: 6, scale: 0.8 }} animate={{ opacity: 1, y: -18, scale: 1.1 }}
+                  exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.5 }}
+                  className="absolute right-0 -top-1 text-sm font-black text-emerald-300 pointer-events-none">+{floatPts.value}</motion.span>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
         <div className="w-full flex gap-1 mb-3">
           {photos.map((p, i) => {
-            const g = state.guesses[i];
+            const g = i === round && !landed ? undefined : state.guesses[i];
             const o = g === undefined ? null : Math.abs(g - p.season);
             return (
-              <div key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${
+              <motion.div key={`${i}-${o === null ? "open" : "done"}`} initial={o === null ? false : { scaleY: 3 }} animate={{ scaleY: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                className={`h-1.5 flex-1 rounded-full transition-colors ${
                 o === null ? (i === round ? "bg-amber-400/40" : "bg-muted")
                 : o === 0 ? "bg-emerald-400" : o <= 2 ? "bg-amber-300" : o <= 4 ? "bg-orange-400" : "bg-red-400/70"}`} />
             );
@@ -410,7 +497,7 @@ export default function PhotoFinish() {
                   : "w-full h-auto"} />
               {revealed && off === 0 && (
                 <motion.div initial={{ scale: 2.4, opacity: 0, rotate: -4 }} animate={{ scale: 1, opacity: 1, rotate: -12 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 16, delay: 0.15 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 16, delay: animateReveal ? travelMs(0) / 1000 + 0.05 : 0 }}
                   className="absolute z-10 px-4 py-1.5 rounded-md border-[3px] border-emerald-400 bg-emerald-950/70 text-emerald-300 text-2xl font-black uppercase tracking-[0.15em] shadow-lg shadow-black/60 pointer-events-none">
                   Spot on
                 </motion.div>
@@ -443,7 +530,7 @@ export default function PhotoFinish() {
                 <Minus className="w-5 h-5" />
               </button>
               <input type="range" min={FIRST_SEASON} max={LAST_SEASON} value={guess} aria-label="Season"
-                onChange={e => { setGuess(Number(e.target.value)); buzz(4); }}
+                onChange={e => { setGuess(Number(e.target.value)); playTick(); buzz(4); }}
                 className="pf-slider flex-1" />
               <button type="button" onClick={() => nudge(1)} aria-label="Later season"
                 className="h-11 w-11 shrink-0 rounded-xl border border-border bg-background/60 flex items-center justify-center active:scale-95 transition">
@@ -464,31 +551,10 @@ export default function PhotoFinish() {
           </div>
         ) : (
           <div className="w-full mt-4">
-            <div className="rounded-2xl border border-border bg-card/60 px-4 pt-3 pb-3">
-              <div className="relative h-16 mx-2">
-                <div className="absolute inset-x-0 top-[27px] h-1.5 rounded-full bg-muted" />
-                <motion.div className="absolute top-[2px] z-10 -translate-x-1/2 text-center text-xs font-bold text-amber-300 whitespace-nowrap"
-                  initial={{ left: pos(state.guesses[round]) }} animate={{ left: pos(photo.season) }}
-                  transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.1 }}>
-                  {seasonLabel(photo.season)}
-                  <div className="w-5 h-5 mx-auto mt-0.5 rounded-full bg-amber-400 border-[3px] border-background" />
-                </motion.div>
-                <div className="absolute top-[24px] -translate-x-1/2 text-center text-[11px] font-semibold text-muted-foreground whitespace-nowrap"
-                  style={{ left: pos(state.guesses[round]) }}>
-                  <div className="w-3.5 h-3.5 mx-auto mb-1 rounded-full bg-muted-foreground border-[3px] border-background" />
-                  You: {seasonLabel(state.guesses[round])}
-                </div>
-              </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-muted-foreground">{offMessage(off)}</span>
-                <motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 14, delay: 0.35 }}
-                  className={`text-3xl font-black tabular-nums ${offColour(off)}`}>+{pointsFor(off)}</motion.span>
-              </div>
-            </div>
+            <RevealPanel key={round} guess={state.guesses[round]} season={photo.season} animate={animateReveal} />
 
             <motion.div initial={{ opacity: 0, y: 14, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0.4 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.25 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: animateReveal ? travelMs(off) / 1000 + 0.15 : 0 }}
               className="mt-3 rounded-md bg-[#f3ecdc] text-[#2a2620] px-4 pt-3 pb-3.5 shadow-xl shadow-black/50">
               <div className="flex justify-between border-b border-[#cfc4ad] pb-1.5 text-[10px] uppercase tracking-[0.14em] text-[#7a6f5c]">
                 <span>BBC Sport</span><span>{formatMatchDate(photo.date)}</span>
@@ -513,7 +579,50 @@ export default function PhotoFinish() {
   );
 }
 
+// The guess-vs-answer timeline: the real season's marker slides from your guess to
+// the answer, ticking through each season on the way, then the points count up.
+function RevealPanel({ guess, season, animate }: { guess: number; season: number; animate: boolean }) {
+  const off = Math.abs(guess - season);
+  const ms = animate ? travelMs(off) : 0;
+  const shownSeason = useTween(season, ms, { initial: animate ? guess : season, delay: 80, onStep: () => playTick() });
+  const pts = pointsFor(off);
+  const shownPts = useTween(pts, animate ? 450 : 0, { initial: animate ? 0 : pts, delay: ms + 80 });
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 px-4 pt-3 pb-3">
+      <div className="relative h-16 mx-2">
+        <div className="absolute inset-x-0 top-[27px] h-1.5 rounded-full bg-muted" />
+        {/* the stretch between guess and answer */}
+        <motion.div className={`absolute top-[27px] h-1.5 rounded-full ${off === 0 ? "bg-emerald-400/60" : "bg-amber-400/35"}`}
+          initial={{ left: pos(guess), width: 0 }}
+          animate={{ left: pos(Math.min(guess, season)), width: `calc(${pos(Math.max(guess, season))} - ${pos(Math.min(guess, season))})` }}
+          transition={{ duration: ms / 1000, delay: 0.08, ease: [0.33, 1, 0.68, 1] }} />
+        <div className="absolute top-[24px] -translate-x-1/2 text-center text-[11px] font-semibold text-muted-foreground whitespace-nowrap"
+          style={{ left: pos(guess) }}>
+          <div className="w-3.5 h-3.5 mx-auto mb-1 rounded-full bg-muted-foreground border-[3px] border-background" />
+          You: {seasonLabel(guess)}
+        </div>
+        <motion.div className="absolute top-[2px] z-10 -translate-x-1/2 text-center text-xs font-bold text-amber-300 whitespace-nowrap"
+          initial={{ left: pos(animate ? guess : season) }} animate={{ left: pos(season) }}
+          transition={{ duration: ms / 1000, delay: 0.08, ease: [0.33, 1, 0.68, 1] }}>
+          {seasonLabel(shownSeason)}
+          <motion.div className={`w-5 h-5 mx-auto mt-0.5 rounded-full border-[3px] border-background ${off === 0 ? "bg-emerald-400" : "bg-amber-400"}`}
+            initial={false} animate={animate ? { scale: [1, 1, 1.5, 1] } : {}}
+            transition={{ duration: ms / 1000 + 0.35, times: [0, 0.7, 0.85, 1] }} />
+        </motion.div>
+      </div>
+      <div className="flex items-baseline justify-between">
+        <motion.span initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: ms / 1000 }}
+          className="text-sm text-muted-foreground">{offMessage(off)}</motion.span>
+        <motion.span initial={animate ? { scale: 0.4, opacity: 0 } : false} animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 12, delay: ms / 1000 }}
+          className={`text-3xl font-black tabular-nums ${offColour(off)}`}>+{shownPts}</motion.span>
+      </div>
+    </div>
+  );
+}
+
 // A one-off burst of confetti from low in the middle of the screen, falling away.
+const i2amber = (c: string) => (c === "#34d399" || c === "#6ee7b7" ? "#fcd34d" : c);
 const CONFETTI_COLOURS = ["#fcd34d", "#fb923c", "#34d399", "#f3ecdc", "#fbbf24", "#6ee7b7"];
 const CONFETTI = Array.from({ length: 56 }, (_, i) => {
   const a = -Math.PI / 2 + ((i % 14) / 13 - 0.5) * 2.3; // fan upwards
@@ -531,10 +640,12 @@ const CONFETTI = Array.from({ length: 56 }, (_, i) => {
   };
 });
 
-function Confetti() {
+function Confetti({ big }: { big: boolean }) {
+  // A near miss gets a small amber sparkle instead of the full burst
+  const pieces = big ? CONFETTI : CONFETTI.filter((_, i) => i % 3 === 0).map(c => ({ ...c, x: c.x * 0.55, y: c.y * 0.55, colour: i2amber(c.colour) }));
   return (
     <div className="fixed left-1/2 top-[62%] z-50 pointer-events-none">
-      {CONFETTI.map((c, i) => (
+      {pieces.map((c, i) => (
         <motion.span key={i} className="absolute block"
           style={{ width: c.w, height: c.h, background: c.colour, borderRadius: c.round ? "50%" : 2 }}
           initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
@@ -572,6 +683,7 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
 }) {
   const total = scoreOf(photos, guesses);
   const rank = rankFor(total);
+  const shownTotal = useTween(total, 1200, { initial: 0, delay: 200 });
   const offs = photos.map((p, i) => (guesses[i] === undefined ? null : Math.abs(guesses[i] - p.season)));
   const [lbPeriod, setLbPeriod] = useState<DailyPeriod>("today");
   const { entries, loading } = useDailyLeaderboard("photofinish", lbPeriod, 10, 1000);
@@ -610,9 +722,16 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
             <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">Photo Finish</span>
             <span className="text-muted-foreground text-lg ml-2">— Complete</span>
           </h1>
-          <div className="text-5xl font-black tabular-nums text-amber-300">{total}</div>
+          <div className="text-5xl font-black tabular-nums text-amber-300">{shownTotal}</div>
           <div className="text-sm text-muted-foreground mt-1">out of {MAX_SCORE.toLocaleString()} · {offs.filter(o => o === 0).length} spot on</div>
-          <div className="text-2xl tracking-[0.2em] mt-3">{offs.map(o => (o === null ? "⬜" : offSquare(o))).join("")}</div>
+          <div className="flex justify-center gap-1.5 text-2xl mt-3">
+            {offs.map((o, i) => (
+              <motion.span key={i} initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.25 + i * 0.09 }}>
+                {o === null ? "⬜" : offSquare(o)}
+              </motion.span>
+            ))}
+          </div>
           <div className="flex items-center justify-center gap-2 mt-3">
             <span className="text-sm font-bold px-3 py-1 rounded-full border bg-amber-500/10 border-amber-400/30 text-amber-300">{rank.label}</span>
             <button onClick={share}
