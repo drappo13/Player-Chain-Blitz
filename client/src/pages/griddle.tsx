@@ -34,10 +34,12 @@ const BIG_SIX = new Set(["Arsenal", "Chelsea", "Liverpool", "Tottenham", "Man Ut
 // Wrong guesses cost lives instead of points; at zero the day ends and the score is
 // submitted. Boards before LIVES_FROM keep the old points-penalty rules so a day is
 // never played under two rule sets.
-const LIVES = 20;
+const LIVES = 10;
 const LIVES_FROM = "2026-11-09";
-const LIFE_COST_ONE_CLUB = 1;
-const LIFE_COST_NO_CLUBS = 5;
+const LIFE_COST = 1;
+// Games saved before the cut from 20 lives carry no livesMax; they keep the lives
+// already spent, but never drop to zero from the change alone.
+const OLD_LIVES = 20;
 
 // --- Progress tiers (% of total valid answers) ---
 const TIERS = [
@@ -325,6 +327,7 @@ interface GriddleState {
   coverageLevel: number; // next level to achieve (1 = all clubs hit 1x, 2 = all hit 2x, etc.)
   submitted: boolean;
   livesLeft: number;
+  livesMax: number;
 }
 
 function makeBoardHash(clubs: string[]): string {
@@ -356,7 +359,10 @@ function loadState(dateKey: string, clubs: string[], username?: string): Griddle
             clubHits: parsed.clubHits || {},
             submitted: parsed.submitted || false,
             coverageLevel: parsed.coverageLevel || 1,
-            livesLeft: parsed.livesLeft ?? LIVES,
+            livesLeft: parsed.livesLeft == null ? LIVES
+              : parsed.livesMax == null && parsed.livesLeft > 0 ? Math.max(1, parsed.livesLeft - (OLD_LIVES - LIVES))
+              : parsed.livesLeft,
+            livesMax: LIVES,
           };
         }
       }
@@ -372,6 +378,7 @@ function loadState(dateKey: string, clubs: string[], username?: string): Griddle
     coverageLevel: 1,
     submitted: false,
     livesLeft: LIVES,
+    livesMax: LIVES,
   };
 }
 
@@ -588,8 +595,8 @@ export default function Griddle() {
       if (matchCount === 1) {
         playNeutral();
         if (livesMode) {
-          showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board`, lives: LIFE_COST_ONE_CLUB });
-          loseLives(LIFE_COST_ONE_CLUB);
+          showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board`, lives: LIFE_COST });
+          loseLives(LIFE_COST);
         } else {
           showFeedbackMsg({ type: "neutral", message: `${playerName} only played for 1 club on the board` });
         }
@@ -598,8 +605,8 @@ export default function Griddle() {
         setFlashColor("bg-red-500");
         setTimeout(() => setFlashColor(null), 300);
         if (livesMode) {
-          showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, lives: LIFE_COST_NO_CLUBS });
-          loseLives(LIFE_COST_NO_CLUBS);
+          showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, lives: LIFE_COST });
+          loseLives(LIFE_COST);
         } else {
           showFeedbackMsg({ type: "wrong", message: `${playerName} didn't play for any clubs on the board`, points: -1 });
           setState(prev => ({ ...prev, score: Math.max(0, prev.score - 1) }));
@@ -781,7 +788,7 @@ export default function Griddle() {
               <RuleItem icon="📈" text="Players for 3+ clubs score more" />
               <RuleItem icon="🔗" text="Hitting adjacent tiles, full rows, columns & diagonals for bonus points!" />
               {livesMode ? (
-                <RuleItem icon="♥" text={`You have ${LIVES} lives. A player with only 1 club on the board costs ${LIFE_COST_ONE_CLUB}, a player with none costs ${LIFE_COST_NO_CLUBS}. Typos and repeats are free. Run out and your score is submitted.`} />
+                <RuleItem icon="♥" text={`You have ${LIVES} lives. Each player who didn't play for 2 board clubs costs ${LIFE_COST}. Typos and repeats are free. Run out and your score is submitted.`} />
               ) : (
                 <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
               )}
@@ -888,8 +895,8 @@ export default function Griddle() {
                 transition={{ duration: 0.35 }}
                 aria-label={`${state.livesLeft} lives left`}
                 className={`mt-0.5 text-xs font-bold tabular-nums whitespace-nowrap px-2 py-0.5 rounded-full border ${
-                  state.livesLeft <= 5 ? "text-red-300 bg-red-500/15 border-red-500/40"
-                  : state.livesLeft <= 10 ? "text-amber-300 bg-amber-500/10 border-amber-500/30"
+                  state.livesLeft <= 3 ? "text-red-300 bg-red-500/15 border-red-500/40"
+                  : state.livesLeft <= 6 ? "text-amber-300 bg-amber-500/10 border-amber-500/30"
                   : "text-rose-200/90 bg-rose-500/10 border-rose-500/20"}`}>
                 ♥ {state.livesLeft}
               </motion.div>
