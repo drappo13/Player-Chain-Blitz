@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type DailyGameSlug = "griddle" | "centrecircle" | "photofinish";
+export type DailyGameSlug = "griddle" | "centrecircle" | "photofinish" | "careerpath";
 
 export interface DailyScoreDoc {
   username: string;

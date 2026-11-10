@@ -11,6 +11,7 @@ export type GameSlug =
   | "griddle"
   | "centrecircle"
   | "photofinish"
+  | "careerpath"
   | "arsenal-champions-2026";
 
 export async function saveScore(

@@ -20,6 +20,7 @@ const ClubLadder = lazy(() => import("@/pages/club-ladder"));
 const Griddle = lazy(() => import("@/pages/griddle"));
 const CentreCircle = lazy(() => import("@/pages/centre-circle"));
 const PhotoFinish = lazy(() => import("@/pages/photo-finish"));
+const CareerPath = lazy(() => import("@/pages/career-path"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const ArsenalChampions = lazy(() => import("@/pages/arsenal-champions"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -123,6 +124,7 @@ function Router() {
         <Route path="/griddle" component={Griddle} />
         <Route path="/centrecircle" component={CentreCircle} />
         <Route path="/photofinish" component={PhotoFinish} />
+        <Route path="/careerpath" component={CareerPath} />
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/arsenal-pl-champions-2026" component={ArsenalChampions} />
         <Route component={NotFound} />

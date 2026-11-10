@@ -22,6 +22,7 @@ const ALL_GAMES: GameSlug[] = [
   "griddle",
   "centrecircle",
   "photofinish",
+  "careerpath",
 ];
 
 const CACHE_KEY_PREFIX = "pcb-stats-";
