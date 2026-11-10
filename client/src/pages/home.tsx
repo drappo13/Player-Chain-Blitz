@@ -43,7 +43,7 @@ const footballGames: GameCard[] = [
     iconBorder: "border-green-500/20",
     title: ["Centre", "Circle"],
     titleGradient: "from-green-400 to-emerald-300",
-    description: "Daily letters around a centre spot. Spell every PL surname you can — all must use the middle one.",
+    description: "Daily letters around a centre spot. Spell every PL surname you can — use the middle letter for double points.",
     playColor: "text-green-400",
   },
   {
