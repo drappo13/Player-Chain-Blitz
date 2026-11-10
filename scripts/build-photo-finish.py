@@ -1,3 +1,8 @@
+# Builds client/src/data/photo-finish.json for Photo Finish.
+# Reads lists of BBC match report URLs (links.json etc., gathered from Wikipedia club-season
+# pages; not kept in the repo) plus BBC's fixtures pages for 2024/25 on, and keeps reports
+# with a real photo (jpg, not a stats graphic), its caption, the score and the intro.
+# Usage: python3 build-photo-finish.py <out.json>
 # Build client/src/data/photo-finish.json: ~4 BBC PL match reports per season, each with
 # a real match photo (jpg, not a graphic), its own caption, the score, date and intro.
 import json,urllib.request,urllib.parse,re,time,random,html,sys
