@@ -497,9 +497,10 @@ export default function CareerPath() {
 
       {/* Centred by a full-width row: framer's transform would override a translate-x */}
       <div className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-        <AnimatePresence>
+        {/* wait: an outgoing toast would otherwise sit beside the new one and push it off-centre */}
+        <AnimatePresence mode="wait">
           {toast && (
-            <motion.div key={toast.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12 }}
+            <motion.div key={toast.id} initial={{ opacity: 0, y: -20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -12, transition: { duration: 0.12 } }}
               transition={{ type: "spring", stiffness: 500, damping: 26 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-fuchsia-500 text-white text-sm font-bold shadow-xl shadow-fuchsia-500/40 max-w-full">
               <Unlock className="w-4 h-4 shrink-0" /> <span className="truncate">{toast.text}</span>
