@@ -63,16 +63,16 @@ const CLUB_COLOURS: Record<string, string> = {
   Arsenal: "#EF0107", "Aston Villa": "#7B1C46", Barnsley: "#D71920", Birmingham: "#1B3F95", Blackburn: "#009EE0",
   Blackpool: "#F68712", Bolton: "#2B4A9B", Bournemouth: "#DA291C", Bradford: "#8A2440", Brentford: "#E30613",
   Brighton: "#0057B8", Burnley: "#7A2050", Cardiff: "#0070B5", Charlton: "#D4021D", Chelsea: "#034694",
-  Coventry: "#59CBE8", "Crystal Palace": "#1B458F", Derby: "#4a4a4a", Everton: "#1240A8", Fulham: "#4a4a4a",
+  Coventry: "#59CBE8", "Crystal Palace": "#1B458F", Derby: "#e8e8e8", Everton: "#1240A8", Fulham: "#e8e8e8",
   Huddersfield: "#0E63AD", Hull: "#F5A12D", Ipswich: "#3A64A3", Leeds: "#1D428A", Leicester: "#003090",
   Liverpool: "#C8102E", Luton: "#F78F1E", "Man City": "#6CABDD", "Man Utd": "#DA291C", Middlesbrough: "#E11B22",
-  Newcastle: "#4a4a4a", Norwich: "#00A650", "Nottingham Forest": "#DD0000", Oldham: "#004A9C", Portsmouth: "#1a3fa0",
+  Newcastle: "#e8e8e8", Norwich: "#00A650", "Nottingham Forest": "#DD0000", Oldham: "#004A9C", Portsmouth: "#1a3fa0",
   QPR: "#1D5BA4", Reading: "#004494", "Sheffield Utd": "#EE2737", "Sheffield Wed": "#1E5BA8", Southampton: "#D71920",
   Stoke: "#E03A3E", Sunderland: "#EB172B", Swansea: "#e8e8e8", Swindon: "#DC161D", Tottenham: "#1d2f6b",
   Watford: "#FBEE23", "West Brom": "#1F3F7A", "West Ham": "#7A263A", Wigan: "#1D59AF", Wimbledon: "#2b4a8b",
   Wolves: "#FDB913",
 };
-const LIGHT_CLUBS = new Set(["Watford", "Wolves", "Man City", "Coventry", "Hull", "Luton", "Swansea"]);
+const LIGHT_CLUBS = new Set(["Watford", "Wolves", "Man City", "Coventry", "Hull", "Luton", "Swansea", "Fulham", "Newcastle", "Derby"]);
 const clubColour = (c: string) => CLUB_COLOURS[c] || "#666";
 const clubText = (c: string) => (LIGHT_CLUBS.has(c) ? "#111" : "#fff");
 
