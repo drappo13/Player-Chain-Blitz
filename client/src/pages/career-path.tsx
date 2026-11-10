@@ -352,7 +352,10 @@ export default function CareerPath() {
     setSubmitting(true);
     const t = totalOf(state.rounds);
     const solved = state.rounds.filter(r => r.solved).length;
-    if (user?.username && !IS_LOCAL && !state.submitted) await submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS);
+    // Don't hold the end screen hostage to a slow or blocked connection; the write keeps trying
+    if (user?.username && !IS_LOCAL && !state.submitted) {
+      await Promise.race([submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS), new Promise(r => setTimeout(r, 6000))]);
+    }
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
     if (t >= MAX_SCORE * 0.6) playHighScore(); else playGameEnd();
