@@ -43,7 +43,7 @@ print({t:len(v) for t,v in tiers.items()}, "size KB",os.path.getsize(f"{REPO}/cl
 for t in tiers:
     import random; random.seed(1); s=random.sample(tiers[t],8); print(t,[P[i]["displayName"]+f" {y}" for i,y in s])
 
-# --- Difficulty tiers (overwrites tiers above) ---
+# --- Difficulty tiers (replace the simple tiers above) ---
 import json,math,random
 REPO=__import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__),"../.."))
 C=json.load(open("careers.json")); ST={int(k):v for k,v in json.load(open("standings.json")).items()}
@@ -66,18 +66,20 @@ for k,p in C.items():
         clubs=len({r[0] for _,r in rows})
         yrs=NOW-(y+4)
         F=1.25*math.log1p(ga)+0.012*apps+2.0*strength+0.6*math.log(pp["totalAppearances"])+{"FWD":0.5,"MID":0.2,"DEF":0}[pos]-0.075*yrs+(0.25 if clubs>1 else 0)
-        if best is None or F>best[0]: best=(F,y,apps,ga,goals,strength,clubs,yrs)
+        if best is None or (clubs>1,F)>(best[6]>1,best[0]): best=(F,y,apps,ga,goals,strength,clubs,yrs)
     if best: cands.append((best[0],int(k),best[1:],pp["displayName"],pos))
 cands.sort(reverse=True)
 SIZES=[70,120,180,240,300]
-tiers=[];i=0
-for n in SIZES: tiers.append(cands[i:i+n]); i+=n
-print("eligible",len(cands),"used",i)
-random.seed(4)
-for t,T in enumerate(tiers,1):
-    s=random.sample(T,10)
-    print(f"T{t} F {T[-1][0]:.2f}-{T[0][0]:.2f}")
-    for F,k,(y,apps,ga,goals,st,cl,yrs),n,pos in s: print(f"    {n:<24} {pos} {y}-{str(y+5)[2:]} apps{apps:>4} G+A{ga:>4} str{st:.2f} clubs{cl}")
-json.dump([[[k,b[0]] for F,k,b,n,pos in T] for T in tiers],open("tiers_out.json","w"))
+ONE_CLUB_SHARE=0.2
+tiers=[];it=iter(cands)
+for n in SIZES:
+    T=[];one=0
+    for c in it:
+        single=c[2][5]==1
+        if single and one>=round(n*ONE_CLUB_SHARE): continue  # dropped: too many one-club spells already
+        T.append(c); one+=single
+        if len(T)==n: break
+    tiers.append(T)
+print("eligible",len(cands),"tiers",[len(T) for T in tiers],"one-club",[sum(c[2][5]==1 for c in T) for T in tiers])
 d=json.load(open(f"{REPO}/client/src/data/career-path.json")); d["tiers"]=[[[k,b[0]] for F,k,b,n,pos in T] for T in tiers]
 json.dump(d,open(f"{REPO}/client/src/data/career-path.json","w"),separators=(",",":"))
