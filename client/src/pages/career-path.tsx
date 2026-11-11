@@ -43,7 +43,7 @@ const ROUND_THEMES = [
   { from: "#f97316", to: "#f59e0b" },
 ];
 const roundGradient = (k: number) => `linear-gradient(135deg, ${ROUND_THEMES[k].from}, ${ROUND_THEMES[k].to})`;
-const ROUND_VERSION = 3;
+const ROUND_VERSION = 4;
 const CP_EPOCH = "2026-11-10";
 
 const CLUES = [
