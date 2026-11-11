@@ -17,4 +17,6 @@ export interface PLPlayer {
   totalAssists: number;
   /** Start year of the last PL season they played, e.g. 2025 for 2025/26 */
   lastSeason?: number | null;
+  /** Average monthly English Wikipedia views (late 2026): how well known the player is */
+  wikiViews?: number;
 }
