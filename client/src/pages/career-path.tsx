@@ -31,7 +31,7 @@ const PLAYERS = new Map((plPlayers as (PLPlayer & { playerId: number })[]).map(p
 const ROUNDS = 5;
 const MULTIPLIERS = [1, 1.5, 2, 2.5, 3];
 const WINDOW = 5;
-const MAX_STAGE = 4; // 0 = numbers only … 4 = initials; a miss at 4 ends the round (5 guesses)
+const MAX_STAGE = 4; // 0 = numbers only … 4 = whole career; a miss at 4 ends the round (5 guesses)
 // Points by guess (first guess 10 … fifth 2), even so every multiplier gives a whole number
 const STAGE_POINTS = [10, 8, 6, 4, 2];
 const MAX_SCORE = MULTIPLIERS.reduce((s, m) => s + m * STAGE_POINTS[0], 0);
@@ -49,10 +49,10 @@ const CP_EPOCH = "2026-11-10";
 
 const CLUES = [
   { label: "Numbers", full: "Just the numbers" },
-  { label: "1st club", full: "First club" },
-  { label: "All clubs", full: "All clubs" },
+  { label: "Yrs 1–2", full: "Clubs for seasons 1–2" },
+  { label: "Yrs 3–5", full: "Clubs for seasons 3–5" },
   { label: "Profile", full: "Position & nation" },
-  { label: "Initials", full: "Initials" },
+  { label: "Career", full: "Whole PL career" },
 ];
 
 const shortSeason = (y: number) => `${String(y).slice(2)}/${String(y + 1).slice(2)}`;
@@ -113,7 +113,6 @@ const broadPosition = (p?: PLPlayer) => {
     : /Forward|Striker/i.test(pos) ? "Forward" : /Midfielder|Winger/i.test(pos) ? "Midfielder" : pos || "Unknown";
 };
 
-const initialsOf = (name: string) => name.split(/\s+/).map(w => w[0]).join(".") + ".";
 
 // --- Daily answers ---
 // Round k comes from tier k. Each tier deals its pool in a seeded shuffle, one a day,
@@ -139,10 +138,13 @@ function daysSinceEpoch(dateKey: string): number {
 
 interface Puzzle { id: number; start: number; rows: SeasonRow[] }
 
+// Days dealt before the tiers were rebuilt, frozen so nobody's game changes mid-day
+const PINNED_DAYS: Record<string, [number, number][]> = {"2026-11-10": [[736198, 2014], [322321, 2015], [152954, 2008], [190129, 2022], [2098, 1993]], "2026-11-11": [[135654, 2021], [136908, 2011], [377868, 2010], [344449, 2015], [1126, 1993]]};
+
 function puzzlesFor(dateKey: string): Puzzle[] {
   const n = daysSinceEpoch(dateKey);
   return Array.from({ length: ROUNDS }, (_, k) => {
-    const [id, start] = dealFrom(k, n);
+    const [id, start] = PINNED_DAYS[dateKey]?.[k] ?? dealFrom(k, n);
     return { id, start, rows: careerOf(id).filter(r => r.year >= start && r.year < start + WINDOW) };
   });
 }
@@ -420,10 +422,8 @@ export default function CareerPath() {
     }
   };
 
-  // Rows within a season are sorted by apps, so this is the first season's main club.
-  // The first clue opens every season he spent there; the next opens the rest.
-  const firstClub = puzzle.rows.find(r => r.year === puzzle.start)?.club;
-  const clubShown = (row: SeasonRow) => done || round.stage >= 2 || (round.stage >= 1 && row.club === firstClub);
+  // The first clue opens seasons 1–2, the second seasons 3–5
+  const clubShown = (row: SeasonRow) => done || round.stage >= 2 || (round.stage >= 1 && row.year < puzzle.start + 2);
   // The backdrop takes the round's colour, warming up as the multiplier grows
   const tint = ROUND_THEMES[current].to;
 
@@ -484,7 +484,7 @@ export default function CareerPath() {
             </div>
             <div className="text-left space-y-3 mb-8">
               <RuleItem icon="📊" text="Five players a day, each harder than the last. You see five straight Premier League seasons of goals, assists and apps, with the clubs hidden" />
-              <RuleItem icon="🔓" text="Five guesses per player. Every wrong one unlocks a clue: their first club, then all their clubs, then position & nation, then initials" />
+              <RuleItem icon="🔓" text="Five guesses per player. Every wrong one unlocks a clue: the clubs for seasons 1–2, then seasons 3–5, then position & nation, then every PL club they played for" />
               <RuleItem icon="🧭" text="Wrong guesses show what they share with the answer: clubs, era, nation, more or fewer goals" />
               <RuleItem icon="🏆" text={`10 points first time, then 8, 6, 4, 2, times the round's multiplier. ${MAX_SCORE} is a perfect day`} />
             </div>
@@ -580,10 +580,7 @@ export default function CareerPath() {
                   transition={{ type: "spring", stiffness: 500, damping: 16, delay: i * 0.08 }}
                   className="px-3 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-100 border border-violet-400/40">{t}</motion.span>
               ))}
-              {(round.stage >= 4 || done) && (
-                <motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 500, damping: 16, delay: 0.16 }}
-                  className="px-3 py-1 rounded-full text-xs font-black tracking-[0.25em] bg-fuchsia-500/25 text-fuchsia-100 border border-fuchsia-400/50">{initialsOf(answer.displayName)}</motion.span>
-              )}
+              {round.stage >= 4 && !done && <CareerClue id={puzzle.id} />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -807,6 +804,36 @@ function AnswerCard({ puzzle, round, roundIndex, onNext, submitting }: {
         {roundIndex < ROUNDS - 1 ? <>Round {roundIndex + 2} <MultBadge k={roundIndex + 1} onDark /></> : submitting ? "Submitting..." : "See your score"}
         <ChevronRight className="w-5 h-5 ml-1" />
       </Button>
+    </motion.div>
+  );
+}
+
+// Final clue: every PL club with its years, and the first and last PL season
+function careerSpans(id: number) {
+  const spans: { club: string; from: number; to: number }[] = [];
+  for (const r of [...careerOf(id)].sort((a, b) => a.year - b.year)) {
+    const open = spans.find(s => s.club === r.club && r.year - s.to <= 1);
+    if (open) open.to = r.year; else spans.push({ club: r.club, from: r.year, to: r.year });
+  }
+  return spans.sort((a, b) => a.from - b.from || a.to - b.to);
+}
+
+function CareerClue({ id }: { id: number }) {
+  const spans = careerSpans(id);
+  const first = Math.min(...spans.map(s => s.from));
+  const last = Math.max(...spans.map(s => s.to));
+  return (
+    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="w-full mt-1 rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-2">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-200">PL career {shortSeason(first)} – {shortSeason(last)}</div>
+      <div className="flex flex-wrap gap-1.5 mt-1.5">
+        {spans.map((s, i) => (
+          <motion.span key={i} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 18, delay: i * 0.06 }}
+            className="px-2 py-0.5 rounded-md text-[11px] font-bold" style={{ background: clubColour(s.club), color: clubText(s.club) }}>
+            {s.club} {String(s.from).slice(2)}–{String(s.to + 1).slice(2)}
+          </motion.span>
+        ))}
+      </div>
     </motion.div>
   );
 }
