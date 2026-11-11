@@ -152,7 +152,7 @@ function daysSinceEpoch(dateKey: string): number {
 interface Puzzle { id: number; start: number; rows: SeasonRow[] }
 
 // Days dealt before the tiers were rebuilt, frozen so nobody's game changes mid-day
-const PINNED_DAYS: Record<string, [number, number][]> = {"2026-11-10": [[736198, 2014], [322321, 2015], [152954, 2008], [190129, 2022], [2098, 1993]], "2026-11-11": [[135654, 2021], [136908, 2011], [377868, 2010], [344449, 2015], [1126, 1993]]};
+const PINNED_DAYS: Record<string, [number, number][]> = {"2026-11-10": [[736198, 2014], [322321, 2015], [152954, 2008], [190129, 2022], [2098, 1993]]};
 
 function puzzlesFor(dateKey: string): Puzzle[] {
   const n = daysSinceEpoch(dateKey);
