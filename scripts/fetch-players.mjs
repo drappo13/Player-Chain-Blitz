@@ -173,6 +173,7 @@ function carryOverNames(fresh, previous) {
     f.displayName = old.displayName;
     f.firstName = old.firstName;
     f.lastName = old.lastName;
+    if (old.wikiViews != null) f.wikiViews = old.wikiViews; // from scripts/fetch-wiki-views.py, not the PL API
   }
   const unmatched = previous.filter((p) => !used.has(p)).map((p) => p.displayName);
   return { matched, renamed, unmatched };
