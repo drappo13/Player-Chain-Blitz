@@ -76,6 +76,20 @@ const LIGHT_CLUBS = new Set(["Watford", "Wolves", "Man City", "Coventry", "Hull"
 const clubColour = (c: string) => CLUB_COLOURS[c] || "#666";
 const clubText = (c: string) => (LIGHT_CLUBS.has(c) ? "#111" : "#fff");
 
+// Nationality -> ISO code (from the PL stats API), for flags
+const NATION_ISO: Record<string, string> = {"Albania": "AL", "Algeria": "DZ", "Angola": "AO", "Antigua & Barbuda": "AG", "Argentina": "AR", "Armenia": "AM", "Australia": "AU", "Austria": "AT", "Bangladesh": "BD", "Barbados": "BB", "Belarus": "BY", "Belgium": "BE", "Benin": "BJ", "Bermuda": "BM", "Bolivia": "BO", "Bosnia & Herzegovina": "BA", "Brazil": "BR", "Bulgaria": "BG", "Burkina Faso": "BF", "Burundi": "BI", "Cameroon": "CM", "Canada": "CA", "Cape Verde": "CV", "Central African Republic": "CF", "Chile": "CL", "China": "CN", "Colombia": "CO", "Congo": "CG", "Costa Rica": "CR", "Cote D\u2019Ivoire": "CI", "Croatia": "HR", "Cuba": "CU", "Curacao": "CW", "Cyprus": "CY", "Czech Republic": "CZ", "DR Congo": "CD", "Denmark": "DK", "Dominican Republic": "DO", "Ecuador": "EC", "Egypt": "EG", "England": "GB-ENG", "Equatorial Guinea": "GQ", "Estonia": "EE", "Faroe Islands": "FO", "Finland": "FI", "France": "FR", "Gabon": "GA", "Gambia": "GM", "Georgia": "GE", "Germany": "DE", "Ghana": "GH", "Gibraltar": "GI", "Greece": "GR", "Grenada": "GD", "Guadeloupe": "GP", "Guatemala": "GT", "Guinea": "GN", "Guinea-Bissau": "GW", "Guyana": "GY", "Haiti": "HT", "Honduras": "HN", "Hungary": "HU", "Iceland": "IS", "Indonesia": "ID", "Iran": "IR", "Iraq": "IQ", "Ireland": "IE", "Israel": "IL", "Italy": "IT", "Jamaica": "JM", "Japan": "JP", "Kenya": "KE", "Kosovo": "XK", "Latvia": "LV", "Liberia": "LR", "Lithuania": "LT", "Mali": "ML", "Malta": "MT", "Martinique": "MQ", "Mauritania": "MR", "Mexico": "MX", "Montenegro": "ME", "Montserrat": "MS", "Morocco": "MA", "Mozambique": "MZ", "Netherlands": "NL", "New Zealand": "NZ", "Nigeria": "NG", "North Macedonia": "MK", "Northern Ireland": "GB-NIR", "Norway": "NO", "Oman": "OM", "Pakistan": "PK", "Paraguay": "PY", "Peru": "PE", "Philippines": "PH", "Poland": "PL", "Portugal": "PT", "Romania": "RO", "Russia": "RU", "Scotland": "GB-SCT", "Senegal": "SN", "Serbia": "RS", "Seychelles": "SC", "Sierra Leone": "SL", "Slovakia": "SK", "Slovenia": "SI", "South Africa": "ZA", "South Korea": "KR", "Spain": "ES", "St. Kitts & Nevis": "KN", "Suriname": "SR", "Sweden": "SE", "Switzerland": "CH", "Syria": "SY", "Tanzania": "TZ", "Togo": "TG", "Trinidad & Tobago": "TT", "Tunisia": "TN", "Turkiye": "TR", "Ukraine": "UA", "United States": "US", "Uruguay": "UY", "Uzbekistan": "UZ", "Venezuela": "VE", "Wales": "GB-WLS", "Zambia": "ZM", "Zimbabwe": "ZW"};
+const HOME_NATIONS: Record<string, string> = { "GB-ENG": "gbeng", "GB-SCT": "gbsct", "GB-WLS": "gbwls" };
+function flagOf(country?: string): string {
+  const code = country ? NATION_ISO[country] : undefined;
+  if (!code) return "";
+  if (HOME_NATIONS[code]) {
+    // England, Scotland, Wales: black flag + tag letters
+    return "\u{1F3F4}" + [...HOME_NATIONS[code]].map(c => String.fromCodePoint(0xe0000 + c.charCodeAt(0))).join("") + "\u{E007F}";
+  }
+  if (!/^[A-Z]{2}$/.test(code)) return ""; // e.g. Northern Ireland has no flag emoji
+  return [...code].map(c => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("");
+}
+
 // --- Seeded RNG ---
 function hashString(str: string): number {
   let h = 0;
@@ -575,7 +589,7 @@ export default function CareerPath() {
         <AnimatePresence>
           {(round.stage >= 3 || done) && answer && (
             <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-wrap gap-2 mt-2.5">
-              {[broadPosition(answer), answer.nationality].map((t, i) => (
+              {[broadPosition(answer), `${flagOf(answer.nationality)} ${answer.nationality}`.trim()].map((t, i) => (
                 <motion.span key={t} initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 16, delay: i * 0.08 }}
                   className="px-3 py-1 rounded-full text-xs font-bold bg-violet-500/20 text-violet-100 border border-violet-400/40">{t}</motion.span>
@@ -745,7 +759,7 @@ function GuessRow({ guessId, answerId }: { guessId: number; answerId: number }) 
       ? f.shared.map(c => ({ ok: true, node: <><Check className="w-3 h-3" />{c}</>, style: { background: clubColour(c), color: clubText(c), borderColor: "transparent" } }))
       : [{ ok: false, node: <><X className="w-3 h-3" />No clubs in common</> }]),
     { ok: f.era === "overlap", node: f.era === "overlap" ? <><Check className="w-3 h-3" />Same era · {f.overlap} season{f.overlap === 1 ? "" : "s"}</> : <>{f.era === "earlier" ? <ArrowDown className="w-3 h-3" /> : <ArrowUp className="w-3 h-3" />}Answer's {f.era}</> },
-    { ok: f.sameNation, node: <>{f.sameNation ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}{g?.nationality || "?"}</> },
+    { ok: f.sameNation, node: <>{f.sameNation ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}{flagOf(g?.nationality)} {g?.nationality || "?"}</> },
     { ok: f.goals === "same", node: <>{f.goals === "more" ? <ArrowUp className="w-3 h-3" /> : f.goals === "fewer" ? <ArrowDown className="w-3 h-3" /> : <Check className="w-3 h-3" />}{f.goals === "same" ? "Same goals" : f.goals === "more" ? "More PL goals" : "Fewer PL goals"}</> },
   ];
   return (
