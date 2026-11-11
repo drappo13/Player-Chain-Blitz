@@ -43,7 +43,10 @@ print({t:len(v) for t,v in tiers.items()}, "size KB",os.path.getsize(f"{REPO}/cl
 for t in tiers:
     import random; random.seed(1); s=random.sample(tiers[t],8); print(t,[P[i]["displayName"]+f" {y}" for i,y in s])
 
-# --- Tiers by fame: monthly Wikipedia views (needs views_all.json from fetch-wiki-views.py) ---
+# --- Tiers: recency quintile + fame quintile (needs views_all.json from fetch-wiki-views.py) ---
+import json,math
+REPO=__import__("os").path.abspath(__import__("os").path.join(__import__("os").path.dirname(__file__),"../.."))
+V=json.load(open("views_all.json"))
 C=json.load(open("careers.json")); ST={int(k):v for k,v in json.load(open("standings.json")).items()}
 P={int(p["playerId"]):p for p in json.load(open(f"{REPO}/client/src/data/pl-players.json"))}
 NOW=2026
@@ -66,14 +69,18 @@ for k,p in C.items():
         F=1.25*math.log1p(ga)+0.012*apps+2.0*strength+0.6*math.log(pp["totalAppearances"])+{"FWD":0.5,"MID":0.2,"DEF":0}[pos]-0.075*yrs+(0.25 if clubs>1 else 0)
         if best is None or (clubs>1,F)>(best[6]>1,best[0]): best=(F,y,apps,ga,goals,strength,clubs,yrs)
     if best: cands.append((best[0],int(k),best[1:],pp["displayName"],pos))
+
 MIN_VIEWS=4000; ONE_CLUB_SHARE=0.2
-pool=sorted([(V[str(k)][1],k,b,n,pos) for F,k,b,n,pos in cands if str(k) in V and V[str(k)][1]>=MIN_VIEWS],reverse=True)
-# cap one-club spells overall, dropping the least-viewed excess
-allowed=int(round(sum(1 for c in pool if c[2][5]>1)*ONE_CLUB_SHARE/(1-ONE_CLUB_SHARE)))
-keep=set(c[1] for c in one[:allowed])
-pool=[c for c in pool if c[2][5]>1 or c[1] in keep]
-n=len(pool); cuts=[0]+[round(n*i/5) for i in range(1,5)]+[n]
-tiers=[pool[cuts[i]:cuts[i+1]] for i in range(5)]
-V=json.load(open("views_all.json"))
-d=json.load(open(f"{REPO}/client/src/data/career-path.json")); d["tiers"]=[[[k,b[0]] for v,k,b,nn,pos in T] for T in tiers]
+pool=[(V[str(k)][1],k,b,n,pos) for F,k,b,n,pos in cands if str(k) in V and V[str(k)][1]>=MIN_VIEWS]
+def quintile(values):
+    """value -> 1..5 by rank within the pool (5 = highest)"""
+    s=sorted(values); return lambda v: 1+min(4,int(5*sum(1 for x in s if x<v)/len(s)))
+qr=quintile([b[0]+4 for v,k,b,n,pos in pool]); qf=quintile([v for v,k,b,n,pos in pool])
+scored=sorted(((qr(b[0]+4)+qf(v),v,k,b,n,pos) for v,k,b,n,pos in pool),reverse=True)
+allowed=int(round(sum(1 for c in scored if c[3][5]>1)*ONE_CLUB_SHARE/(1-ONE_CLUB_SHARE)))
+keep=set([c[2] for c in scored if c[3][5]==1][:allowed])
+scored=[c for c in scored if c[3][5]>1 or c[2] in keep]
+n=len(scored); cuts=[round(n*i/5) for i in range(6)]
+tiers=[scored[cuts[i]:cuts[i+1]] for i in range(5)]
+d=json.load(open(f"{REPO}/client/src/data/career-path.json")); d["tiers"]=[[[k,b[0]] for sc,v,k,b,nn,pos in T] for T in tiers]
 json.dump(d,open(f"{REPO}/client/src/data/career-path.json","w"),separators=(",",":"))
