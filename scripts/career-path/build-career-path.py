@@ -76,6 +76,8 @@ def quintile(values):
     """value -> 1..5 by rank within the pool (5 = highest)"""
     s=sorted(values); return lambda v: 1+min(4,int(5*sum(1 for x in s if x<v)/len(s)))
 qr=quintile([b[0]+4 for v,k,b,n,pos in pool]); qf=quintile([v for v,k,b,n,pos in pool])
+pool=[c for c in pool if c[2][0]+4>=2008 or qf(c[0])==5]  # old spells only for the most famous
+qr=quintile([b[0]+4 for v,k,b,n,pos in pool]); qf=quintile([v for v,k,b,n,pos in pool])
 scored=sorted(((qr(b[0]+4)+qf(v),v,k,b,n,pos) for v,k,b,n,pos in pool),reverse=True)
 allowed=int(round(sum(1 for c in scored if c[3][5]>1)*ONE_CLUB_SHARE/(1-ONE_CLUB_SHARE)))
 keep=set([c[2] for c in scored if c[3][5]==1][:allowed])

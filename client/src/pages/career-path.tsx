@@ -17,8 +17,8 @@ import { LeaderboardTable } from "@/components/leaderboard-table";
 // --- Data ---
 // `players` maps a PL playerId to its season rows: [startYear, clubIndex, apps, goals, assists],
 // sorted by apps within a season. `tiers` are the five answer pools, easiest first: players with
-// 4k+ monthly Wikipedia views, scored 1-5 on how recent the five seasons are plus 1-5 on views,
-// sorted by the total and cut into fifths. Each entry is [playerId, first of the five seasons
+// 4k+ monthly Wikipedia views (seasons ending before 2008 only for the most viewed fifth), scored
+// 1-5 on how recent the five seasons are plus 1-5 on views, sorted by the total and cut into fifths. Each entry is [playerId, first of the five seasons
 // shown], a stretch that includes a move where the player had one.
 interface CareerData {
   clubs: string[];
