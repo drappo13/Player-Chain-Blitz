@@ -650,12 +650,13 @@ export default function CareerPath() {
                 )}
               </AnimatePresence>
             </div>
-            <div className="flex items-center justify-between mt-2.5">
-              <span className="text-xs text-muted-foreground">
-                {round.stage < MAX_STAGE ? <>Wrong guess unlocks: <span className="text-fuchsia-200 font-semibold">{CLUES[round.stage + 1].full}</span></> : <span className="text-red-300 font-semibold">Last chance</span>}
+            <div className="flex items-center justify-between gap-3 mt-2.5">
+              <span className="text-xs text-muted-foreground min-w-0">
+                {/* The clue name never splits across lines; on narrow phones it drops below as one piece */}
+                {round.stage < MAX_STAGE ? <>Wrong guess unlocks: <span className="text-fuchsia-200 font-semibold whitespace-nowrap">{CLUES[round.stage + 1].full}</span></> : <span className="text-red-300 font-semibold">Last chance</span>}
               </span>
               <motion.button type="button" whileTap={{ scale: 0.94 }} onClick={revealClue}
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20 transition-colors">
+                className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20 transition-colors">
                 <Lightbulb className="w-3.5 h-3.5" />{round.stage < MAX_STAGE ? "Reveal clue" : "Give up"}
               </motion.button>
             </div>
