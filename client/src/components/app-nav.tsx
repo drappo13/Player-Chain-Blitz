@@ -29,10 +29,30 @@ function StreakChip({ streak, playedToday }: { streak: number; playedToday: bool
   );
 }
 
-function Wordmark() {
+// Same order and colours as the favicon: Career Path, Photo Finish / CentreCircle, Griddle
+const MARK = [
+  { x: 2, y: 2, fill: "#8b5cf6" },
+  { x: 13, y: 2, fill: "#fbbf24" },
+  { x: 2, y: 13, fill: "#34d399" },
+  { x: 13, y: 13, fill: "#38bdf8" },
+];
+
+/** The four-square mark; each square lights up as that day's game is finished (all lit when signed out). */
+function Wordmark({ done }: { done: boolean[] | null }) {
   return (
-    <Link href="/" className="font-black tracking-tight text-lg text-foreground">
-      drapk<span className="text-primary">.in</span>
+    <Link href="/" className="flex items-center gap-2 font-black tracking-tight text-lg text-foreground" aria-label="drapk.in, today's games">
+      <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-7 md:h-7" aria-hidden="true">
+        {MARK.map((m, i) => (
+          <motion.rect
+            key={i}
+            x={m.x} y={m.y} width="9" height="9" rx="2.6" fill={m.fill}
+            initial={false}
+            animate={{ opacity: !done || done[i] ? 1 : 0.22 }}
+            transition={{ duration: 0.5, delay: 0.1 * i }}
+          />
+        ))}
+      </svg>
+      <span>drapk<span className="text-primary">.in</span></span>
     </Link>
   );
 }
@@ -42,9 +62,10 @@ export function AppNav() {
   const [location] = useLocation();
   const { user } = useUser();
   const { current, playedToday, day, entries, today } = useStreak(user?.username);
-  const left = DAILY_GAMES.filter(
-    (g) => day[g.slug]?.status !== "done" && !entries.some((e) => e.game === g.slug && e.dateKey === today),
-  ).length;
+  const doneToday = DAILY_GAMES.map(
+    (g) => day[g.slug]?.status === "done" || entries.some((e) => e.game === g.slug && e.dateKey === today),
+  );
+  const left = doneToday.filter((d) => !d).length;
 
   const userChip = user && (
     <Link href="/me" className="flex items-center gap-1.5 rounded-full bg-card border border-border pl-1.5 pr-2.5 py-1 hover:bg-muted transition-colors">
@@ -58,7 +79,7 @@ export function AppNav() {
       {/* Top bar: tabs inline on desktop, just the wordmark + user on phones */}
       <header className="fixed top-0 inset-x-0 z-40 bg-background/85 backdrop-blur-md border-b border-border/60">
         <div className="max-w-5xl mx-auto h-12 md:h-16 px-4 flex items-center justify-between gap-4">
-          <Wordmark />
+          <Wordmark done={user ? doneToday : null} />
           <nav className="hidden md:flex items-center gap-1">
             {TABS.map((t) => {
               const active = location === t.href;
