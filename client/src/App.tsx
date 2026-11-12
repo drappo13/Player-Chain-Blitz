@@ -27,6 +27,7 @@ const CareerPath = lazy(() => import("@/pages/career-path"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const Arcade = lazy(() => import("@/pages/arcade"));
 const Me = lazy(() => import("@/pages/me"));
+const Stats = lazy(() => import("@/pages/stats"));
 const ArsenalChampions = lazy(() => import("@/pages/arsenal-champions"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
@@ -133,6 +134,7 @@ function Router() {
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/arcade" component={Arcade} />
         <Route path="/me" component={Me} />
+        <Route path="/stats" component={Stats} />
         <Route path="/arsenal-pl-champions-2026" component={ArsenalChampions} />
         <Route component={NotFound} />
       </Switch>
@@ -145,7 +147,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/": "Today", "/arcade": "Arcade", "/leaderboard": "Leaderboards", "/me": "Me",
   "/careerpath": "Career Path", "/photofinish": "Photo Finish", "/centrecircle": "CentreCircle", "/griddle": "Griddle",
   "/targetman": "TargetMan", "/overlap": "Overlap", "/clubladder": "Ladder Up", "/goalchain": "GoalChain",
-  "/slamchain": "Slam16", "/gridlock": "GridLock", "/arsenal-pl-champions-2026": "Champions Quiz",
+  "/slamchain": "Slam16", "/gridlock": "GridLock", "/arsenal-pl-champions-2026": "Champions Quiz", "/stats": "Stats",
 };
 const DEFAULT_TITLE = "drapk.in · Daily Premier League games";
 const GAME_AT = Object.fromEntries(DAILY_GAMES.map((g) => [g.href, g.slug])) as Record<string, DailyGameSlug>;
