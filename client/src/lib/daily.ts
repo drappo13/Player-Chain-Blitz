@@ -127,6 +127,7 @@ export interface DailyProgress {
   detail: string; // short line for the tile, e.g. "23/59 found"
   level?: string; // the game's own rank, e.g. "Captain"
   progress?: number; // 0..1 for a progress bar while playing
+  count?: number; // what's been done: names found, photos guessed, players attempted
   startedAt?: number; // set on the first move, for time-to-finish analytics
 }
 
@@ -178,6 +179,25 @@ function trackTransition(game: DailyGameSlug, prev: DailyProgress | undefined, p
     });
     if (doneToday === DAILY_GAMES.length) trackEvent("set_complete", { last_game: game });
   }
+}
+
+/** Analytics when someone leaves a daily game without finishing it: how far they got, so
+ *  "bored after round 1" can be told apart from "found 45 names and stopped". */
+export function trackGameExit(username: string | undefined, game: DailyGameSlug, exitType: "navigate" | "hidden") {
+  if (!username) return;
+  const p = readDay(username, todayKey())[game];
+  if (p?.status === "done") return; // finishes are game_finish
+  trackEvent("game_exit", {
+    game,
+    mode: "daily",
+    exit_type: exitType,
+    status: p?.status ?? "not_started",
+    progress_pct: p?.progress != null ? Math.round(p.progress * 100) : 0,
+    count: p?.count ?? 0,
+    score: p?.score ?? 0,
+    level: p?.level,
+    seconds: p?.startedAt ? Math.round((Date.now() - p.startedAt) / 1000) : undefined,
+  });
 }
 
 /** Today's progress on this device, kept live as games write to it. */

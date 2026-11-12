@@ -381,6 +381,7 @@ export default function CareerPath() {
         ? state.remoteScore != null ? "Finished" : `${state.rounds.filter(r => r.solved).length}/${ROUNDS} named`
         : `${finished}/${ROUNDS} players`,
       progress: finished / ROUNDS,
+      count: played,
     } : null);
   }, [state]);
   useEffect(() => { setHighlight(0); }, [query]);

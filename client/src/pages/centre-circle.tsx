@@ -432,6 +432,7 @@ export default function CentreCircle() {
       detail: `${state.found.length}/${answers.length} found`,
       level: getRank(state.score, maxScore).label,
       progress: rankFill(state.score, maxScore),
+      count: state.found.length,
     } : null);
   }, [state]);
 

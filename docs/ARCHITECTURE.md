@@ -358,9 +358,10 @@ Events go to Google Analytics, not Firestore (free, no read/write cost). `trackE
 
 | Event | Fired from | Key params |
 |---|---|---|
-| `page_view` | route changes (`App.tsx`) | path |
+| `page_view` | route changes (`App.tsx`, which also sets a per-page title, e.g. "Career Path · drapk.in") | path |
 | `game_start` / `game_finish` | daily: `recordDaily` transitions in `lib/daily.ts` (restored results fire nothing); arcade: `saveScore`; quiz: its own | score, level, seconds, set_position |
 | `set_complete` | `lib/daily.ts` | last_game |
+| `game_exit` | leaving a daily game unfinished: route change or tab/app hidden (`GameExitTracker` in `App.tsx`) | exit_type, status (`not_started` / `playing`), progress_pct, count, score, level, seconds |
 | `guess` | each daily game (Griddle/CentreCircle via their feedback fn) | result / seasons_off / clue_stage, round |
 | `clue_reveal`, `hints_open`, `rules_open` | daily games | game, round, clue_stage |
 | `round_start` / `round_finish` | Champions quiz | round, score |

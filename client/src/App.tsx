@@ -7,9 +7,10 @@ import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
 import { UserBadge } from "@/components/user-badge";
 import { AppNav, HUB_ROUTES } from "@/components/app-nav";
-import { lazy, Suspense, Component, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, Component, useEffect, useRef, type ReactNode } from "react";
 import { trackPageView, identify } from "@/lib/firebase";
-import { DAILY_GAMES, useStreak } from "@/lib/daily";
+import { DAILY_GAMES, useStreak, trackGameExit } from "@/lib/daily";
+import type { DailyGameSlug } from "@/lib/daily-score";
 
 // Lazy-load all pages — isolates crashes so one broken page can't kill the whole app
 const Home = lazy(() => import("@/pages/home"));
@@ -139,6 +140,37 @@ function Router() {
   );
 }
 
+// A title per page, so the tab and analytics can tell the games apart
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Today", "/arcade": "Arcade", "/leaderboard": "Leaderboards", "/me": "Me",
+  "/careerpath": "Career Path", "/photofinish": "Photo Finish", "/centrecircle": "CentreCircle", "/griddle": "Griddle",
+  "/targetman": "TargetMan", "/overlap": "Overlap", "/clubladder": "Ladder Up", "/goalchain": "GoalChain",
+  "/slamchain": "Slam16", "/gridlock": "GridLock", "/arsenal-pl-champions-2026": "Champions Quiz",
+};
+const DEFAULT_TITLE = "drapk.in · Daily Premier League games";
+const GAME_AT = Object.fromEntries(DAILY_GAMES.map((g) => [g.href, g.slug])) as Record<string, DailyGameSlug>;
+
+/** Logs game_exit when someone leaves a daily game unfinished: moving to another page,
+ *  or the tab/app being hidden (closing it, switching apps). */
+function GameExitTracker({ location }: { location: string }) {
+  const { user } = useUser();
+  const prev = useRef(location);
+  useEffect(() => {
+    const was = GAME_AT[prev.current];
+    if (was && prev.current !== location) trackGameExit(user?.username, was, "navigate");
+    prev.current = location;
+  }, [location, user?.username]);
+  useEffect(() => {
+    const onHide = () => {
+      const game = GAME_AT[prev.current];
+      if (game && document.visibilityState === "hidden") trackGameExit(user?.username, game, "hidden");
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, [user?.username]);
+  return null;
+}
+
 /** Keeps analytics tied to the signed-in account, tagged with its retention stats so any
  *  report can be split by streak, days played or how they joined. */
 function AnalyticsIdentity() {
@@ -168,6 +200,8 @@ function AppContent() {
   // Fire a Firebase Analytics page_view on every wouter route change. No-ops
   // if Analytics isn't configured (no measurementId in firebase.ts).
   useEffect(() => {
+    const name = PAGE_TITLES[location];
+    document.title = name ? `${name} · drapk.in` : DEFAULT_TITLE;
     trackPageView(location);
   }, [location]);
 
@@ -179,6 +213,7 @@ function AppContent() {
   return (
     <>
       <AnalyticsIdentity />
+      <GameExitTracker location={location} />
       {!user && !allowAnonymous && <UsernamePicker />}
       {isHub ? <AppNav /> : <UserBadge />}
       <Router />
