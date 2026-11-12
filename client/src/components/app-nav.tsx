@@ -37,22 +37,47 @@ const MARK = [
   { x: 13, y: 13, fill: "#38bdf8" },
 ];
 
-/** The four-square mark; each square lights up as that day's game is finished (all lit when signed out). */
+/** The four-square mark; each square lights up as that day's game is finished (all lit when null). */
+export function SetMark({ done, className = "w-6 h-6" }: { done: boolean[] | null; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      {MARK.map((m, i) => (
+        <motion.rect
+          key={i}
+          x={m.x} y={m.y} width="9" height="9" rx="2.6" fill={m.fill}
+          initial={false}
+          animate={{ opacity: !done || done[i] ? 1 : 0.22 }}
+          transition={{ duration: 0.5, delay: 0.1 * i }}
+        />
+      ))}
+    </svg>
+  );
+}
+
 function Wordmark({ done }: { done: boolean[] | null }) {
   return (
     <Link href="/" className="flex items-center gap-2 font-black tracking-tight text-lg text-foreground" aria-label="drapk.in, today's games">
-      <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-7 md:h-7" aria-hidden="true">
-        {MARK.map((m, i) => (
-          <motion.rect
-            key={i}
-            x={m.x} y={m.y} width="9" height="9" rx="2.6" fill={m.fill}
-            initial={false}
-            animate={{ opacity: !done || done[i] ? 1 : 0.22 }}
-            transition={{ duration: 0.5, delay: 0.1 * i }}
-          />
-        ))}
-      </svg>
+      <SetMark done={done} className="w-6 h-6 md:w-7 md:h-7" />
       <span>drapk<span className="text-primary">.in</span></span>
+    </Link>
+  );
+}
+
+/** Top-left of each daily game: the set mark with today's progress, linking back to Today.
+ *  Replaces the plain Home button so people who land straight in a game see there's a set of four. */
+export function SetChip() {
+  const { user } = useUser();
+  const { view } = useStreak(user?.username);
+  const done = DAILY_GAMES.map((g) => view[g.slug]?.status === "done");
+  return (
+    <Link
+      href="/"
+      aria-label={`Today's set, ${done.filter(Boolean).length} of ${DAILY_GAMES.length} done`}
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 pl-1.5 pr-3 py-1 text-xs hover:bg-muted transition-colors"
+    >
+      <SetMark done={user ? done : null} className="w-[22px] h-[22px]" />
+      <span className="font-black tabular-nums text-foreground">{done.filter(Boolean).length}/{DAILY_GAMES.length}</span>
+      <span className="font-semibold text-muted-foreground">Today</span>
     </Link>
   );
 }
