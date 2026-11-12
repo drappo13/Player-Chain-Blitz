@@ -119,8 +119,13 @@ function shuffleInPlace<T>(arr: T[], rng: () => number) {
 // --- Players ---
 interface SeasonRow { year: number; club: string; apps: number; goals: number; assists: number }
 
+// Within a season with two clubs the data doesn't say which came first, so read it as one
+// continuous story: last season's club first, next season's club last.
 function careerOf(id: number): SeasonRow[] {
-  return (DATA.players[String(id)] || []).map(([year, c, apps, goals, assists]) => ({ year, club: DATA.clubs[c], apps, goals, assists }));
+  const rows = (DATA.players[String(id)] || []).map(([year, c, apps, goals, assists]) => ({ year, club: DATA.clubs[c], apps, goals, assists }));
+  const playedFor = (club: string, year: number) => rows.some(r => r.year === year && r.club === club);
+  const order = (r: SeasonRow) => (playedFor(r.club, r.year - 1) ? 0 : playedFor(r.club, r.year + 1) ? 2 : 1);
+  return rows.sort((a, b) => a.year - b.year || order(a) - order(b) || b.apps - a.apps);
 }
 
 const broadPosition = (p?: PLPlayer) => {
@@ -877,7 +882,7 @@ function CareerClue({ id }: { id: number }) {
 function CareerBar({ id, windowStart }: { id: number; windowStart?: number }) {
   const p = PLAYERS.get(id);
   const bySeason = new Map<number, SeasonRow>();
-  for (const r of careerOf(id)) if (!bySeason.has(r.year)) bySeason.set(r.year, r); // rows are sorted by apps
+  for (const r of careerOf(id)) if ((bySeason.get(r.year)?.apps ?? -1) < r.apps) bySeason.set(r.year, r); // main club = most apps
   const years = [...bySeason.keys()].sort((a, b) => a - b);
   const first = years[0];
   const last = years[years.length - 1];
