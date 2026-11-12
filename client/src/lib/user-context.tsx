@@ -2,6 +2,19 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
+// Invite links look like drapk.in/?ref=username; remember the inviter until sign-up
+const REF_KEY = "pcb-ref";
+if (typeof window !== "undefined") {
+  try {
+    const ref = new URLSearchParams(window.location.search).get("ref")?.toLowerCase().trim();
+    if (ref && /^[a-z0-9_]{2,15}$/.test(ref)) localStorage.setItem(REF_KEY, ref);
+  } catch { /* ignore */ }
+}
+
+function readReferrer(): string | null {
+  try { return localStorage.getItem(REF_KEY); } catch { return null; }
+}
+
 export interface User {
   username: string;
   avatar: string;
@@ -74,7 +87,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const snap = await withTimeout(getDoc(doc(db, "users", key)));
       if (snap.exists()) return { ok: false, error: "Username taken" };
       const userData: User = { username: trimmed, avatar };
-      await withTimeout(setDoc(doc(db, "users", key), { ...userData, createdAt: serverTimestamp() }));
+      const record = { ...userData, createdAt: serverTimestamp() };
+      const ref = readReferrer();
+      if (ref && ref !== key) {
+        // Credit whoever invited them; if the extra field is ever rejected, sign up without it
+        try {
+          await withTimeout(setDoc(doc(db, "users", key), { ...record, referredBy: ref }));
+        } catch {
+          await withTimeout(setDoc(doc(db, "users", key), record));
+        }
+      } else {
+        await withTimeout(setDoc(doc(db, "users", key), record));
+      }
       setUser(userData);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
       return { ok: true };

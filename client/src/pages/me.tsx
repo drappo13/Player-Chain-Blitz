@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getCountFromServer, getDoc, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Flame, CalendarDays, Award, CheckCircle2, LogOut } from "lucide-react";
+import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { useUserStats } from "@/lib/use-user-stats";
 import type { GameSlug } from "@/lib/save-score";
 import { HubPage } from "@/components/app-nav";
 import { GameIcon } from "@/components/game-icons";
-import { DAILY_GAMES, shiftDay, useStreak } from "@/lib/daily";
+import { DAILY_GAMES, shareText, shiftDay, useStreak } from "@/lib/daily";
+import { BadgeGrid } from "@/components/badge-grid";
+import type { BadgeContext } from "@/lib/badges";
 
 const ARCADE_NAMES: { slug: GameSlug; name: string; emoji: string }[] = [
   { slug: "targetman", name: "Target Man", emoji: "🎯" },
@@ -72,6 +74,49 @@ function Calendar({ counts, today }: { counts: Map<string, number>; today: strin
   );
 }
 
+/** How many people signed up through this user's invite link. */
+function useInviteCount(username: string | undefined): number {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!username) return;
+    getCountFromServer(query(collection(db, "users"), where("referredBy", "==", username.toLowerCase())))
+      .then((snap) => setN(snap.data().count))
+      .catch(() => {});
+  }, [username]);
+  return n;
+}
+
+function InviteCard({ username, streak, invites }: { username: string; streak: number; invites: number }) {
+  const [copied, setCopied] = useState(false);
+  const invite = async () => {
+    const text = [
+      "Four daily Premier League games on drapk.in. A new set every day.",
+      streak > 1 ? `I'm on a ${streak}-day streak \uD83D\uDD25 come and play` : "Come and play",
+      `https://drapk.in/?ref=${encodeURIComponent(username.toLowerCase())}`,
+    ].join("\n");
+    if (await shareText(text)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  return (
+    <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card p-4 mb-6 flex items-center gap-3">
+      <span className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
+        <UserPlus className="w-5 h-5" />
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-black text-foreground">Invite a mate</p>
+        <p className="text-xs text-muted-foreground">
+          {invites > 0 ? `${invites} ${invites === 1 ? "mate has" : "mates have"} joined from your link` : "Send your link. When they sign up you unlock Recruiter"}
+        </p>
+      </div>
+      <button onClick={invite} className="shrink-0 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-black">
+        {copied ? "Copied!" : "Invite"}
+      </button>
+    </section>
+  );
+}
+
 /** When the account was made (falls back to the first daily game). */
 function useMemberSince(username: string | undefined, firstDay?: string): string | null {
   const [created, setCreated] = useState<Date | null>(null);
@@ -113,6 +158,13 @@ export default function Me() {
     };
   });
   const fullSets = [...counts.values()].filter((n) => n >= DAILY_GAMES.length).length;
+  const invites = useInviteCount(user?.username);
+  const arcadePlays = Object.values(stats).reduce((sum, s) => sum + (s?.plays ?? 0), 0)
+    - DAILY_GAMES.reduce((sum, g) => sum + (stats[g.slug]?.plays ?? 0), 0);
+  const badgeCtx: BadgeContext = useMemo(
+    () => ({ entries, bestStreak: best, daysPlayed, fullSets, arcadePlays, invites }),
+    [entries, best, daysPlayed, fullSets, arcadePlays, invites],
+  );
 
   if (!user) return <HubPage><p className="text-muted-foreground">Sign in to see your stats.</p></HubPage>;
 
@@ -132,6 +184,10 @@ export default function Me() {
         <StatTile icon={CalendarDays} label="Days played" value={daysPlayed} accent="text-sky-300" delay={0.15} />
         <StatTile icon={CheckCircle2} label="Full sets" value={fullSets} accent="text-emerald-300" delay={0.2} />
       </div>
+
+      <BadgeGrid ctx={badgeCtx} username={user.username} />
+
+      <InviteCard username={user.username} streak={current} invites={invites} />
 
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex items-center justify-between mb-3 gap-3">

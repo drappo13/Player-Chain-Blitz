@@ -40,8 +40,10 @@ export function useDailyLeaderboard(
         });
     };
 
-    if (delay > 0) {
-      const timer = setTimeout(doFetch, delay);
+    // Scores are written before the end screen shows, so a short beat is enough
+    const wait = Math.min(delay, 250);
+    if (wait > 0) {
+      const timer = setTimeout(doFetch, wait);
       return () => { cancelled = true; clearTimeout(timer); };
     }
 
