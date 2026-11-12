@@ -139,7 +139,7 @@ export function AppNav() {
 /** Wrapper that leaves room for the nav bars. */
 export function HubPage({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
-    <div className="min-h-screen bg-background pt-[60px] md:pt-24 pb-24 md:pb-12 px-4 overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-background pt-[60px] md:pt-24 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-12 px-4 overflow-x-hidden">
       <div className={`${wide ? "max-w-5xl" : "max-w-3xl"} mx-auto`}>{children}</div>
     </div>
   );

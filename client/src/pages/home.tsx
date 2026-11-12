@@ -160,7 +160,7 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
         <motion.div
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
-          className={`relative h-[170px] sm:h-[210px] overflow-hidden rounded-2xl border p-3 sm:p-4 flex flex-col cursor-pointer ${game.tile}`}
+          className={`relative h-[170px] [@media(max-height:680px)]:h-[160px] sm:h-[210px] overflow-hidden rounded-2xl border p-3 sm:p-4 flex flex-col cursor-pointer ${game.tile}`}
         >
           <div className="flex items-start justify-between mb-1.5 sm:mb-2">
             <span className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black/25 flex items-center justify-center ${game.accent}`}>

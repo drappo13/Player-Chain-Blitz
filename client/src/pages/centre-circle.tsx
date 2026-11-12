@@ -387,6 +387,8 @@ export default function CentreCircle() {
   const [pangramHit, setPangramHit] = useState<string | null>(null);
   const [pulse, setPulse] = useState(0);
   const [popped, setPopped] = useState<{ id: number; word: string; gold: boolean } | null>(null);
+  // Last correct word, kept (not cleared) so the board's letter glow can finish
+  const [boardHit, setBoardHit] = useState<{ id: number; word: string; gold: boolean } | null>(null);
   const [showTracker, setShowTracker] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -488,6 +490,7 @@ export default function CentreCircle() {
     setPulse(p => p + 1);
     const popId = floatId.current;
     setPopped({ id: popId, word, gold: answer.pangram });
+    setBoardHit({ id: popId, word, gold: answer.pangram });
     setTimeout(() => setPopped(cur => (cur?.id === popId ? null : cur)), 700);
     const tags: string[] = [];
     if (answer.usesCentre) tags.push(`${board.centre.toUpperCase()} ×2`);
@@ -700,10 +703,8 @@ export default function CentreCircle() {
 
         {/* Hive + overlays */}
         <div className="relative w-full flex justify-center mt-4 mb-1">
-          <motion.div key={`hive-${pulse}`} animate={pulse ? { scale: [1, 1.03, 1] } : {}} transition={{ duration: 0.3 }}>
-            <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished}
-              scale={boardScale(outer.length)} />
-          </motion.div>
+          <HiveBoard centre={board.centre} outer={outer} onLetter={typeLetter} celebrate={!!pangramHit} disabled={isFinished}
+            scale={boardScale(outer.length)} hit={boardHit} />
           {pangramHit && <BeeBurst />}
 
           <AnimatePresence>
@@ -873,13 +874,19 @@ function boardScale(count: number) {
 // between hexes leave room for that without neighbours overlapping.
 const TAP_PAD = 4;
 
-function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = false, scale = 1 }: {
+// On a correct answer the letters it used light up in spelling order, each giving a
+// small nudge towards the centre (the centre letter pulses instead).
+const HIT_NUDGE = 9;
+const HIT_STEP = 0.06;
+
+function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = false, scale = 1, hit = null }: {
   centre: string;
   outer: string[];
   onLetter: (ch: string) => void;
   celebrate?: boolean;
   disabled?: boolean;
   scale?: number;
+  hit?: { id: number; word: string; gold: boolean } | null;
 }) {
   const { size, slots } = ringLayout(outer.length);
   const hexes = [
@@ -889,7 +896,15 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
   return (
     <div className="relative" style={{ width: size * scale, height: size * scale }}>
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: size, height: size, transform: `scale(${scale})` }}>
-        {hexes.map(({ ch, isCentre, w, x, y }, i) => (
+        {hexes.map(({ ch, isCentre, w, x, y }, i) => {
+          const order = hit ? hit.word.indexOf(ch) : -1;
+          const used = order >= 0;
+          const cx = x + w / 2, cy = y + (w * 0.866) / 2;
+          const dist = Math.hypot(size / 2 - cx, size / 2 - cy) || 1;
+          const nudge = isCentre
+            ? { scale: [1, 1.12, 1] }
+            : { x: [0, ((size / 2 - cx) / dist) * HIT_NUDGE, 0], y: [0, ((size / 2 - cy) / dist) * HIT_NUDGE, 0] };
+          return (
           <motion.button key={ch} type="button" disabled={disabled} onClick={() => onLetter(ch)}
             aria-label={`Letter ${ch.toUpperCase()}${isCentre ? ", centre" : ""}`}
             initial={{ x: size / 2 - w / 2 - TAP_PAD, y: size / 2 - w / 2 - TAP_PAD, opacity: 0, scale: 0.4 }}
@@ -900,15 +915,26 @@ function HiveBoard({ centre, outer, onLetter, celebrate = false, disabled = fals
             whileTap={{ scale: 0.86, filter: "brightness(1.7)" }}
             style={{ width: w + 2 * TAP_PAD, height: w + 2 * TAP_PAD, position: "absolute", left: 0, top: 0, WebkitTapHighlightColor: "transparent" }}
             className="group rounded-full flex items-center justify-center select-none touch-manipulation outline-none">
-            <span style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP }}
-              className={`flex items-center justify-center font-black uppercase transition-colors ${
+            <motion.span key={used ? `hit-${hit!.id}` : "idle"}
+              animate={used ? nudge : {}}
+              transition={{ duration: 0.42, delay: order * HIT_STEP, ease: "easeInOut" }}
+              style={{ width: w, height: w * 0.866, clipPath: HEX_CLIP }}
+              className={`relative flex items-center justify-center font-black uppercase transition-colors ${
                 isCentre
                   ? "text-3xl bg-gradient-to-br from-lime-300 to-green-500 text-green-950"
                   : "text-2xl bg-white/[0.09] text-foreground group-hover:bg-white/[0.15] group-active:bg-green-400/25"}`}>
-              {ch}
-            </span>
+              {used && (
+                <motion.span aria-hidden
+                  className={`absolute inset-0 ${hit!.gold ? "bg-amber-300" : isCentre ? "bg-white" : "bg-green-400"}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, isCentre ? 0.45 : 0.6, 0] }}
+                  transition={{ duration: 0.6, delay: order * HIT_STEP, ease: "easeOut" }} />
+              )}
+              <span className="relative">{ch}</span>
+            </motion.span>
           </motion.button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
