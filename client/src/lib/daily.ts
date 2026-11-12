@@ -243,6 +243,8 @@ function fetchHistory(username: string): Promise<DailyEntry[]> {
   const hit = historyFetches.get(key);
   if (hit && Date.now() - hit.at < HISTORY_TTL) return hit.promise;
   const promise = getDocs(query(collection(db, "daily-scores"), where("username", "==", key))).then((snap) => {
+    // Offline, Firestore answers from its (often empty) local cache: keep what we have instead
+    if (snap.metadata.fromCache) throw new Error("offline");
     const list: DailyEntry[] = [];
     snap.forEach((d) => {
       const x = d.data() as DailyEntry & { timestamp?: { toMillis?: () => number } };
@@ -371,6 +373,7 @@ async function fetchRank(dateKey: string, game: DailyGameSlug, score: number): P
     return { rank: above.data().count + 1, of: total.data().count };
   } catch {
     const snap = await getDocs(query(collection(db, "daily-scores"), ...base));
+    if (snap.metadata.fromCache) throw new Error("offline");
     let above = 0;
     snap.forEach((d) => { if ((d.data() as { score: number }).score > score) above++; });
     return { rank: above + 1, of: snap.size };
@@ -396,6 +399,7 @@ export function useTodayRanks(username: string | undefined, dateKey: string, vie
         } catch { /* ignore */ }
         try {
           const r = await fetchRank(dateKey, game, score);
+          if (r.of === 0) return; // nothing to rank against (e.g. offline)
           out[game] = r;
           try { localStorage.setItem(k, JSON.stringify({ ...r, score, at: Date.now() })); } catch { /* ignore */ }
         } catch { /* ignore */ }
