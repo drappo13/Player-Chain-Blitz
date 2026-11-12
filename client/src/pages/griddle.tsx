@@ -979,7 +979,8 @@ export default function Griddle() {
                         : "bg-card/50 border-border text-muted-foreground"}`}>
                   <span className="block truncate leading-tight">{club}</span>
                   {isCovered && !isHighlighted && (
-                    <div className="absolute top-1 right-1 flex items-center gap-0.5">
+                    // Sits on the tile's corner so it never covers long club names
+                    <div className="absolute -top-2 -right-1.5 flex items-center gap-0.5 rounded-full bg-background border border-blue-500/30 px-1.5 py-0.5">
                       {hits > 1 && <span className={`text-[10px] font-bold tabular-nums ${getHitIndicatorColor(hits)}`}>{hits}</span>}
                       <div className={`w-1.5 h-1.5 rounded-full ${getHitDotBg(hits)}`} />
                     </div>
