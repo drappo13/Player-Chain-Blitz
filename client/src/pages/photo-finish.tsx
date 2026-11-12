@@ -325,6 +325,7 @@ export default function PhotoFinish() {
         ? n === 0 ? "Finished" : `${state.guesses.filter((g, i) => g === photos[i].season).length} spot on`
         : `${n}/${ROUNDS} photos`,
       progress: n / ROUNDS,
+      count: n,
     } : null);
   }, [state]);
 

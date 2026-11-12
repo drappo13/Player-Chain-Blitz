@@ -508,6 +508,7 @@ export default function Griddle() {
       detail: isFinished ? `${found} found` : `${found} found \u00B7 ${state.livesLeft} ${state.livesLeft === 1 ? "life" : "lives"} left`,
       level: getCurrentTier(found, totalValid).current?.label ?? "Unranked",
       progress: tierFill(found, totalValid),
+      count: found,
     } : null);
   }, [state]);
 
