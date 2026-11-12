@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playTick, playScoreSound, playShieldBlock } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import type { GameState } from "@/lib/game-types";
@@ -1146,7 +1146,7 @@ function EndScreen({
     ? Math.max(...turnResults.map((r) => r.threshold))
     : 0;
 
-  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on LadderUp \u26bd Can you beat me?\nhttps://drapk.in/clubladder`);
+  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on LadderUp \u26bd Can you beat me?\n${shareLink("/clubladder")}`);
 
   useEndScreenEffects({
     isNewHighScore,

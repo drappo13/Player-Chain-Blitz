@@ -11,6 +11,13 @@ if (typeof window !== "undefined") {
   } catch { /* ignore */ }
 }
 
+/** A drapk.in link that credits the signed-in player as the inviter (plain link if signed out). */
+export function shareLink(path = "/"): string {
+  let ref = "";
+  try { ref = (JSON.parse(localStorage.getItem("pcb-user") || "null") as User | null)?.username?.toLowerCase() ?? ""; } catch { /* ignore */ }
+  return `https://drapk.in${path}${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`;
+}
+
 function readReferrer(): string | null {
   try { return localStorage.getItem(REF_KEY); } catch { return null; }
 }

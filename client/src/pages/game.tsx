@@ -5,7 +5,7 @@ import { Timer, Trophy, Zap, Target, ChevronRight, Flame, Flag, Home, Ticket, In
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick } from "@/lib/sounds";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
@@ -716,7 +716,7 @@ function EndScreen({
   const [, navigate] = useLocation();
   const isNewHighScore = totalGoals >= highScore && totalGoals > 0;
 
-  const handleShare = () => share(`I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\nhttps://drapk.in/goalchain`);
+  const handleShare = () => share(`I scored ${totalGoals.toLocaleString()} on GoalChain \u26bd Can you beat me?\n${shareLink("/goalchain")}`);
 
   useEndScreenEffects({
     isNewHighScore,

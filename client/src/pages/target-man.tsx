@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playTick, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { GameState } from "@/lib/game-types";
 import { useHighScore } from "@/hooks/use-high-score";
@@ -1082,7 +1082,7 @@ function EndScreen({
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
 
-  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on TargetMan \u26bd Can you beat me?\nhttps://drapk.in/targetman`);
+  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on TargetMan \u26bd Can you beat me?\n${shareLink("/targetman")}`);
 
   useEndScreenEffects({
     isNewHighScore,
