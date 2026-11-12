@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
 import { db } from "./firebase";
 import type { DailyGameSlug } from "./daily-score";
 
@@ -11,6 +11,7 @@ export interface DailyGameMeta {
   href: string;
   name: string;
   emoji: string;
+  dot: string; // coloured circle used in share text, matching the logo
   tagline: string;
   max?: number;
   // Literal Tailwind classes (kept whole so the JIT picks them up)
@@ -23,6 +24,7 @@ export interface DailyGameMeta {
 export const DAILY_GAMES: DailyGameMeta[] = [
   {
     slug: "careerpath",
+    dot: "🟣",
     href: "/careerpath",
     name: "Career Path",
     emoji: "🧭",
@@ -35,6 +37,7 @@ export const DAILY_GAMES: DailyGameMeta[] = [
   },
   {
     slug: "photofinish",
+    dot: "🟡",
     href: "/photofinish",
     name: "Photo Finish",
     emoji: "📸",
@@ -47,6 +50,7 @@ export const DAILY_GAMES: DailyGameMeta[] = [
   },
   {
     slug: "centrecircle",
+    dot: "🟢",
     href: "/centrecircle",
     name: "CentreCircle",
     emoji: "⚪",
@@ -58,6 +62,7 @@ export const DAILY_GAMES: DailyGameMeta[] = [
   },
   {
     slug: "griddle",
+    dot: "🔵",
     href: "/griddle",
     name: "Griddle",
     emoji: "🧩",
@@ -200,6 +205,29 @@ function readHistoryCache(username: string | undefined): DailyEntry[] {
   }
 }
 
+// One history fetch shared by every component on the page, refreshed at most every few minutes
+// (today's own games come from local progress, so a slightly stale history is fine).
+const HISTORY_TTL = 5 * 60 * 1000;
+const historyFetches = new Map<string, { at: number; promise: Promise<DailyEntry[]> }>();
+
+function fetchHistory(username: string): Promise<DailyEntry[]> {
+  const key = username.toLowerCase();
+  const hit = historyFetches.get(key);
+  if (hit && Date.now() - hit.at < HISTORY_TTL) return hit.promise;
+  const promise = getDocs(query(collection(db, "daily-scores"), where("username", "==", key))).then((snap) => {
+    const list: DailyEntry[] = [];
+    snap.forEach((d) => {
+      const x = d.data() as DailyEntry;
+      list.push({ game: x.game, dateKey: x.dateKey, score: x.score });
+    });
+    try { localStorage.setItem(historyKey(username), JSON.stringify(list)); } catch { /* ignore */ }
+    return list;
+  });
+  promise.catch(() => historyFetches.delete(key));
+  historyFetches.set(key, { at: Date.now(), promise });
+  return promise;
+}
+
 /** All of a user's finished daily games, cached locally so the streak shows instantly. */
 export function useDailyHistory(username: string | undefined): { entries: DailyEntry[]; loading: boolean } {
   const [entries, setEntries] = useState<DailyEntry[]>(() => readHistoryCache(username));
@@ -210,23 +238,25 @@ export function useDailyHistory(username: string | undefined): { entries: DailyE
     setEntries(readHistoryCache(username));
     let cancelled = false;
     setLoading(true);
-    getDocs(query(collection(db, "daily-scores"), where("username", "==", username.toLowerCase())))
-      .then((snap) => {
-        if (cancelled) return;
-        const list: DailyEntry[] = [];
-        snap.forEach((d) => {
-          const x = d.data() as DailyEntry;
-          list.push({ game: x.game, dateKey: x.dateKey, score: x.score });
-        });
-        setEntries(list);
-        try { localStorage.setItem(historyKey(username), JSON.stringify(list)); } catch { /* ignore */ }
-      })
+    fetchHistory(username)
+      .then((list) => { if (!cancelled) setEntries(list); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [username]);
 
   return { entries, loading };
+}
+
+/** Today's progress, with games finished on another device (only in Firestore) marked done. */
+export function withFinished(day: DayProgress, entries: DailyEntry[], dateKey: string): DayProgress {
+  const view: DayProgress = { ...day };
+  for (const e of entries) {
+    if (e.dateKey === dateKey && view[e.game]?.status !== "done") {
+      view[e.game] = { status: "done", score: e.score, detail: "Finished" };
+    }
+  }
+  return view;
 }
 
 /** History plus anything finished today on this device that hasn't reached Firestore (or localhost). */
@@ -278,10 +308,11 @@ export function useStreak(username: string | undefined) {
   const day = useDayProgress(username, today);
   const all = mergeToday(entries, day, today);
   const info = streakOf(all, today);
+  const view = withFinished(day, entries, today);
   useEffect(() => {
     if (username) try { localStorage.setItem(streakCacheKey(username), String(info.current)); } catch { /* ignore */ }
   }, [username, info.current]);
-  return { ...info, entries: all, day, today, loading };
+  return { ...info, entries: all, day, view, today, loading };
 }
 
 export function cachedStreak(username: string | undefined): number {
@@ -297,30 +328,56 @@ export function cachedStreak(username: string | undefined): number {
 
 export type TodayRanks = Partial<Record<DailyGameSlug, { rank: number; of: number }>>;
 
-/** Where the user sits on each of today's daily leaderboards (one query for all four). */
-export function useTodayRanks(username: string | undefined, dateKey: string, refreshOn: unknown): TodayRanks {
+const RANK_TTL = 10 * 60 * 1000;
+const rankKey = (username: string, dateKey: string, game: DailyGameSlug) => `pcb-rank-${username.toLowerCase()}-${dateKey}-${game}`;
+
+/** Position on one game's daily board: two count queries (needs the dateKey+game+score index),
+ *  falling back to reading that game's scores for the day if the index isn't there. */
+async function fetchRank(dateKey: string, game: DailyGameSlug, score: number): Promise<{ rank: number; of: number }> {
+  const base = [where("dateKey", "==", dateKey), where("game", "==", game)];
+  try {
+    const [above, total] = await Promise.all([
+      getCountFromServer(query(collection(db, "daily-scores"), ...base, where("score", ">", score))),
+      getCountFromServer(query(collection(db, "daily-scores"), ...base)),
+    ]);
+    return { rank: above.data().count + 1, of: total.data().count };
+  } catch {
+    const snap = await getDocs(query(collection(db, "daily-scores"), ...base));
+    let above = 0;
+    snap.forEach((d) => { if ((d.data() as { score: number }).score > score) above++; });
+    return { rank: above + 1, of: snap.size };
+  }
+}
+
+/** Where the user sits on today's board for each game they've finished, cached for a few minutes. */
+export function useTodayRanks(username: string | undefined, dateKey: string, view: DayProgress): TodayRanks {
   const [ranks, setRanks] = useState<TodayRanks>({});
-  const load = useCallback(() => {
+  const done = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").map((g) => [g.slug, view[g.slug]!.score] as const);
+  const sig = done.map(([g, sc]) => `${g}:${sc}`).join(",");
+
+  useEffect(() => {
     if (!username) return;
-    const me = username.toLowerCase();
-    getDocs(query(collection(db, "daily-scores"), where("dateKey", "==", dateKey)))
-      .then((snap) => {
-        const byGame = new Map<DailyGameSlug, { username: string; score: number }[]>();
-        snap.forEach((d) => {
-          const x = d.data() as { game: DailyGameSlug; username: string; score: number };
-          if (!byGame.has(x.game)) byGame.set(x.game, []);
-          byGame.get(x.game)!.push(x);
-        });
-        const out: TodayRanks = {};
-        byGame.forEach((list, game) => {
-          const mine = list.find((e) => e.username === me);
-          if (mine) out[game] = { rank: 1 + list.filter((e) => e.score > mine.score).length, of: list.length };
-        });
-        setRanks(out);
-      })
-      .catch(() => {});
-  }, [username, dateKey]);
-  useEffect(() => { load(); }, [load, refreshOn]);
+    let cancelled = false;
+    (async () => {
+      const out: TodayRanks = {};
+      await Promise.all(done.map(async ([game, score]) => {
+        const k = rankKey(username, dateKey, game);
+        try {
+          const c = JSON.parse(localStorage.getItem(k) || "null");
+          if (c && c.score === score && Date.now() - c.at < RANK_TTL) { out[game] = { rank: c.rank, of: c.of }; return; }
+        } catch { /* ignore */ }
+        try {
+          const r = await fetchRank(dateKey, game, score);
+          out[game] = r;
+          try { localStorage.setItem(k, JSON.stringify({ ...r, score, at: Date.now() })); } catch { /* ignore */ }
+        } catch { /* ignore */ }
+      }));
+      if (!cancelled) setRanks(out);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, dateKey, sig]);
+
   return ranks;
 }
 
@@ -331,13 +388,15 @@ export function dayShareText(day: DayProgress, streak: number, dateKey: string):
   const date = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   const lines = DAILY_GAMES.map((g) => {
     const p = day[g.slug];
-    if (p?.status !== "done") return `${g.emoji} ${g.name} —`;
-    return `${g.emoji} ${g.name} ${p.score.toLocaleString()}${g.max ? `/${g.max}` : ""}`;
+    if (p?.status !== "done") return `${g.dot} ${g.name} —`;
+    return `${g.dot} ${g.name} ${p.score.toLocaleString()}${g.max ? `/${g.max}` : ""}`;
   });
   const done = DAILY_GAMES.filter((g) => day[g.slug]?.status === "done").length;
   return [
     `drapk.in daily · ${date}`,
+    "",
     ...lines,
+    "",
     `${done === DAILY_GAMES.length ? "✅ Set complete" : `${done}/${DAILY_GAMES.length} done`}${streak > 1 ? ` · 🔥 ${streak}-day streak` : ""}`,
     "https://drapk.in",
   ].join("\n");

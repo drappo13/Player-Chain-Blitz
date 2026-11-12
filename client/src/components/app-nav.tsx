@@ -61,10 +61,8 @@ function Wordmark({ done }: { done: boolean[] | null }) {
 export function AppNav() {
   const [location] = useLocation();
   const { user } = useUser();
-  const { current, playedToday, day, entries, today } = useStreak(user?.username);
-  const doneToday = DAILY_GAMES.map(
-    (g) => day[g.slug]?.status === "done" || entries.some((e) => e.game === g.slug && e.dateKey === today),
-  );
+  const { current, playedToday, view } = useStreak(user?.username);
+  const doneToday = DAILY_GAMES.map((g) => view[g.slug]?.status === "done");
   const left = doneToday.filter((d) => !d).length;
 
   const userChip = user && (
