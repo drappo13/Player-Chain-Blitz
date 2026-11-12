@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, playBoostHit, playCrowdRoar, playComboCorrect, playTick } from "@/lib/sounds";
 import { ScreenFlash } from "@/components/screen-flash";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
 import { DailyNext } from "@/components/daily-next";
@@ -760,7 +760,7 @@ function EndScreen({ photos, guesses, remoteScore = null, dateKey, navigate, use
 
   const share = async () => {
     const squares = scoreOnly ? "" : `${offs.map(o => (o === null ? "⬜" : offSquare(o))).join("")} `;
-    const text = `Photo Finish ${formatDate(dateKey)}\n${squares}${total}/${MAX_SCORE}\ndrapk.in/photofinish`;
+    const text = `Photo Finish ${formatDate(dateKey)}\n${squares}${total}/${MAX_SCORE}\n${shareLink("/photofinish")}`;
     try {
       if (navigator.share && !window.matchMedia?.("(pointer: fine)").matches) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); }

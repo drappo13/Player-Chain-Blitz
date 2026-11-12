@@ -9,7 +9,7 @@ import { playNeutral, playHighScore, playGameEnd, playTick, playBoostHit, playEx
 import { normalizeName, PL_ALTERNATES, PL_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
 import { DailyNext } from "@/components/daily-next";
@@ -968,7 +968,7 @@ function EndScreen({ puzzles, rounds, remoteScore = null, dateKey, navigate, use
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
-    const text = `Career Path ${formatDate(dateKey)}\n${scoreOnly ? "" : `${rounds.map(resultEmoji).join("")} `}${fmtPts(total)}/${MAX_SCORE}\ndrapk.in/careerpath`;
+    const text = `Career Path ${formatDate(dateKey)}\n${scoreOnly ? "" : `${rounds.map(resultEmoji).join("")} `}${fmtPts(total)}/${MAX_SCORE}\n${shareLink("/careerpath")}`;
     try {
       if (navigator.share && !window.matchMedia?.("(pointer: fine)").matches) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); }

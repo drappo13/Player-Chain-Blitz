@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import arsenalStats from "../data/arteta-arsenal-stats.json";
 import { Trophy, ChevronRight, Home, Share2, RotateCcw } from "lucide-react";
 import { useLocation } from "wouter";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { saveScore } from "@/lib/save-score";
 import { saveQuizPlay } from "@/lib/quiz-plays";
 import { trackEvent } from "@/lib/firebase";
@@ -2978,7 +2978,7 @@ export default function ArsenalChampions() {
   function handlePlayAgain() { setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0); setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false); setPhase("intro"); }
   function handleShare() {
     navigator.clipboard.writeText(
-      `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ drapk.in/arsenal-pl-champions-2026`
+      `I scored ${totalScore}/100 on the Arsenal PL Champions 2026 quiz! 🏆⚽ ${shareLink("/arsenal-pl-champions-2026")}`
     ).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   }
 

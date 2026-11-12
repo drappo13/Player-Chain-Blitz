@@ -4,7 +4,7 @@ import { db } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus } from "lucide-react";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { useUserStats } from "@/lib/use-user-stats";
 import type { GameSlug } from "@/lib/save-score";
 import { HubPage } from "@/components/app-nav";
@@ -92,7 +92,7 @@ function InviteCard({ username, streak, invites }: { username: string; streak: n
     const text = [
       "Four daily Premier League games on drapk.in. A new set every day.",
       streak > 1 ? `I'm on a ${streak}-day streak \uD83D\uDD25 come and play` : "Come and play",
-      `https://drapk.in/?ref=${encodeURIComponent(username.toLowerCase())}`,
+      shareLink("/"),
     ].join("\n");
     if (await shareText(text)) {
       setCopied(true);

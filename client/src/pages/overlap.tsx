@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playWrong, playNeutral, playTick, playScoreSound } from "@/lib/sounds";
 import { gameThemes } from "@/lib/game-themes";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORITY_MONONYMS } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import type { GameState } from "@/lib/game-types";
@@ -1187,7 +1187,7 @@ function EndScreen({
     ? scoringRounds.reduce((best, r) => (r.finalPoints > best.finalPoints ? r : best))
     : null;
 
-  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\nhttps://drapk.in/overlap`);
+  const handleShare = () => share(`I scored ${totalScore.toLocaleString()} on Overlap \u26bd Can you beat me?\n${shareLink("/overlap")}`);
 
   useEndScreenEffects({
     isNewHighScore,

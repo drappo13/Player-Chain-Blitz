@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
 import { db } from "./firebase";
 import type { DailyGameSlug } from "./daily-score";
+import { shareLink } from "./user-context";
 
 // --- The daily set ---
 // Order is the order of the home tiles and of the "Next up" chain on end screens.
@@ -401,7 +402,7 @@ export function dayShareText(day: DayProgress, streak: number, dateKey: string):
     ...lines,
     "",
     `${done === DAILY_GAMES.length ? "✅ Set complete" : `${done}/${DAILY_GAMES.length} done`}${streak > 1 ? ` · 🔥 ${streak}-day streak` : ""}`,
-    "https://drapk.in",
+    shareLink("/"),
   ].join("\n");
 }
 

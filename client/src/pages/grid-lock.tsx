@@ -5,7 +5,7 @@ import { Timer, Trophy, ChevronRight, Flame, Home, SkipForward, X, Flag, Ticket,
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { playCorrect, playWrong, playTick } from "@/lib/sounds";
-import { useUser } from "@/lib/user-context";
+import { useUser, shareLink } from "@/lib/user-context";
 import { normalizeName } from "@/lib/normalize";
 import { shuffleArray, toSentenceCase } from "@/lib/utils";
 import type { GameState } from "@/lib/game-types";
@@ -657,7 +657,7 @@ function GridLockEndScreen({
   const { user } = useUser();
   const [, navigate] = useLocation();
 
-  const handleShare = () => share(`I scored ${score.toLocaleString()} on GridLock \u{1F3CE}\u{FE0F} Can you beat me?\nhttps://drapk.in/gridlock`);
+  const handleShare = () => share(`I scored ${score.toLocaleString()} on GridLock \u{1F3CE}\u{FE0F} Can you beat me?\n${shareLink("/gridlock")}`);
 
   useEndScreenEffects({
     isNewHighScore,
