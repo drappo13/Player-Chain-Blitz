@@ -175,6 +175,7 @@ interface PFState {
   roundsHash: string;
   guesses: number[]; // one locked-in season per round played
   submitted: boolean;
+  remoteScore?: number; // finished on another device before guesses were synced
 }
 
 const makeRoundsHash = (photos: Photo[]) => String(hashString(photos.map(p => p.url).join("|")));
@@ -278,6 +279,7 @@ export default function PhotoFinish() {
 
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
+  const remoteScore = state.remoteScore ?? null;
   const [showRules, setShowRules] = useState(() => {
     const s = loadState(dateKey, photos, user?.username);
     return s.guesses.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "photofinish");
@@ -297,8 +299,16 @@ export default function PhotoFinish() {
     if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "photofinish", dateKey).then(result => {
-      if (result.submitted && !state.submitted) {
-        setState(prev => ({ ...prev, submitted: true }));
+      // Also covers devices that already marked it submitted with nothing to show
+      const empty = state.guesses.length === 0 && state.remoteScore == null;
+      if (result.submitted && (!state.submitted || empty)) {
+        // Finished on another device: restore its guesses if they were synced with the score
+        const remote = result.state as Partial<PFState> | undefined;
+        if (remote?.roundsHash === state.roundsHash && Array.isArray(remote.guesses)) {
+          setState(prev => ({ ...prev, guesses: remote.guesses!, submitted: true }));
+        } else {
+          setState(prev => ({ ...prev, submitted: true, remoteScore: result.score }));
+        }
         setShowRules(false);
       }
     });
@@ -309,9 +319,9 @@ export default function PhotoFinish() {
     const n = state.guesses.length;
     recordDaily(user?.username, "photofinish", dateKey, state.submitted || n > 0 ? {
       status: state.submitted ? "done" : "playing",
-      score: scoreOf(photos, state.guesses),
+      score: n === 0 && remoteScore !== null ? remoteScore : scoreOf(photos, state.guesses),
       detail: state.submitted
-        ? `${state.guesses.filter((g, i) => g === photos[i].season).length} spot on`
+        ? n === 0 ? "Finished" : `${state.guesses.filter((g, i) => g === photos[i].season).length} spot on`
         : `${n}/${ROUNDS} photos`,
       progress: n / ROUNDS,
     } : null);
@@ -327,7 +337,7 @@ export default function PhotoFinish() {
     setSubmitting(true);
     const total = scoreOf(photos, guesses);
     const exact = guesses.filter((g, i) => g === photos[i].season).length;
-    if (user?.username && !IS_LOCAL) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS);
+    if (user?.username && !IS_LOCAL) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS, { roundsHash: state.roundsHash, guesses });
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
     if (total >= 700) playHighScore(); else playGameEnd();
@@ -446,7 +456,7 @@ export default function PhotoFinish() {
 
   // --- End Screen ---
   if (showEndScreen || (isFinished && !showRules)) {
-    return <EndScreen photos={photos} guesses={state.guesses} dateKey={dateKey} navigate={navigate} username={user?.username} />;
+    return <EndScreen photos={photos} guesses={state.guesses} remoteScore={remoteScore} dateKey={dateKey} navigate={navigate} username={user?.username} />;
   }
 
   // --- Rules Screen ---
@@ -730,14 +740,17 @@ function RuleItem({ icon, text }: { icon: string; text: string }) {
 }
 
 // --- End Screen Component ---
-function EndScreen({ photos, guesses, dateKey, navigate, username }: {
+function EndScreen({ photos, guesses, remoteScore = null, dateKey, navigate, username }: {
   photos: Photo[];
   guesses: number[];
+  remoteScore?: number | null;
   dateKey: string;
   navigate: (to: string) => void;
   username?: string;
 }) {
-  const total = scoreOf(photos, guesses);
+  // Played on another device with no guesses to show: just the score
+  const scoreOnly = guesses.length === 0 && remoteScore !== null;
+  const total = scoreOnly ? remoteScore! : scoreOf(photos, guesses);
   const rank = rankFor(total);
   const shownTotal = useTween(total, 1200, { initial: 0, delay: 200 });
   const offs = photos.map((p, i) => (guesses[i] === undefined ? null : Math.abs(guesses[i] - p.season)));
@@ -746,7 +759,8 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
-    const text = `Photo Finish ${formatDate(dateKey)}\n${offs.map(o => (o === null ? "⬜" : offSquare(o))).join("")} ${total}/${MAX_SCORE}\ndrapk.in/photofinish`;
+    const squares = scoreOnly ? "" : `${offs.map(o => (o === null ? "⬜" : offSquare(o))).join("")} `;
+    const text = `Photo Finish ${formatDate(dateKey)}\n${squares}${total}/${MAX_SCORE}\ndrapk.in/photofinish`;
     try {
       if (navigator.share && !window.matchMedia?.("(pointer: fine)").matches) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); }
@@ -775,15 +789,17 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
             <span className="text-muted-foreground text-lg ml-2">— Complete</span>
           </h1>
           <div className="text-5xl font-black tabular-nums text-amber-300">{shownTotal}</div>
-          <div className="text-sm text-muted-foreground mt-1">out of {MAX_SCORE.toLocaleString()} · {offs.filter(o => o === 0).length} spot on</div>
-          <div className="flex justify-center gap-1.5 text-2xl mt-3">
+          <div className="text-sm text-muted-foreground mt-1">
+            out of {MAX_SCORE.toLocaleString()} · {scoreOnly ? "played on another device" : `${offs.filter(o => o === 0).length} spot on`}
+          </div>
+          {!scoreOnly && <div className="flex justify-center gap-1.5 text-2xl mt-3">
             {offs.map((o, i) => (
               <motion.span key={i} initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.25 + i * 0.09 }}>
                 {o === null ? "⬜" : offSquare(o)}
               </motion.span>
             ))}
-          </div>
+          </div>}
           <div className="flex items-center justify-center gap-2 mt-3">
             <span className="text-sm font-bold px-3 py-1 rounded-full border bg-amber-500/10 border-amber-400/30 text-amber-300">{rank.label}</span>
             <button onClick={share}
@@ -825,9 +841,9 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
                     {seasonLabel(p.season)}{guesses[i] !== undefined && <> · you said {seasonLabel(guesses[i])}</>}
                   </div>
                 </div>
-                <span className={`font-bold tabular-nums ml-1 ${offs[i] === null ? "text-muted-foreground" : offColour(offs[i]!)}`}>
-                  +{offs[i] === null ? 0 : pointsFor(offs[i]!)}
-                </span>
+                {offs[i] !== null && (
+                  <span className={`font-bold tabular-nums ml-1 ${offColour(offs[i]!)}`}>+{pointsFor(offs[i]!)}</span>
+                )}
               </a>
             ))}
           </div>

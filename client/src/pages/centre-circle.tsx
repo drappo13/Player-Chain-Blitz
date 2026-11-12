@@ -412,7 +412,10 @@ export default function CentreCircle() {
     checkedRemote.current = true;
     hasDailySubmission(user.username, "centrecircle", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
-        setState(prev => ({ ...prev, submitted: true, score: result.score }));
+        // Finished on another device: restore its found names if they were synced with the score
+        const remote = result.state as Partial<HiveState> | undefined;
+        const found = remote?.boardHash === state.boardHash && Array.isArray(remote.found) ? remote.found : null;
+        setState(prev => ({ ...prev, submitted: true, score: result.score, ...(found ? { found } : {}) }));
         setShowRules(false);
       } else if (!result.submitted && state.submitted) {
         setState(prev => ({ ...prev, submitted: false }));
@@ -461,7 +464,7 @@ export default function CentreCircle() {
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
     setSubmitting(true);
-    if (!IS_LOCAL) await submitDailyScore(user.username, "centrecircle", dateKey, state.score, state.found.length, answers.length);
+    if (!IS_LOCAL) await submitDailyScore(user.username, "centrecircle", dateKey, state.score, state.found.length, answers.length, { boardHash: state.boardHash, found: state.found });
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
