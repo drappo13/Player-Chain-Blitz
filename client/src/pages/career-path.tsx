@@ -14,6 +14,7 @@ import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
+import { SetChip } from "@/components/app-nav";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
@@ -478,9 +479,7 @@ export default function CareerPath() {
   const header = (
     <div className="w-full flex items-center justify-between mb-4">
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
-          <Home className="w-4 h-4 mr-1" /> Home
-        </Button>
+        <SetChip />
         {!showRules && (
           <button onClick={() => { setShowRules(true); trackEvent("rules_open", { game: "careerpath", mode: "daily" }); }} title="How to play"
             className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors">
@@ -985,9 +984,7 @@ function EndScreen({ puzzles, rounds, remoteScore = null, dateKey, navigate, use
       <Backdrop tint="#a855f7" />
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-8 flex-1">
         <div className="w-full flex items-center justify-between mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
-            <Home className="w-4 h-4 mr-1" /> Home
-          </Button>
+          <SetChip />
           <div className="flex items-center gap-2">
           </div>
         </div>
