@@ -10,6 +10,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
@@ -348,6 +349,7 @@ export default function PhotoFinish() {
     if (revealed || isFinished) return;
     const off = Math.abs(guess - photo.season);
     const pts = pointsFor(off);
+    trackEvent("guess", { game: "photofinish", mode: "daily", round: round + 1, seasons_off: off, points: pts });
     setAnimateReveal(true);
     setLanded(false);
     setState(prev => ({ ...prev, guesses: [...prev.guesses, guess] }));
@@ -428,7 +430,7 @@ export default function PhotoFinish() {
           <Home className="w-4 h-4 mr-1" /> Home
         </Button>
         {!showRules && (
-          <button onClick={() => setShowRules(true)} title="How to play"
+          <button onClick={() => { setShowRules(true); trackEvent("rules_open", { game: "photofinish", mode: "daily" }); }} title="How to play"
             className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors">
             <Info className="w-4 h-4" />
           </button>

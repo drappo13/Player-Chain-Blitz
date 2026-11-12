@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Flame, Share2 } from "lucide-react";
 import { useUser } from "@/lib/user-context";
+import { trackEvent } from "@/lib/firebase";
 import { DAILY_GAMES, DAILY_META, dayShareText, shareText, useCountdown, useStreak, type DayProgress } from "@/lib/daily";
 import { GameIcon } from "@/components/game-icons";
 import type { DailyGameSlug } from "@/lib/daily-score";
@@ -80,7 +81,7 @@ export function DailyNext({ current }: { current: DailyGameSlug }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => navigate(nextMeta.href)}
+          onClick={() => { trackEvent("next_up_click", { from: current, to: nextMeta.slug, done_today: done.size }); navigate(nextMeta.href); }}
           className={`mt-4 w-full rounded-2xl border p-4 flex items-center gap-3 text-left ${nextMeta.tile}`}
         >
           <span className={`w-11 h-11 rounded-xl bg-black/25 flex items-center justify-center ${nextMeta.accent}`}>

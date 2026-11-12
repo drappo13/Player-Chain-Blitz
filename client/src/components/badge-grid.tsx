@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { BADGES, type Badge, type BadgeContext } from "@/lib/badges";
+import { trackEvent } from "@/lib/firebase";
 
 const seenKey = (username: string) => `pcb-badges-seen-${username.toLowerCase()}`;
 
@@ -58,6 +59,7 @@ export function BadgeGrid({ ctx, username }: { ctx: BadgeContext; username: stri
   const [seen] = useState(() => readSeen(username));
   const fresh = new Set(seen ? unlockedIds.filter((id) => !seen.has(id)) : []);
   useEffect(() => {
+    fresh.forEach((badge) => trackEvent("badge_unlock", { badge, unlocked_total: unlockedIds.length }));
     try { localStorage.setItem(seenKey(username), JSON.stringify(unlockedIds)); } catch { /* ignore */ }
   }, [username, unlockedIds.join(",")]);
 

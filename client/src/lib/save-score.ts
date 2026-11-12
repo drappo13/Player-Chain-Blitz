@@ -1,5 +1,5 @@
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, trackEvent } from "./firebase";
 
 export type GameSlug =
   | "goalchain"
@@ -20,6 +20,8 @@ export async function saveScore(
   score: number,
 ): Promise<void> {
   if (!username || score <= 0) return;
+  // The Champions quiz logs its own finish (it can be played signed out)
+  if (game !== "arsenal-champions-2026") trackEvent("game_finish", { game, mode: "arcade", score });
   try {
     await addDoc(collection(db, "scores"), {
       username: username.toLowerCase(),

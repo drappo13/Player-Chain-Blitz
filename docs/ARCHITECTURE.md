@@ -352,6 +352,29 @@ Known data gaps exist (e.g., short stints missing). Accepted — game rules stat
 
 ---
 
+## Analytics (GA4 via Firebase Analytics)
+
+Events go to Google Analytics, not Firestore (free, no read/write cost). `trackEvent()` and `identify()` in `lib/firebase.ts` queue calls until GA has loaded. Names are shared across games; params include `game` (slug) and `mode` (`daily` | `arcade` | `special`) where relevant. Ad blockers drop a share of events, so Firestore stays the source of truth for counts; GA is for behaviour and funnels.
+
+| Event | Fired from | Key params |
+|---|---|---|
+| `page_view` | route changes (`App.tsx`) | path |
+| `game_start` / `game_finish` | daily: `recordDaily` transitions in `lib/daily.ts` (restored results fire nothing); arcade: `saveScore`; quiz: its own | score, level, seconds, set_position |
+| `set_complete` | `lib/daily.ts` | last_game |
+| `guess` | each daily game (Griddle/CentreCircle via their feedback fn) | result / seasons_off / clue_stage, round |
+| `clue_reveal`, `hints_open`, `rules_open` | daily games | game, round, clue_stage |
+| `round_start` / `round_finish` | Champions quiz | round, score |
+| `tile_open` | home tiles | game, status, position |
+| `next_up_click` | `DailyNext` | from, to, done_today |
+| `share` | `shareLink()` (every share message) | path, source (`game` / `day` / `invite`) |
+| `invite_landing` | `?ref=` on load (`user-context`) | ref, path, signed_in |
+| `sign_up` / `login` | `user-context` | invited, ref |
+| `badge_unlock` | `BadgeGrid` (first view after unlocking) | badge |
+
+User ID = lowercase username (so retention counts people, not devices). User properties: `acquisition` (invite/organic), `referred_by`, `signup_month` (set at sign-up), `current_streak`, `best_streak`, `days_played`, `days_played_band`, `daily_done_today` (refreshed by `AnalyticsIdentity` in `App.tsx`).
+
+---
+
 ## Deployment
 
 Push to `main` → GitHub Actions → live at **drapk.in** in ~1 min.

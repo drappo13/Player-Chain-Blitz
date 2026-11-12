@@ -8,7 +8,8 @@ import { UsernamePicker } from "@/components/username-picker";
 import { UserBadge } from "@/components/user-badge";
 import { AppNav, HUB_ROUTES } from "@/components/app-nav";
 import { lazy, Suspense, Component, useEffect, type ReactNode } from "react";
-import { trackPageView } from "@/lib/firebase";
+import { trackPageView, identify } from "@/lib/firebase";
+import { DAILY_GAMES, useStreak } from "@/lib/daily";
 
 // Lazy-load all pages — isolates crashes so one broken page can't kill the whole app
 const Home = lazy(() => import("@/pages/home"));
@@ -138,6 +139,25 @@ function Router() {
   );
 }
 
+/** Keeps analytics tied to the signed-in account, tagged with its retention stats so any
+ *  report can be split by streak, days played or how they joined. */
+function AnalyticsIdentity() {
+  const { user } = useUser();
+  const { current, best, daysPlayed, view } = useStreak(user?.username);
+  const doneToday = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").length;
+  useEffect(() => {
+    if (!user) { identify(null); return; }
+    identify(user.username.toLowerCase(), {
+      current_streak: current,
+      best_streak: best,
+      days_played: daysPlayed,
+      days_played_band: daysPlayed >= 30 ? "30+" : daysPlayed >= 7 ? "7-29" : daysPlayed >= 2 ? "2-6" : daysPlayed === 1 ? "1" : "0",
+      daily_done_today: doneToday,
+    });
+  }, [user?.username, current, best, daysPlayed, doneToday]);
+  return null;
+}
+
 // Routes where anonymous play is allowed — UsernamePicker is opt-in instead of forced.
 const ANON_ALLOWED_ROUTES = ["/arsenal-pl-champions-2026"];
 
@@ -158,6 +178,7 @@ function AppContent() {
 
   return (
     <>
+      <AnalyticsIdentity />
       {!user && !allowAnonymous && <UsernamePicker />}
       {isHub ? <AppNav /> : <UserBadge />}
       <Router />

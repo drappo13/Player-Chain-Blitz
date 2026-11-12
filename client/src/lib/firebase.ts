@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics, isSupported, logEvent, type Analytics } from "firebase/analytics";
+import { getAnalytics, isSupported, logEvent, setUserId, setUserProperties, type Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDgg5sd6bAQAMo2ENtdZJV-lP6ytduPbj4",
@@ -18,26 +18,48 @@ export const db = getFirestore(app);
 
 // Analytics is loaded lazily and conditionally — only when the SDK supports
 // the runtime (browsers with cookies + IndexedDB; not SSR or some embedded
-// webviews) AND a measurementId is configured.
+// webviews) AND a measurementId is configured. Calls made before it's ready are
+// queued and replayed, so early events (e.g. landing from an invite link) aren't lost.
 let analytics: Analytics | null = null;
+let pending: ((a: Analytics) => void)[] = [];
+const withAnalytics = (fn: (a: Analytics) => void) => {
+  if (analytics) fn(analytics);
+  else if (pending) pending.push(fn);
+};
 if (typeof window !== "undefined" && (firebaseConfig as { measurementId?: string }).measurementId) {
   isSupported().then((ok) => {
-    if (ok) analytics = getAnalytics(app);
-  }).catch(() => {});
+    if (!ok) { pending = []; return; }
+    analytics = getAnalytics(app);
+    const queued = pending;
+    pending = [];
+    queued.forEach((fn) => fn(analytics!));
+  }).catch(() => { pending = []; });
 }
 
-/** Log a page view. Safe to call anywhere — no-ops if Analytics isn't ready. */
+/** Log a page view. Safe to call anywhere. */
 export function trackPageView(path: string, title?: string) {
-  if (!analytics) return;
-  logEvent(analytics, "page_view", {
+  withAnalytics((a) => logEvent(a, "page_view", {
     page_path: path,
     page_title: title ?? document.title,
     page_location: window.location.href,
-  });
+  }));
 }
 
-/** Log a custom GA event. Safe to call anywhere — no-ops if Analytics isn't ready. */
-export function trackEvent(name: string, params?: Record<string, string | number | boolean>) {
-  if (!analytics) return;
-  logEvent(analytics, name as Parameters<typeof logEvent>[1], params);
+/** Log a custom GA event. Safe to call anywhere. Event names are snake_case and shared
+ *  across games; pass `game` (slug) and `mode` ("daily" | "arcade") where they apply. */
+export function trackEvent(name: string, params?: Record<string, string | number | boolean | undefined>) {
+  const clean = params && Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined));
+  withAnalytics((a) => logEvent(a, name as Parameters<typeof logEvent>[1], clean));
+}
+
+/** Tie analytics to the account (so retention counts people, not devices) and tag them
+ *  with properties every report can be split by. */
+export function identify(username: string | null, props?: Record<string, string | number | undefined>) {
+  withAnalytics((a) => {
+    setUserId(a, username);
+    if (props) {
+      const clean = Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)]));
+      setUserProperties(a, clean);
+    }
+  });
 }
