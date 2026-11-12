@@ -21,6 +21,19 @@ export interface LeaderboardEntry {
 
 export type LeaderboardPeriod = "today" | "alltime";
 
+// These read every score for a game (or every arcade score, for the global board), so
+// results are cached for a few minutes. End screens pass fresh=true to see their new score.
+const LB_TTL = 5 * 60 * 1000;
+const lbCache = new Map<string, { at: number; entries: LeaderboardEntry[] }>();
+
+async function cached(key: string, fresh: boolean, load: () => Promise<LeaderboardEntry[]>): Promise<LeaderboardEntry[]> {
+  const hit = lbCache.get(key);
+  if (!fresh && hit && Date.now() - hit.at < LB_TTL) return hit.entries;
+  const entries = await load();
+  lbCache.set(key, { at: Date.now(), entries });
+  return entries;
+}
+
 /**
  * Fetch top scores for a specific game.
  * Uses only equality filters to avoid needing composite Firestore indexes.
@@ -164,7 +177,7 @@ export function useGameLeaderboard(
     setLoading(true);
 
     const doFetch = () => {
-      fetchGameLeaderboard(game, period, max).then((data) => {
+      cached(`game:${game}:${period}:${max}`, delay > 0 || refreshKey > 0, () => fetchGameLeaderboard(game, period, max)).then((data) => {
         if (!cancelled) {
           setEntries(data);
           setLoading(false);
@@ -201,7 +214,7 @@ export function useGlobalLeaderboard(
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchGlobalLeaderboard(mode, period, max).then((data) => {
+    cached(`global:${mode}:${period}:${max}`, refreshKey > 0, () => fetchGlobalLeaderboard(mode, period, max)).then((data) => {
       if (!cancelled) {
         setEntries(data);
         setLoading(false);
