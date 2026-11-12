@@ -11,6 +11,8 @@ import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
@@ -65,6 +67,17 @@ function getCurrentTier(found: number, total: number) {
     }
   }
   return { current, nextTier, pct };
+}
+
+// Tiers sit evenly along a bar; fill to the current tier plus progress to the next.
+function tierFill(found: number, total: number) {
+  const pct = total > 0 ? found / total : 0;
+  let idx = -1;
+  for (let i = 0; i < TIERS.length; i++) if (pct >= TIERS[i].pct) idx = i;
+  const lo = idx >= 0 ? TIERS[idx].pct : 0;
+  const hi = TIERS[idx + 1]?.pct;
+  const within = hi ? (pct - lo) / (hi - lo) : 0;
+  return Math.min(1, (idx + 1 + within) / TIERS.length);
 }
 
 // --- Seeded PRNG (mulberry32) ---
@@ -455,7 +468,7 @@ export default function Griddle() {
   const [showRules, setShowRules] = useState(() => {
     // Skip rules if they already have progress or submitted
     const s = loadState(dateKey, boardClubs, user?.username);
-    return s.foundPlayers.length === 0 && !s.submitted;
+    return s.foundPlayers.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "griddle");
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
@@ -474,6 +487,7 @@ export default function Griddle() {
       if (result.submitted && !state.submitted) {
         // Found on Firebase but not local — cross-device case
         setState(prev => ({ ...prev, submitted: true, score: result.score }));
+        setShowRules(false);
       } else if (!result.submitted && state.submitted) {
         // Local says submitted but Firebase has nothing — failed write, let them retry
         setState(prev => ({ ...prev, submitted: false }));
@@ -484,6 +498,14 @@ export default function Griddle() {
   // Persist state on change
   useEffect(() => {
     saveState(state, user?.username);
+    const found = state.foundPlayers.length;
+    recordDaily(user?.username, "griddle", dateKey, isFinished || found > 0 ? {
+      status: isFinished ? "done" : "playing",
+      score: state.score,
+      detail: isFinished ? `${found} found` : `${found} found \u00B7 ${state.livesLeft} ${state.livesLeft === 1 ? "life" : "lives"} left`,
+      level: getCurrentTier(found, totalValid).current?.label ?? "Unranked",
+      progress: tierFill(found, totalValid),
+    } : null);
   }, [state]);
 
   // Auto-focus input
@@ -770,10 +792,6 @@ export default function Griddle() {
               <Home className="w-4 h-4 mr-1" /> Home
             </Button>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-xs font-semibold">
-                <Calendar className="w-3 h-3" />DAILY
-              </span>
-              <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
             </div>
           </div>
 
@@ -866,10 +884,6 @@ export default function Griddle() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-xs font-semibold">
-              <Calendar className="w-3 h-3" />DAILY
-            </span>
-            <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
           </div>
         </div>
 
@@ -1334,10 +1348,6 @@ function EndScreen({
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 text-xs font-semibold">
-              <Calendar className="w-3 h-3" />DAILY
-            </span>
-            <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
           </div>
         </div>
 
@@ -1409,10 +1419,7 @@ function EndScreen({
         {/* Come back tomorrow */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
           className="w-full text-center py-4 text-muted-foreground">
-          <p className="text-sm">Come back tomorrow for a new board!</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4 mr-1.5" /> Back to games
-          </Button>
+          <DailyNext current="griddle" />
         </motion.div>
       </div>
     </div>

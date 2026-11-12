@@ -11,6 +11,8 @@ import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
@@ -330,7 +332,7 @@ export default function CareerPath() {
   const [submitting, setSubmitting] = useState(false);
   const [showRules, setShowRules] = useState(() => {
     const s = loadState(dateKey, puzzles, user?.username);
-    return s.rounds.every(r => r.guesses.length === 0 && r.stage === 0) && !s.submitted;
+    return s.rounds.every(r => r.guesses.length === 0 && r.stage === 0) && !s.submitted && !hasPlayedBefore(user?.username, "careerpath");
   });
   const checkedRemote = useRef(false);
 
@@ -347,11 +349,26 @@ export default function CareerPath() {
     if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "careerpath", dateKey).then(result => {
-      if (result.submitted && !state.submitted) setState(prev => ({ ...prev, submitted: true }));
+      if (result.submitted && !state.submitted) {
+        setState(prev => ({ ...prev, submitted: true }));
+        setShowRules(false);
+      }
     });
   }, [user?.username, dateKey, state.submitted]);
 
-  useEffect(() => { saveState(state, user?.username); }, [state]);
+  useEffect(() => {
+    saveState(state, user?.username);
+    const played = state.rounds.filter(r => roundDone(r) || r.guesses.length > 0).length;
+    const finished = state.rounds.filter(roundDone).length;
+    recordDaily(user?.username, "careerpath", dateKey, state.submitted || played > 0 ? {
+      status: state.submitted ? "done" : "playing",
+      score: totalOf(state.rounds),
+      detail: state.submitted
+        ? `${state.rounds.filter(r => r.solved).length}/${ROUNDS} named`
+        : `${finished}/${ROUNDS} players`,
+      progress: finished / ROUNDS,
+    } : null);
+  }, [state]);
   useEffect(() => { setHighlight(0); }, [query]);
 
   const showToast = (text: string) => {
@@ -455,10 +472,6 @@ export default function CareerPath() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-xs font-semibold">
-          <Calendar className="w-3 h-3" />DAILY
-        </span>
-        <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-violet-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg backdrop-blur">
@@ -955,10 +968,6 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-xs font-semibold">
-              <Calendar className="w-3 h-3" />DAILY
-            </span>
-            <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
           </div>
         </div>
 
@@ -1014,10 +1023,7 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
         </div>
 
         <div className="w-full text-center py-4 text-muted-foreground">
-          <p className="text-sm">Five new players tomorrow!</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4 mr-1.5" /> Back to games
-          </Button>
+          <DailyNext current="careerpath" />
         </div>
       </div>
     </div>

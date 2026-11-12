@@ -10,6 +10,8 @@ import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
@@ -391,7 +393,7 @@ export default function CentreCircle() {
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [showRules, setShowRules] = useState(() => {
     const s = loadState(dateKey, board, user?.username);
-    return s.found.length === 0 && !s.submitted;
+    return s.found.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "centrecircle");
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
@@ -409,6 +411,7 @@ export default function CentreCircle() {
     hasDailySubmission(user.username, "centrecircle", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
         setState(prev => ({ ...prev, submitted: true, score: result.score }));
+        setShowRules(false);
       } else if (!result.submitted && state.submitted) {
         setState(prev => ({ ...prev, submitted: false }));
       }
@@ -417,6 +420,13 @@ export default function CentreCircle() {
 
   useEffect(() => {
     saveState(state, user?.username);
+    recordDaily(user?.username, "centrecircle", dateKey, state.submitted || state.found.length > 0 ? {
+      status: state.submitted ? "done" : "playing",
+      score: state.score,
+      detail: `${state.found.length}/${answers.length} found`,
+      level: getRank(state.score, maxScore).label,
+      progress: rankFill(state.score, maxScore),
+    } : null);
   }, [state]);
 
   // Desktop keeps the cursor in the input; touch screens use the hive so the
@@ -566,10 +576,6 @@ export default function CentreCircle() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-xs font-semibold">
-          <Calendar className="w-3 h-3" />DAILY
-        </span>
-        <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-green-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
@@ -930,13 +936,18 @@ function BeeBurst() {
   );
 }
 
-function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
+// Ranks sit evenly along the bar; the fill runs to the current rank plus progress to the next.
+function rankFill(score: number, maxScore: number) {
   const rank = getRank(score, maxScore);
-  const steps = RANKS.length - 1;
-  // Ranks sit evenly along the bar; the fill runs to the current rank plus progress to the next.
   const from = RANKS[rank.index].pct * maxScore;
   const within = rank.next ? (score - from) / (rank.next.pct * maxScore - from) : 0;
-  const fill = Math.min(1, (rank.index + Math.max(0, Math.min(1, within))) / steps);
+  return Math.min(1, (rank.index + Math.max(0, Math.min(1, within))) / (RANKS.length - 1));
+}
+
+function RankBar({ score, maxScore }: { score: number; maxScore: number }) {
+  const rank = getRank(score, maxScore);
+  const fill = rankFill(score, maxScore);
+  const steps = RANKS.length - 1;
   return (
     <div className="w-full">
       <div className="flex items-baseline justify-between mb-1.5">
@@ -1143,10 +1154,6 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-xs font-semibold">
-              <Calendar className="w-3 h-3" />DAILY
-            </span>
-            <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
           </div>
         </div>
 
@@ -1206,10 +1213,7 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
           className="w-full text-center py-4 text-muted-foreground">
-          <p className="text-sm">Come back tomorrow for new letters!</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4 mr-1.5" /> Back to games
-          </Button>
+          <DailyNext current="centrecircle" />
         </motion.div>
       </div>
     </div>

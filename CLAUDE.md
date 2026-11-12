@@ -32,6 +32,10 @@ Sports trivia game site at **drapk.in** — React SPA deployed via GitHub Pages.
 | `/slamchain` | `slam-chain.tsx` | Arcade | Name Grand Slam tennis players |
 | `/gridlock` | `grid-lock.tsx` | Arcade | Name F1 points scorers |
 
+## Site Structure
+
+Hub pages (`/`, `/arcade`, `/leaderboard`, `/me`) share `AppNav`: a top bar on desktop and bottom tabs on phones. Home is "Today": the daily set with live progress per game, streaks and Next-up chaining between daily games (`lib/daily.ts`). Game pages hide the nav and show a floating streak/name chip linking to `/me`.
+
 ## Tech Stack
 
 React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Wouter, Framer Motion, Web Audio API, Firebase Firestore, Lucide React
