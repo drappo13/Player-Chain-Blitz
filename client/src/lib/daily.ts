@@ -192,6 +192,9 @@ export interface DailyEntry {
   game: DailyGameSlug;
   dateKey: string;
   score: number;
+  found?: number; // game-specific: players named, exact photos, names found
+  total?: number;
+  at?: number; // when it was submitted (ms)
 }
 
 const historyKey = (username: string) => `pcb-dailyhist-${username.toLowerCase()}`;
@@ -217,8 +220,8 @@ function fetchHistory(username: string): Promise<DailyEntry[]> {
   const promise = getDocs(query(collection(db, "daily-scores"), where("username", "==", key))).then((snap) => {
     const list: DailyEntry[] = [];
     snap.forEach((d) => {
-      const x = d.data() as DailyEntry;
-      list.push({ game: x.game, dateKey: x.dateKey, score: x.score });
+      const x = d.data() as DailyEntry & { timestamp?: { toMillis?: () => number } };
+      list.push({ game: x.game, dateKey: x.dateKey, score: x.score, found: x.found, total: x.total, at: x.timestamp?.toMillis?.() });
     });
     try { localStorage.setItem(historyKey(username), JSON.stringify(list)); } catch { /* ignore */ }
     return list;

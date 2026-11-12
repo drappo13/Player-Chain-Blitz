@@ -7,6 +7,8 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -94,6 +96,50 @@ export async function submitDailyScore(
   }
 }
 
+// Avatars rarely change, so remember them (in memory and on the device) instead of
+// fetching each top player's user doc on every leaderboard load.
+const AVATARS_KEY = "pcb-avatars";
+const avatarCache: Map<string, string> = (() => {
+  try { return new Map(Object.entries(JSON.parse(localStorage.getItem(AVATARS_KEY) || "{}"))); } catch { return new Map(); }
+})();
+
+async function avatarsFor(usernames: string[]): Promise<Map<string, string>> {
+  const missing = usernames.filter((u) => !avatarCache.has(u));
+  if (missing.length) {
+    await Promise.all(missing.map(async (u) => {
+      try {
+        const snap = await getDoc(doc(db, "users", u.toLowerCase()));
+        const avatar = snap.exists() ? (snap.data() as { avatar?: string }).avatar : undefined;
+        if (avatar) avatarCache.set(u, avatar);
+      } catch { /* silent */ }
+    }));
+    try { localStorage.setItem(AVATARS_KEY, JSON.stringify(Object.fromEntries(avatarCache))); } catch { /* ignore */ }
+  }
+  return avatarCache;
+}
+
+type Row = { id: string; username: string; score: number; found: number };
+
+/** Top scores for one game on one day. Uses the dateKey+game+score index to read only the top
+ *  rows; without it, reads that game's scores for the day and sorts them here. */
+async function topRows(game: DailyGameSlug, dateKey: string, max: number): Promise<Row[]> {
+  const base = [where("dateKey", "==", dateKey), where("game", "==", game)];
+  const toRow = (d: { id: string; data: () => unknown }): Row => {
+    const x = d.data() as DailyScoreDoc;
+    return { id: d.id, username: x.username, score: x.score, found: x.found };
+  };
+  let rows: Row[];
+  try {
+    const snap = await getDocs(query(collection(db, "daily-scores"), ...base, orderBy("score", "desc"), limit(max)));
+    rows = snap.docs.map(toRow);
+  } catch {
+    const snap = await getDocs(query(collection(db, "daily-scores"), ...base));
+    rows = snap.docs.map(toRow);
+  }
+  // Ties in document order, as before
+  return rows.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1)).slice(0, max);
+}
+
 /** Fetch daily leaderboard for a specific game + date */
 export async function fetchDailyLeaderboard(
   game: DailyGameSlug,
@@ -101,40 +147,13 @@ export async function fetchDailyLeaderboard(
   max: number,
 ): Promise<{ username: string; avatar: string; score: number; found: number }[]> {
   try {
-    const q = query(
-      collection(db, "daily-scores"),
-      where("dateKey", "==", dateKey),
-    );
-    const snap = await getDocs(q);
-
-    const entries: { username: string; score: number; found: number }[] = [];
-    snap.forEach((d) => {
-      const data = d.data() as DailyScoreDoc;
-      if (data.game === game) {
-        entries.push({ username: data.username, score: data.score, found: data.found });
-      }
-    });
-
-    entries.sort((a, b) => b.score - a.score);
-    const top = entries.slice(0, max);
-
-    // Fetch avatars
-    const avatarMap = new Map<string, string>();
-    await Promise.all(
-      top.map(async (e) => {
-        try {
-          const snap = await getDoc(doc(db, "users", e.username.toLowerCase()));
-          if (snap.exists()) {
-            const data = snap.data() as { avatar?: string };
-            if (data.avatar) avatarMap.set(e.username, data.avatar);
-          }
-        } catch { /* silent */ }
-      }),
-    );
-
-    return top.map((e) => ({
-      ...e,
-      avatar: avatarMap.get(e.username) || "\u26bd",
+    const top = await topRows(game, dateKey, max);
+    const avatars = await avatarsFor(top.map((e) => e.username));
+    return top.map(({ username, score, found }) => ({
+      username,
+      score,
+      found,
+      avatar: avatars.get(username) || "\u26bd",
     }));
   } catch {
     return [];
