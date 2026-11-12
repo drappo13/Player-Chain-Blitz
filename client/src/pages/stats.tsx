@@ -195,7 +195,7 @@ export default function StatsPage() {
                     <td className="text-right">{d.games}</td>
                     <td className="text-right">{d.signups}</td>
                     <td className="text-right">{d.fullSets}</td>
-                    <td className="text-right font-bold">{d.backNext === null ? <span className="text-muted-foreground font-normal">today</span> : pct(d.backNext)}</td>
+                    <td className="text-right font-bold">{d.day === t.today ? <span className="text-muted-foreground font-normal">today</span> : pct(d.backNext)}</td>
                   </tr>
                 ))}
               </tbody>
