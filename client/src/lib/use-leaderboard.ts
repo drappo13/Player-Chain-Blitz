@@ -21,16 +21,22 @@ export interface LeaderboardEntry {
 
 export type LeaderboardPeriod = "today" | "alltime";
 
-// These read every score for a game (or every arcade score, for the global board), so
-// results are cached for a few minutes. End screens pass fresh=true to see their new score.
-const LB_TTL = 5 * 60 * 1000;
-const lbCache = new Map<string, { at: number; entries: LeaderboardEntry[] }>();
+// These read every score for a game (or every arcade score, for the global board), so results
+// are kept on the device: 6 hours for all-time boards, 30 minutes for today's. Finishing an
+// arcade game clears it (saveScore), and end screens / manual refreshes always fetch fresh.
+export const LB_CACHE_KEY = "pcb-lb-cache";
+type LbCache = Record<string, { at: number; entries: LeaderboardEntry[] }>;
+
+function readLbCache(): LbCache {
+  try { return JSON.parse(localStorage.getItem(LB_CACHE_KEY) || "{}"); } catch { return {}; }
+}
 
 async function cached(key: string, fresh: boolean, load: () => Promise<LeaderboardEntry[]>): Promise<LeaderboardEntry[]> {
-  const hit = lbCache.get(key);
-  if (!fresh && hit && Date.now() - hit.at < LB_TTL) return hit.entries;
+  const ttl = key.includes(":today:") ? 30 * 60 * 1000 : 6 * 60 * 60 * 1000;
+  const hit = readLbCache()[key];
+  if (!fresh && hit && Date.now() - hit.at < ttl) return hit.entries;
   const entries = await load();
-  lbCache.set(key, { at: Date.now(), entries });
+  try { localStorage.setItem(LB_CACHE_KEY, JSON.stringify({ ...readLbCache(), [key]: { at: Date.now(), entries } })); } catch { /* ignore */ }
   return entries;
 }
 

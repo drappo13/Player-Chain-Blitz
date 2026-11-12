@@ -27,6 +27,8 @@ export async function saveScore(
       score,
       timestamp: serverTimestamp(),
     });
+    // Your new score should show on the leaderboards straight away
+    try { localStorage.removeItem("pcb-lb-cache"); } catch { /* ignore */ }
   } catch {
     // Silent failure — never break the game experience
   }
