@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, trackEvent } from "./firebase";
 import type { DailyGameSlug } from "./daily-score";
 import { shareLink } from "./user-context";
 
@@ -127,6 +127,7 @@ export interface DailyProgress {
   detail: string; // short line for the tile, e.g. "23/59 found"
   level?: string; // the game's own rank, e.g. "Captain"
   progress?: number; // 0..1 for a progress bar while playing
+  startedAt?: number; // set on the first move, for time-to-finish analytics
 }
 
 export type DayProgress = Partial<Record<DailyGameSlug, DailyProgress>>;
@@ -149,11 +150,34 @@ export function recordDaily(username: string | undefined, game: DailyGameSlug, d
   try {
     if (p) localStorage.setItem(playedKey(username, game), "1");
     const day = readDay(username, dateKey);
-    if (p) day[game] = p;
+    const prev = day[game];
+    if (p) {
+      p = { ...p, startedAt: prev?.startedAt ?? (p.status === "playing" ? Date.now() : undefined) };
+      trackTransition(game, prev, p, day);
+      day[game] = p;
+    }
     else if (day[game]?.status !== "done") delete day[game];
     localStorage.setItem(progressKey(username, dateKey), JSON.stringify(day));
     window.dispatchEvent(new Event(PROGRESS_EVENT));
   } catch { /* ignore */ }
+}
+
+/** Analytics for a game moving between states. Only real play counts: a result restored
+ *  from another device (never "playing" here) fires nothing. */
+function trackTransition(game: DailyGameSlug, prev: DailyProgress | undefined, p: DailyProgress, day: DayProgress) {
+  const base = { game, mode: "daily" };
+  if (!prev && p.status === "playing") trackEvent("game_start", base);
+  if (prev?.status === "playing" && p.status === "done") {
+    const doneToday = DAILY_GAMES.filter((g) => g.slug === game || day[g.slug]?.status === "done").length;
+    trackEvent("game_finish", {
+      ...base,
+      score: p.score,
+      level: p.level,
+      seconds: p.startedAt ? Math.round((Date.now() - p.startedAt) / 1000) : undefined,
+      set_position: doneToday, // 1st, 2nd… game finished today
+    });
+    if (doneToday === DAILY_GAMES.length) trackEvent("set_complete", { last_game: game });
+  }
 }
 
 /** Today's progress on this device, kept live as games write to it. */
@@ -402,7 +426,7 @@ export function dayShareText(day: DayProgress, streak: number, dateKey: string):
     ...lines,
     "",
     `${done === DAILY_GAMES.length ? "✅ Set complete" : `${done}/${DAILY_GAMES.length} done`}${streak > 1 ? ` · 🔥 ${streak}-day streak` : ""}`,
-    shareLink("/"),
+    shareLink("/", "day"),
   ].join("\n");
 }
 

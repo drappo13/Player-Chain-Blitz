@@ -1,18 +1,22 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, trackEvent, identify } from "./firebase";
 
 // Invite links look like drapk.in/?ref=username; remember the inviter until sign-up
 const REF_KEY = "pcb-ref";
 if (typeof window !== "undefined") {
   try {
     const ref = new URLSearchParams(window.location.search).get("ref")?.toLowerCase().trim();
-    if (ref && /^[a-z0-9_]{2,15}$/.test(ref)) localStorage.setItem(REF_KEY, ref);
+    if (ref && /^[a-z0-9_]{2,15}$/.test(ref)) {
+      localStorage.setItem(REF_KEY, ref);
+      trackEvent("invite_landing", { ref, path: window.location.pathname, signed_in: !!localStorage.getItem("pcb-user") });
+    }
   } catch { /* ignore */ }
 }
 
 /** A drapk.in link that credits the signed-in player as the inviter (plain link if signed out). */
-export function shareLink(path = "/"): string {
+export function shareLink(path = "/", source = "game"): string {
+  trackEvent("share", { path, source });
   let ref = "";
   try { ref = (JSON.parse(localStorage.getItem("pcb-user") || "null") as User | null)?.username?.toLowerCase() ?? ""; } catch { /* ignore */ }
   return `https://drapk.in${path}${ref ? `?ref=${encodeURIComponent(ref)}` : ""}`;
@@ -77,6 +81,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const data = snap.data() as User;
       setUser(data);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      trackEvent("login", { method: "username" });
       return { ok: true };
     } catch {
       return { ok: false, error: UNREACHABLE };
@@ -108,6 +113,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
       setUser(userData);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      const invited = !!ref && ref !== key;
+      trackEvent("sign_up", { method: "username", invited, ref: invited ? ref! : undefined, path: window.location.pathname });
+      const now = new Date();
+      identify(key, {
+        signup_month: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
+        acquisition: invited ? "invite" : "organic",
+        referred_by: invited ? ref! : undefined,
+      });
       return { ok: true };
     } catch {
       return { ok: false, error: UNREACHABLE };

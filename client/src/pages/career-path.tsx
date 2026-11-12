@@ -12,6 +12,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
@@ -413,6 +414,7 @@ export default function CareerPath() {
   const guess = useCallback((c: Candidate) => {
     if (done) return;
     setQuery("");
+    trackEvent("guess", { game: "careerpath", mode: "daily", round: current + 1, clue_stage: round.stage, result: c.id === puzzle.id ? "correct" : "wrong" });
     if (c.id === puzzle.id) {
       updateRound(r => ({ ...r, guesses: [...r.guesses, c.id], solved: true }));
       playExactMatch();
@@ -430,10 +432,11 @@ export default function CareerPath() {
       if (lastChance) playGameEnd();
       else { playNeutral(); setTimeout(playTick, 260); showToast(unlockNote(round.stage + 1)); }
     }
-  }, [done, puzzle.id, round.stage, updateRound, windowClubs]);
+  }, [done, puzzle.id, round.stage, updateRound, windowClubs, current]);
 
   const revealClue = useCallback(() => {
     if (done) return;
+    trackEvent("clue_reveal", { game: "careerpath", mode: "daily", round: current + 1, clue_stage: round.stage + 1 });
     if (round.stage >= MAX_STAGE) {
       updateRound(r => ({ ...r, failed: true }));
       playGameEnd();
@@ -443,7 +446,7 @@ export default function CareerPath() {
     playBoostHit();
     buzz(10);
     showToast(unlockNote(round.stage + 1));
-  }, [done, round.stage, updateRound]);
+  }, [done, round.stage, updateRound, current]);
 
   const nextRound = useCallback(() => {
     if (current < ROUNDS - 1) {
@@ -478,7 +481,7 @@ export default function CareerPath() {
           <Home className="w-4 h-4 mr-1" /> Home
         </Button>
         {!showRules && (
-          <button onClick={() => setShowRules(true)} title="How to play"
+          <button onClick={() => { setShowRules(true); trackEvent("rules_open", { game: "careerpath", mode: "daily" }); }} title="How to play"
             className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors">
             <Info className="w-4 h-4" />
           </button>

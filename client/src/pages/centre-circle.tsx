@@ -11,6 +11,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
@@ -449,6 +450,7 @@ export default function CentreCircle() {
   }, [isFinished]);
 
   const showFeedbackMsg = useCallback((fb: Feedback, duration = 2600) => {
+    trackEvent("guess", { game: "centrecircle", mode: "daily", result: fb.type ?? "other", points: fb.points });
     setFeedback(fb);
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
@@ -575,7 +577,7 @@ export default function CentreCircle() {
           <Home className="w-4 h-4 mr-1" /> Home
         </Button>
         {!showRules && (
-          <button onClick={() => setShowRules(true)} title="How to play"
+          <button onClick={() => { setShowRules(true); trackEvent("rules_open", { game: "centrecircle", mode: "daily" }); }} title="How to play"
             className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors">
             <Info className="w-4 h-4" />
           </button>
@@ -796,7 +798,7 @@ export default function CentreCircle() {
               className="h-11 w-11 rounded-full border border-border bg-card/60 text-muted-foreground hover:text-foreground active:scale-95 transition flex items-center justify-center">
               <Shuffle className="w-5 h-5" />
             </button>
-            <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
+            <button type="button" onClick={() => setShowTracker(v => { if (!v) trackEvent("hints_open", { game: "centrecircle", mode: "daily" }); return !v; })} aria-pressed={showTracker}
               aria-label="Hints" title="Tracker — what's left to find"
               className={`h-11 w-11 rounded-full border active:scale-95 transition flex items-center justify-center ${showTracker
                 ? "bg-green-500/15 border-green-500/40 text-green-300"

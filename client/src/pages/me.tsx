@@ -92,7 +92,7 @@ function InviteCard({ username, streak, invites }: { username: string; streak: n
     const text = [
       "Four daily Premier League games on drapk.in. A new set every day.",
       streak > 1 ? `I'm on a ${streak}-day streak \uD83D\uDD25 come and play` : "Come and play",
-      shareLink("/"),
+      shareLink("/", "invite"),
     ].join("\n");
     if (await shareText(text)) {
       setCopied(true);

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Check, ChevronRight, Flame, Share2, Trophy, Clock } from "lucide-react";
 import { useUser } from "@/lib/user-context";
+import { trackEvent } from "@/lib/firebase";
 import { HubPage } from "@/components/app-nav";
 import { SetSegments } from "@/components/daily-next";
 import { GameIcon } from "@/components/game-icons";
@@ -156,7 +157,8 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
   const status = p?.status ?? "new";
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + index * 0.06 }}>
-      <Link href={game.href} data-testid={`tile-${game.slug}`}>
+      <Link href={game.href} data-testid={`tile-${game.slug}`}
+        onClick={() => trackEvent("tile_open", { game: game.slug, mode: "daily", status, position: index + 1 })}>
         <motion.div
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}

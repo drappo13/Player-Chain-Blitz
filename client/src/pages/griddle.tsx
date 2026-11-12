@@ -12,6 +12,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
@@ -533,6 +534,7 @@ export default function Griddle() {
   const tierInfo = useMemo(() => getCurrentTier(state.foundPlayers.length, totalValid), [state.foundPlayers.length, totalValid]);
 
   const showFeedbackMsg = useCallback((fb: Feedback, duration = 3000) => {
+    trackEvent("guess", { game: "griddle", mode: "daily", result: fb.type ?? "other", points: fb.points });
     setFeedback(fb);
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
@@ -879,7 +881,7 @@ export default function Griddle() {
               <Home className="w-4 h-4 mr-1" /> Home
             </Button>
             <button
-              onClick={() => setShowRules(true)}
+              onClick={() => { setShowRules(true); trackEvent("rules_open", { game: "griddle", mode: "daily" }); }}
               className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-colors"
               title="How to play"
             >
@@ -1061,7 +1063,7 @@ export default function Griddle() {
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className={`flex-1 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
             />
-            <button type="button" onClick={() => setShowTracker(v => !v)} aria-pressed={showTracker}
+            <button type="button" onClick={() => setShowTracker(v => { if (!v) trackEvent("hints_open", { game: "griddle", mode: "daily" }); return !v; })} aria-pressed={showTracker}
               className={`px-3 py-3 rounded-xl border transition-colors ${showTracker
                 ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
                 : "bg-card/80 border-border text-muted-foreground hover:text-foreground"}`}

@@ -2942,28 +2942,28 @@ export default function ArsenalChampions() {
   }, [phase, user, totalScore, savedToLeaderboard, refreshLeaderboard]);
 
   function startQuiz() {
-    trackEvent("arsenal_quiz_started");
+    trackEvent("game_start", { game: "arsenal-champions-2026", mode: "special" });
     setCurrentRound(0); setRoundScores([]); setCurrentRoundProgress(0);
     setSavedToLeaderboard(false); setShowLeaderboard(false); setShowChampionsCloser(false);
     setPhase("between");
   }
   function startRound() {
     const r = ROUNDS[currentRound];
-    trackEvent("arsenal_round_started", { round_number: r.number, round_name: r.name });
+    trackEvent("round_start", { game: "arsenal-champions-2026", mode: "special", round: r.number, round_name: r.name });
     setCurrentRoundProgress(0);
     setPhase("playing");
   }
   function handleRoundComplete(score: number) {
     // score is 0–10 per round (1pt per question × 10 questions)
     const r = ROUNDS[currentRound];
-    trackEvent("arsenal_round_completed", { round_number: r.number, round_name: r.name, score });
+    trackEvent("round_finish", { game: "arsenal-champions-2026", mode: "special", round: r.number, round_name: r.name, score });
     setCurrentRoundProgress(0);
     const next = [...roundScores, score];
     setRoundScores(next);
     const nextIdx = currentRound + 1;
     if (nextIdx >= ROUNDS.length) {
       const total = next.reduce((a, b) => a + b, 0);
-      trackEvent("arsenal_quiz_completed", { total_score: total });
+      trackEvent("game_finish", { game: "arsenal-champions-2026", mode: "special", score: total });
       // Final round: show CHAMPIONS celebration briefly before results
       setShowChampionsCloser(true);
       setTimeout(() => {
