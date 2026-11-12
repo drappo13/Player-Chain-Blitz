@@ -9,6 +9,8 @@ import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, p
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { DailyNext } from "@/components/daily-next";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 
@@ -278,7 +280,7 @@ export default function PhotoFinish() {
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [showRules, setShowRules] = useState(() => {
     const s = loadState(dateKey, photos, user?.username);
-    return s.guesses.length === 0 && !s.submitted;
+    return s.guesses.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "photofinish");
   });
   const checkedRemote = useRef(false);
 
@@ -295,12 +297,24 @@ export default function PhotoFinish() {
     if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "photofinish", dateKey).then(result => {
-      if (result.submitted && !state.submitted) setState(prev => ({ ...prev, submitted: true }));
+      if (result.submitted && !state.submitted) {
+        setState(prev => ({ ...prev, submitted: true }));
+        setShowRules(false);
+      }
     });
   }, [user?.username, dateKey, state.submitted]);
 
   useEffect(() => {
     saveState(state, user?.username);
+    const n = state.guesses.length;
+    recordDaily(user?.username, "photofinish", dateKey, state.submitted || n > 0 ? {
+      status: state.submitted ? "done" : "playing",
+      score: scoreOf(photos, state.guesses),
+      detail: state.submitted
+        ? `${state.guesses.filter((g, i) => g === photos[i].season).length} spot on`
+        : `${n}/${ROUNDS} photos`,
+      progress: n / ROUNDS,
+    } : null);
   }, [state]);
 
   // Warm the next photo so it's ready when the reveal is dismissed
@@ -411,10 +425,6 @@ export default function PhotoFinish() {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-xs font-semibold">
-          <Calendar className="w-3 h-3" />DAILY
-        </span>
-        <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
       </div>
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
@@ -756,10 +766,6 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
             <Home className="w-4 h-4 mr-1" /> Home
           </Button>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-xs font-semibold">
-              <Calendar className="w-3 h-3" />DAILY
-            </span>
-            <span className="text-sm text-muted-foreground">{formatDate(dateKey)}</span>
           </div>
         </div>
 
@@ -829,10 +835,7 @@ function EndScreen({ photos, guesses, dateKey, navigate, username }: {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
           className="w-full text-center py-4 text-muted-foreground">
-          <p className="text-sm">Come back tomorrow for new photos!</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4 mr-1.5" /> Back to games
-          </Button>
+          <DailyNext current="photofinish" />
         </motion.div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
 import { UserBadge } from "@/components/user-badge";
+import { AppNav, HUB_ROUTES } from "@/components/app-nav";
 import { lazy, Suspense, Component, useEffect, type ReactNode } from "react";
 import { trackPageView } from "@/lib/firebase";
 
@@ -22,6 +23,8 @@ const CentreCircle = lazy(() => import("@/pages/centre-circle"));
 const PhotoFinish = lazy(() => import("@/pages/photo-finish"));
 const CareerPath = lazy(() => import("@/pages/career-path"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
+const Arcade = lazy(() => import("@/pages/arcade"));
+const Me = lazy(() => import("@/pages/me"));
 const ArsenalChampions = lazy(() => import("@/pages/arsenal-champions"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
@@ -126,6 +129,8 @@ function Router() {
         <Route path="/photofinish" component={PhotoFinish} />
         <Route path="/careerpath" component={CareerPath} />
         <Route path="/leaderboard" component={Leaderboard} />
+        <Route path="/arcade" component={Arcade} />
+        <Route path="/me" component={Me} />
         <Route path="/arsenal-pl-champions-2026" component={ArsenalChampions} />
         <Route component={NotFound} />
       </Switch>
@@ -149,11 +154,12 @@ function AppContent() {
   if (loading) return null;
 
   const allowAnonymous = ANON_ALLOWED_ROUTES.includes(location);
+  const isHub = HUB_ROUTES.includes(location);
 
   return (
     <>
       {!user && !allowAnonymous && <UsernamePicker />}
-      <UserBadge />
+      {isHub ? <AppNav /> : <UserBadge />}
       <Router />
     </>
   );

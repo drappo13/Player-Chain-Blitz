@@ -1,352 +1,291 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ChevronRight, Trophy, Ticket } from "lucide-react";
+import { Check, ChevronRight, Flame, Share2, Trophy, Clock } from "lucide-react";
 import { useUser } from "@/lib/user-context";
-import { useUserStats, type GameStats } from "@/lib/use-user-stats";
-import type { GameSlug } from "@/lib/save-score";
+import { HubPage } from "@/components/app-nav";
+import { SetSegments } from "@/components/daily-next";
+import { GameIcon } from "@/components/game-icons";
+import {
+  DAILY_GAMES,
+  dayShareText,
+  shareText,
+  msToMidnight,
+  todayKey,
+  useCountdown,
+  useStreak,
+  useTodayRanks,
+  type DailyGameMeta,
+  type DailyProgress,
+  type DayProgress,
+} from "@/lib/daily";
+import type { DailyGameSlug } from "@/lib/daily-score";
 
-interface GameCard {
-  href: string;
-  slug: GameSlug;
-  testId: string;
-  emoji: string;
-  iconGradient: string;
-  iconBorder: string;
-  title: [string, string]; // [plain, gradient]
-  titleGradient: string;
-  description: string;
-  playColor: string;
-  mode?: "daily" | "arcade";
+function greeting(): string {
+  const h = new Date().getHours();
+  return h < 5 ? "Late one" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
-const footballGames: GameCard[] = [
-  {
-    href: "/griddle",
-    slug: "griddle",
-    testId: "link-griddle",
-    mode: "daily",
-    emoji: "\uD83E\uDDE9",
-    iconGradient: "from-blue-500/20 to-cyan-500/5",
-    iconBorder: "border-blue-500/20",
-    title: ["Grid", "dle"],
-    titleGradient: "from-blue-400 to-cyan-400",
-    description: "Daily 3×3 board. Name players who played for 2+ clubs. No timer, no game over.",
-    playColor: "text-blue-400",
-  },
-  {
-    href: "/centrecircle",
-    slug: "centrecircle",
-    testId: "link-centrecircle",
-    mode: "daily",
-    emoji: "\u26AA",
-    iconGradient: "from-green-500/20 to-emerald-500/5",
-    iconBorder: "border-green-500/20",
-    title: ["Centre", "Circle"],
-    titleGradient: "from-green-400 to-emerald-300",
-    description: "Daily letters around a centre spot. Spell every PL surname you can — use the middle letter for double points.",
-    playColor: "text-green-400",
-  },
-  {
-    href: "/photofinish",
-    slug: "photofinish",
-    testId: "link-photofinish",
-    mode: "daily",
-    emoji: "\uD83D\uDCF8",
-    iconGradient: "from-amber-500/20 to-orange-500/5",
-    iconBorder: "border-amber-500/20",
-    title: ["Photo ", "Finish"],
-    titleGradient: "from-amber-300 to-orange-400",
-    description: "Ten Premier League match photos a day. Guess the season each was taken in.",
-    playColor: "text-amber-400",
-  },
-  {
-    href: "/careerpath",
-    slug: "careerpath",
-    testId: "link-careerpath",
-    mode: "daily",
-    emoji: "\uD83E\uDDED",
-    iconGradient: "from-violet-500/20 to-fuchsia-500/5",
-    iconBorder: "border-violet-500/20",
-    title: ["Career ", "Path"],
-    titleGradient: "from-violet-300 to-fuchsia-400",
-    description: "Five mystery players a day, each harder than the last. Five seasons of numbers, clubs hidden. Wrong guesses unlock clues.",
-    playColor: "text-violet-400",
-  },
-  {
-    href: "/targetman",
-    slug: "targetman",
-    testId: "link-targetman",
-    mode: "arcade",
-    emoji: "\uD83C\uDFAF",
-    iconGradient: "from-orange-500/20 to-orange-500/5",
-    iconBorder: "border-orange-500/20",
-    title: ["Target", "Man"],
-    titleGradient: "from-orange-400 to-amber-400",
-    description: "Match the target goal number. Combos, boosts & precision scoring.",
-    playColor: "text-orange-400",
-  },
-  {
-    href: "/overlap",
-    slug: "overlap",
-    testId: "link-overlap",
-    mode: "arcade",
-    emoji: "\uD83D\uDD17",
-    iconGradient: "from-blue-500/20 to-blue-500/5",
-    iconBorder: "border-blue-500/20",
-    title: ["Over", "lap"],
-    titleGradient: "from-blue-400 to-cyan-400",
-    description: "Name a player who appeared for both clubs. Obscure overlaps score big.",
-    playColor: "text-blue-400",
-  },
-  {
-    href: "/clubladder",
-    slug: "clubladder",
-    testId: "link-clubladder",
-    mode: "arcade",
-    emoji: "\uD83D\uDCC8",
-    iconGradient: "from-purple-500/20 to-purple-500/5",
-    iconBorder: "border-purple-500/20",
-    title: ["Ladder", "Up"],
-    titleGradient: "from-purple-400 to-indigo-400",
-    description: "Climb the goal threshold. 3 clubs, multipliers, 1 shield. How high can you go?",
-    playColor: "text-purple-400",
-  },
-  {
-    href: "/goalchain",
-    slug: "goalchain",
-    testId: "link-goalchain",
-    mode: "arcade",
-    emoji: "\u26BD",
-    iconGradient: "from-primary/20 to-primary/5",
-    iconBorder: "border-primary/20",
-    title: ["Goal", "Chain"],
-    titleGradient: "from-primary to-emerald-400",
-    description: "Chain PL scorers by the last letter of their surname. Score = total goals.",
-    playColor: "text-primary",
-  },
-];
+function prettyDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+}
 
-const tennisGames: GameCard[] = [
-  {
-    href: "/slamchain",
-    slug: "slamchain",
-    testId: "link-slamchain",
-    mode: "arcade",
-    emoji: "\uD83C\uDFBE",
-    iconGradient: "from-emerald-500/20 to-emerald-500/5",
-    iconBorder: "border-emerald-500/20",
-    title: ["Slam", "16"],
-    titleGradient: "from-emerald-400 to-teal-400",
-    description: "Name players from Grand Slam tournaments. One wrong answer ends the game.",
-    playColor: "text-emerald-400",
-  },
-];
+const CONFETTI_COLOURS = ["#a78bfa", "#fbbf24", "#34d399", "#38bdf8", "#f472b6", "#fb923c"];
 
-const f1Games: GameCard[] = [
-  {
-    href: "/gridlock",
-    slug: "gridlock",
-    testId: "link-gridlock",
-    mode: "arcade",
-    emoji: "\uD83C\uDFCE\uFE0F",
-    iconGradient: "from-red-500/20 to-red-500/5",
-    iconBorder: "border-red-500/20",
-    title: ["Grid", "Lock"],
-    titleGradient: "from-red-500 to-orange-500",
-    description: "Name F1 drivers who scored points each season. Score = championship points.",
-    playColor: "text-red-400",
-  },
-];
+function Confetti() {
+  const bits = useMemo(
+    () => Array.from({ length: 44 }, (_, i) => ({
+      x: (Math.random() - 0.5) * 420,
+      y: -80 - Math.random() * 160,
+      r: Math.random() * 540 - 270,
+      c: CONFETTI_COLOURS[i % CONFETTI_COLOURS.length],
+      d: Math.random() * 0.25,
+      w: 6 + Math.random() * 5,
+    })),
+    [],
+  );
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20">
+      {bits.map((b, i) => (
+        <motion.span
+          key={i}
+          className="absolute rounded-[2px]"
+          style={{ background: b.c, width: b.w, height: b.w * 0.45 }}
+          initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
+          animate={{ x: b.x, y: [0, b.y, b.y + 260], opacity: [1, 1, 0], rotate: b.r }}
+          transition={{ duration: 1.8, delay: b.d, ease: "easeOut" }}
+        />
+      ))}
+    </div>
+  );
+}
 
-function GameCardComponent({ game, delay, gameStats: rawStats }: { game: GameCard; delay: number; gameStats: GameStats }) {
-  const gameStats = rawStats || { highScore: 0, plays: 0 };
+function SetCard({ day, streak, playedToday, today, username }: { day: DayProgress; streak: number; playedToday: boolean; today: string; username: string }) {
+  const countdown = useCountdown();
+  const done = new Set(DAILY_GAMES.filter((g) => day[g.slug]?.status === "done").map((g) => g.slug));
+  const n = done.size;
+  const total = DAILY_GAMES.length;
+  const complete = n === total;
+  const [copied, setCopied] = useState(false);
+
+  // Celebrate the first time the finished set is seen today
+  const celebrateKey = `pcb-set-celebrated-${username}-${today}`;
+  const [celebrate] = useState(() => {
+    if (!complete) return false;
+    try {
+      if (localStorage.getItem(celebrateKey)) return false;
+      localStorage.setItem(celebrateKey, "1");
+    } catch { /* ignore */ }
+    return true;
+  });
+
+  const message = complete
+    ? "Set complete. See you tomorrow."
+    : n === 0
+      ? streak > 0 && !playedToday
+        ? `Finish one to keep your ${streak}-day streak going`
+        : "Four fresh games. Start anywhere."
+      : `${total - n} to go${total - n === 1 ? " — nearly there" : ""}`;
+
+  const share = async () => {
+    if (await shareText(dayShareText(day, streak, today))) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="h-full"
+      className={`relative rounded-3xl border p-3 sm:p-5 mb-3 sm:mb-4 ${
+        complete ? "border-emerald-400/40 bg-gradient-to-br from-emerald-500/20 via-card to-card" : "border-border bg-card"
+      }`}
     >
-      <Link href={game.href} data-testid={game.testId}>
-        <div className="group cursor-pointer rounded-md border border-border/60 bg-card p-4 sm:p-6 text-left hover-elevate transition-all duration-200 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br ${game.iconGradient} border ${game.iconBorder} flex items-center justify-center`}>
-              <span className="text-xl sm:text-2xl">{game.emoji}</span>
-            </div>
-            <div className="h-5 flex items-center">
-              {gameStats.plays > 0 ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Ticket className="w-3 h-3" />
-                    <span className="text-[10px] font-medium">{gameStats.plays}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-400">
-                    <Trophy className="w-3 h-3" />
-                    <span className="text-[10px] font-bold">{gameStats.highScore.toLocaleString()}</span>
-                  </div>
-                </div>
-              ) : (
-                <span className="text-[10px] font-medium text-muted-foreground/60 px-2 py-0.5 rounded-full border border-border/60">
-                  New
-                </span>
-              )}
-            </div>
+      {celebrate && <Confetti />}
+      <div className="flex items-center gap-3 sm:gap-4 mb-2.5 sm:mb-3.5">
+        <div className="relative w-11 h-11 sm:w-14 sm:h-14 shrink-0">
+          <svg viewBox="0 0 56 56" className="w-full h-full -rotate-90">
+            <circle cx="28" cy="28" r="24" fill="none" strokeWidth="6" className="stroke-white/10" />
+            <motion.circle
+              cx="28" cy="28" r="24" fill="none" strokeWidth="6" strokeLinecap="round"
+              className={complete ? "stroke-emerald-400" : "stroke-primary"}
+              strokeDasharray={2 * Math.PI * 24}
+              initial={{ strokeDashoffset: 2 * Math.PI * 24 }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 24 * (1 - n / total) }}
+              transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            {complete ? (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.9, type: "spring", stiffness: 300 }}>
+                <Check className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-300" strokeWidth={3} />
+              </motion.span>
+            ) : (
+              <span className="text-sm sm:text-base font-black tabular-nums text-foreground">{n}/{total}</span>
+            )}
           </div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <h2 className="text-lg sm:text-xl font-bold text-foreground">
-              {game.title[0]}
-              <span className={`bg-gradient-to-r ${game.titleGradient} bg-clip-text text-transparent`}>
-                {game.title[1]}
-              </span>
-            </h2>
-            {game.mode && (
-              <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
-                game.mode === "daily"
-                  ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                  : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-              }`}>
-                {game.mode}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1">
+            Today's set <span className="opacity-50">·</span> <Clock className="w-3 h-3" /> {countdown}
+          </p>
+          <p className="text-sm sm:text-lg font-black text-foreground leading-snug">{message}</p>
+        </div>
+        {n > 0 && (
+          <button
+            onClick={share}
+            aria-label="Share my day"
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+              complete ? "bg-emerald-400 text-emerald-950" : "bg-white/10 text-foreground hover:bg-white/15"
+            }`}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{copied ? "Copied!" : "Share my day"}</span>
+            <span className="sm:hidden">{copied ? "Copied" : "Share"}</span>
+          </button>
+        )}
+      </div>
+      <SetSegments day={day} className="h-2 sm:h-2.5" />
+    </motion.div>
+  );
+}
+
+function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyProgress; rank?: { rank: number; of: number }; index: number }) {
+  const status = p?.status ?? "new";
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + index * 0.06 }}>
+      <Link href={game.href} data-testid={`tile-${game.slug}`}>
+        <motion.div
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          className={`relative h-[170px] sm:h-[210px] overflow-hidden rounded-2xl border p-3 sm:p-4 flex flex-col cursor-pointer ${game.tile}`}
+        >
+          <div className="flex items-start justify-between mb-1.5 sm:mb-2">
+            <span className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black/25 flex items-center justify-center ${game.accent}`}>
+              <GameIcon game={game.slug} className="w-6 h-6 sm:w-7 sm:h-7" />
+            </span>
+            {status === "done" && (
+              <motion.span
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.35 + index * 0.06, type: "spring", stiffness: 320, damping: 16 }}
+                className="w-7 h-7 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center shadow-lg shadow-emerald-500/20"
+              >
+                <Check className="w-4 h-4" strokeWidth={3.5} />
+              </motion.span>
+            )}
+            {status === "playing" && (
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-black/30 px-2 py-1 text-white/85">In progress</span>
+            )}
+          </div>
+
+          <h2 className="text-base sm:text-lg font-black text-white leading-tight">{game.name}</h2>
+
+          <div className="flex-1 min-h-0 mt-0.5">
+            {status === "new" && <p className="text-xs text-white/70 leading-snug line-clamp-2">{game.tagline}</p>}
+            {status === "playing" && (
+              <>
+                {p!.level && <p className={`text-sm font-black leading-tight ${game.accent}`}>{p!.level}</p>}
+                <p className="text-xs font-semibold text-white/85 truncate">{p!.detail}</p>
+                {p!.progress != null && (
+                  <div className="mt-1.5 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full ${game.bar}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(4, Math.round(p!.progress * 100))}%` }}
+                      transition={{ duration: 0.7, delay: 0.2 }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+            {status === "done" && (
+              <>
+                <p className="text-white leading-none mt-0.5">
+                  <span className="text-[28px] sm:text-3xl font-black tabular-nums">{p!.score.toLocaleString()}</span>
+                  {game.max && <span className="text-sm font-bold text-white/55">/{game.max}</span>}
+                </p>
+                {p!.detail !== "Finished" && (
+                  <p className="text-xs text-white/70 mt-1 truncate">{p!.level ? `${p!.level} \u00B7 ${p!.detail}` : p!.detail}</p>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="mt-2">
+            {status === "done" ? (
+              rank ? (
+                <span className={`inline-flex items-center gap-1 text-xs font-bold ${game.accent}`}>
+                  <Trophy className="w-3 h-3" /> #{rank.rank} of {rank.of} today
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-white/60">
+                  Results <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              )
+            ) : (
+              <span className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-black ${game.solid}`}>
+                {status === "playing" ? "Continue" : "Play"} <ChevronRight className="w-3.5 h-3.5 -mr-1" />
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4 flex-1">
-            {game.description}
-          </p>
-          <div className={`flex items-center gap-1 text-xs font-medium ${game.playColor}`}>
-            Play
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
-        </div>
+        </motion.div>
       </Link>
     </motion.div>
   );
 }
 
-function GameSection({
-  label,
-  emoji,
-  games,
-  baseDelay,
-  allStats,
-}: {
-  label: string;
-  emoji: string;
-  games: GameCard[];
-  baseDelay: number;
-  allStats: Record<GameSlug, GameStats>;
-}) {
-  return (
-    <div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: baseDelay - 0.05 }}
-        className="flex items-center gap-2 mb-3"
-      >
-        <span className="text-sm">{emoji}</span>
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-          {label}
-        </span>
-      </motion.div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {games.map((game, i) => (
-          <GameCardComponent key={game.href} game={game} delay={baseDelay + i * 0.08} gameStats={allStats[game.slug]} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const { user } = useUser();
-  const { stats } = useUserStats(user?.username);
+  const today = todayKey();
+  const { current, playedToday, day, entries } = useStreak(user?.username);
+
+  // Finished on another device: Firestore has it, this device's progress doesn't
+  const view: DayProgress = { ...day };
+  for (const e of entries) {
+    if (e.dateKey === today && view[e.game]?.status !== "done") {
+      view[e.game] = { status: "done", score: e.score, detail: "Finished" };
+    }
+  }
+  const doneCount = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").length;
+  const ranks = useTodayRanks(user?.username, today, doneCount);
+
+  // Keep the countdown honest across midnight: reload into the new day
+  useEffect(() => {
+    const t = setTimeout(() => window.location.reload(), Math.min(864e5, msToMidnight() + 2000));
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background flex items-start pt-12 sm:pt-16 justify-center p-4 relative overflow-x-hidden">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/6 rounded-full blur-3xl" />
+    <HubPage>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3 sm:mb-4">
+        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 flex-wrap">
+          <span>{prettyDate(today)}</span>
+          {user && current > 0 && (
+            <span className="inline-flex items-center gap-1 normal-case tracking-normal text-xs">
+              <Flame className={`w-3.5 h-3.5 ${playedToday ? "fill-amber-400 text-orange-400" : "text-muted-foreground"}`} />
+              <span className={playedToday ? "font-black bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent" : "text-muted-foreground"}>
+                {playedToday ? `${current}-day streak` : `${current}-day streak \u2014 play today to keep it`}
+              </span>
+            </span>
+          )}
+        </p>
+        <h1 className="text-xl sm:text-3xl font-black text-foreground tracking-tight break-words" data-testid="text-app-title">
+          {greeting()}{user ? `, ${user.username}` : ""}
+        </h1>
+      </motion.div>
+
+      <SetCard day={view} streak={current} playedToday={playedToday} today={today} username={user?.username ?? ""} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        {DAILY_GAMES.map((g, i) => (
+          <DailyTile key={g.slug} game={g} p={view[g.slug as DailyGameSlug]} rank={ranks[g.slug]} index={i} />
+        ))}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center max-w-4xl w-full relative z-10"
-      >
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-3xl sm:text-4xl font-black text-foreground mb-2 tracking-tight"
-          data-testid="text-app-title"
-        >
-          Pick Your Game
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-sm text-muted-foreground mb-4 sm:mb-6"
-        >
-          Test your sports knowledge
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="mb-6 sm:mb-10"
-        >
-          <Link href="/leaderboard">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
-              <Trophy className="w-3.5 h-3.5" />
-              Leaderboards
-              <ChevronRight className="w-3 h-3" />
-            </span>
-          </Link>
-        </motion.div>
-
-        <div className="space-y-6 sm:space-y-8 text-left">
-          {/* ── Arsenal Champions 2026 featured card ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28 }}
-          >
-            <Link href="/arsenal-pl-champions-2026" data-testid="link-arsenal-champions">
-              <div className="group cursor-pointer rounded-md border border-red-700/40 bg-gradient-to-br from-red-950/60 via-[#1a0a0a] to-[#0a0a0f] p-4 sm:p-6 text-left hover-elevate transition-all duration-200 relative overflow-hidden">
-                {/* Glow layer */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-700/10 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md bg-gradient-to-br from-red-600/30 to-amber-500/10 border border-red-600/30 flex items-center justify-center">
-                    <span className="text-xl sm:text-2xl">🏆</span>
-                  </div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border bg-amber-500/10 border-amber-500/30 text-amber-400">
-                    Special
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <h2 className="text-lg sm:text-xl font-bold text-foreground">
-                    <span className="text-red-500">Champions</span>
-                    <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent"> Quiz</span>
-                  </h2>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3 sm:mb-4">
-                  Relive Arsenal's title-winning journey. 10 rounds, 100 questions.
-                </p>
-                <div className="flex items-center gap-1 text-xs font-medium text-amber-400">
-                  Play
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-
-          <GameSection label="Football" emoji="⚽" games={footballGames} baseDelay={0.3} allStats={stats} />
-          <GameSection label="Tennis" emoji="🎾" games={tennisGames} baseDelay={0.55} allStats={stats} />
-          <GameSection label="Formula 1" emoji="🏎️" games={f1Games} baseDelay={0.65} allStats={stats} />
-        </div>
-      </motion.div>
-    </div>
+    </HubPage>
   );
 }
+

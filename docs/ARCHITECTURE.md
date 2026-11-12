@@ -21,7 +21,9 @@
 client/src/
 ├── App.tsx                      # Router + lazy loading + error boundary
 ├── pages/
-│   ├── home.tsx                 # Game picker (cards with Daily/Arcade tags)
+│   ├── home.tsx                 # Today: daily set tracker + a tile per daily game (progress, score, rank)
+│   ├── arcade.tsx               # Arcade games, Champions quiz, tennis, F1
+│   ├── me.tsx                   # Your stats: streaks, days played, calendar, per-game bests
 │   ├── griddle.tsx              # Griddle (daily)
 │   ├── centre-circle.tsx        # CentreCircle (daily surname spelling)
 │   ├── photo-finish.tsx         # Photo Finish (daily guess-the-season photos)
@@ -48,6 +50,7 @@ client/src/
 │   ├── firebase.ts              # Firebase init (API key is public by design)
 │   ├── save-score.ts            # Arcade score saving + GameSlug type
 │   ├── daily-score.ts           # Daily score submission + leaderboard fetch
+│   ├── daily.ts                 # Daily set: game list/order, today's progress, history, streaks, ranks, share text
 │   ├── use-leaderboard.ts       # useGameLeaderboard, useGlobalLeaderboard hooks
 │   ├── use-daily-leaderboard.ts # useDailyLeaderboard hook
 │   ├── use-user-stats.ts        # useUserStats hook (per-game high scores)
@@ -61,7 +64,10 @@ client/src/
 │   ├── end-screen-actions.tsx   # End screen button layout
 │   ├── new-high-score-badge.tsx # High score badge
 │   ├── username-picker.tsx      # Login/signup modal
-│   └── user-badge.tsx           # User display
+│   ├── app-nav.tsx              # Hub nav (Today/Arcade/Leaders/Me): top bar on desktop, bottom tabs on phones; HubPage wrapper
+│   ├── daily-next.tsx           # End-screen "Next up" / set complete block + SetSegments
+│   ├── game-icons.tsx           # Custom SVG icons for the daily games
+│   └── user-badge.tsx           # Floating streak + name chip on game pages (links to /me)
 └── hooks/
     ├── use-high-score.ts        # Local + Firebase high score
     ├── use-share.ts             # Web Share API / clipboard
@@ -168,7 +174,7 @@ useShare() → { share, copied }
 Lifecycle: Rules screen → Playing → Submitted (locked) → End screen
 
 ### Rules Screen
-Shown on first visit (skipped if localStorage has progress). Rules + "Play" button.
+Shown only the first time someone plays that game (skipped if there's progress today, the game was ever played on this device (`hasPlayedBefore` in `lib/daily.ts`), or it's already submitted). Rules + "Play" button; the info button reopens it.
 
 ### Playing Screen
 - No timer. Input + flag button (submits score).
@@ -180,7 +186,7 @@ Shown on first visit (skipped if localStorage has progress). Rules + "Play" butt
 Input replaced with "View Results & Leaderboard" button. Board visible but locked.
 
 ### End Screen
-Score + tier → Leaderboard (today/yesterday) → Top 20 missed players → "Come back tomorrow"
+Score + tier → Leaderboard (today/yesterday) → Top 20 missed players → `<DailyNext>` (today's set progress and a "Next up" button to the next unfinished daily game, or "Daily set complete" with streak and Share my day)
 
 ### Board Generation
 ```
@@ -225,6 +231,9 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 - CentreCircle follows the same pattern (`centrecircle-{username}-{dateKey}`). Its boards are dealt from a fixed rotation starting at `HIVE_EPOCH`. Each board is the 8–10 letters of one surname (the pangram), which must be the only surname using every letter and belong to a player people know (50+ apps in the last 10 seasons, 100+ in the last 20, or 100+ goals; uses `lastSeason` in pl-players.json). A board needs 40–250 answers, 15+ by 100+ app players and 5+ legends; the centre is any letter 15+ answers use. A set only repeats (with a new centre) after every other set has been used. Any surname from the letters counts; score is 1 point per letter (+ board size for the pangram), ×2 for using the centre letter, ×2 for a legend (250+ apps or 75+ goals). Wrong guesses are free
 - Photo Finish follows the same pattern (`photofinish-{username}-{dateKey}`). Photos are the lead images of BBC Sport PL match reports, hotlinked (not stored): `client/src/data/photo-finish.json` holds 551 (20 per season from 2000/01, 11 from 1999/00, built by `scripts/build-photo-finish.py`) and `photo-finish-classics.json` 24 iconic moments from the BBC's "30 years of the Premier League in pictures". The pool is cut by date into 10 era bands; each day takes one photo per band, dealt from a seeded shuffle starting at `PF_EPOCH`, so 50 days pass before any repeat and later cycles reshuffle. The day's classic replaces the photo from its own era. Score: 100 for the exact season, then 80/60/45/30/15/5 by seasons out (max 1,000). The `entries` field stores the number of exact guesses.
 - Career Path follows the same pattern (`careerpath-{username}-{dateKey}`). `client/src/data/career-path.json` holds every PL player's season-by-season apps/goals/assists per club (from the PL stats API, filtered by season and team) and five answer tiers. Each answer is a player plus five straight PL seasons; tiers rank players (4k+ monthly Wikipedia views, `wikiViews` in pl-players.json) by a recency quintile of the five seasons plus a views quintile, cut into fifths (spells ending before 2008 only for the most viewed fifth, so hard rounds are recent squad players rather than old names); about 1 in 5 answers is a single-club spell (`scripts/career-path/`: `fetch-careers.py`, then `build-career-path.py`; the per-season final tables come from the PL standings endpoint, see the note in `fetch-careers.py`). Round k (multiplier 1, 1.5, 2, 2.5, 3) draws from tier k, dealt from a seeded shuffle from `CP_EPOCH`. Five guesses per player; each miss unlocks a clue (clubs for seasons 1–2, seasons 3–5, position & nation, whole PL career). Points 10/8/6/4/2 by guess × multiplier, max 100. `entries` stores players solved.
+- Today's progress: every daily game calls `recordDaily()` (`lib/daily.ts`) whenever its state changes, writing a small summary (status, score, detail, level, progress 0–1) to `pcb-day-{username}-{dateKey}`. The home tiles, set tracker and Next-up read this. Games finished on another device come from the user's `daily-scores` docs instead.
+- Streaks: `useStreak()` reads all the user's `daily-scores` (cached in `pcb-dailyhist-{username}`) plus today's local progress. A streak is consecutive days with at least one finished daily game, alive until the end of the day after the last play. Days played = distinct dates.
+- Adding a daily game to the set: add it to `DAILY_GAMES` in `lib/daily.ts` (order = home tile order and Next-up chain), an icon in `components/game-icons.tsx`, and a `recordDaily()` call in its persist effect plus `<DailyNext current=… />` on its end screen.
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
 
@@ -357,7 +366,7 @@ Workflow (`.github/workflows/deploy.yml`):
 - **Lazy loading** — all pages use `React.lazy()` in `App.tsx`. A crash in one page's chunk can't kill others.
 - **Error boundary** — wraps entire app. Shows "Refresh" button instead of blank screen on unhandled errors.
 - **Stats cache merging** — `readCache` in `use-user-stats.ts` merges cached data with `makeEmpty()` defaults, so newly added game slugs don't crash the homepage.
-- **Defensive guards** — `GameCardComponent` in `home.tsx` falls back to `{ highScore: 0, plays: 0 }` if stats are undefined.
+- **Defensive guards** — `GameCardComponent` in `arcade.tsx` falls back to `{ highScore: 0, plays: 0 }` if stats are undefined.
 
 **Common issues:**
 - Dep broke? → Pin exact version in `package.json` (e.g., `@tanstack/react-query` pinned to `5.60.5`)
@@ -371,7 +380,7 @@ Workflow (`.github/workflows/deploy.yml`):
 Checklist:
 1. Create page file in `client/src/pages/`
 2. Add lazy import + route in `App.tsx`
-3. Add card in `home.tsx` (with `mode: "daily" | "arcade"`)
+3. Daily: add to `DAILY_GAMES` in `lib/daily.ts` (see Daily Game Pattern → Persistence). Arcade: add a card in `arcade.tsx`
 4. Add slug to `GameSlug` in `lib/save-score.ts`
 5. **Add slug to `ALL_GAMES` in `lib/use-user-stats.ts`** — CRITICAL: missing this crashes the homepage for all users (stats cache returns undefined for the new game)
 6. If daily game:

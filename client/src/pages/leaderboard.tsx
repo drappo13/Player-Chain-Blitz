@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Home, Trophy } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { Trophy } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { useGameLeaderboard, useGlobalLeaderboard, type LeaderboardPeriod } from "@/lib/use-leaderboard";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
@@ -22,27 +20,26 @@ const ARCADE_TABS: { slug: GameSlug; label: string; accent: string }[] = [
 ];
 
 const DAILY_TABS: { slug: DailyGameSlug; label: string; accent: string }[] = [
-  { slug: "griddle", label: "Griddle", accent: "bg-blue-500/10 border-blue-500/30" },
-  { slug: "centrecircle", label: "CentreCircle", accent: "bg-green-500/10 border-green-500/30" },
-  { slug: "photofinish", label: "Photo Finish", accent: "bg-amber-500/10 border-amber-500/30" },
   { slug: "careerpath", label: "Career Path", accent: "bg-violet-500/10 border-violet-500/30" },
+  { slug: "photofinish", label: "Photo Finish", accent: "bg-amber-500/10 border-amber-500/30" },
+  { slug: "centrecircle", label: "CentreCircle", accent: "bg-green-500/10 border-green-500/30" },
+  { slug: "griddle", label: "Griddle", accent: "bg-blue-500/10 border-blue-500/30" },
 ];
 
 export default function Leaderboard() {
-  const [, navigate] = useLocation();
   const { user } = useUser();
   const [mode, setMode] = useState<LeaderboardMode>("daily");
   const [arcadeTab, setArcadeTab] = useState<GameSlug | "global">("targetman");
   const [arcadePeriod, setArcadePeriod] = useState<LeaderboardPeriod>("alltime");
   const [globalMode, setGlobalMode] = useState<"points" | "plays">("points");
-  const [dailyTab, setDailyTab] = useState<DailyGameSlug>("griddle");
+  const [dailyTab, setDailyTab] = useState<DailyGameSlug>("careerpath");
   const [dailyPeriod, setDailyPeriod] = useState<DailyPeriod>("today");
 
   const activeArcadeGame = ARCADE_TABS.find(g => g.slug === arcadeTab);
   const activeDailyGame = DAILY_TABS.find(g => g.slug === dailyTab);
 
   return (
-    <div className="min-h-screen bg-background flex items-start pt-10 sm:pt-14 justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-background flex items-start pt-16 md:pt-24 pb-28 md:pb-12 justify-center px-4 relative overflow-x-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-chart-2/5 rounded-full blur-3xl" />
@@ -55,15 +52,9 @@ export default function Leaderboard() {
         className="max-w-lg w-full relative z-10"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="font-bold">
-            <Home className="w-4 h-4 mr-1.5" />Home
-          </Button>
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-400" />
-            <h1 className="text-xl font-black text-foreground">Leaderboards</h1>
-          </div>
-          <div className="w-[72px]" />
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <Trophy className="w-5 h-5 text-amber-400" />
+          <h1 className="text-xl font-black text-foreground">Leaderboards</h1>
         </div>
 
         {/* Mode toggle: Daily / Arcade */}
