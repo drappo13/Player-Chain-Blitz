@@ -240,17 +240,8 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
 export default function Home() {
   const { user } = useUser();
   const today = todayKey();
-  const { current, playedToday, day, entries } = useStreak(user?.username);
-
-  // Finished on another device: Firestore has it, this device's progress doesn't
-  const view: DayProgress = { ...day };
-  for (const e of entries) {
-    if (e.dateKey === today && view[e.game]?.status !== "done") {
-      view[e.game] = { status: "done", score: e.score, detail: "Finished" };
-    }
-  }
-  const doneCount = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").length;
-  const ranks = useTodayRanks(user?.username, today, doneCount);
+  const { current, playedToday, view } = useStreak(user?.username);
+  const ranks = useTodayRanks(user?.username, today, view);
 
   // Keep the countdown honest across midnight: reload into the new day
   useEffect(() => {

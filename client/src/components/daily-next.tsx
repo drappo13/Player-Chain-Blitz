@@ -48,7 +48,7 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
 export function DailyNext({ current }: { current: DailyGameSlug }) {
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const { day, today, current: streak } = useStreak(user?.username);
+  const { view: day, today, current: streak } = useStreak(user?.username);
   const countdown = useCountdown();
   const [copied, setCopied] = useState(false);
 
