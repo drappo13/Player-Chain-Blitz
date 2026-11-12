@@ -21,6 +21,8 @@ export interface DailyScoreDoc {
   total: number; // total valid answers
   /** Composite key for easy single-field lookups: game_dateKey_username */
   key: string;
+  /** JSON of the game's saved state at submission, so another device can show the full results */
+  state?: string;
   timestamp: unknown; // serverTimestamp
 }
 
@@ -33,7 +35,7 @@ export async function hasDailySubmission(
   username: string,
   game: DailyGameSlug,
   dateKey: string,
-): Promise<{ submitted: boolean; score: number; found: number; total: number }> {
+): Promise<{ submitted: boolean; score: number; found: number; total: number; state?: unknown }> {
   try {
     const k = makeKey(username, game, dateKey);
     const q = query(
@@ -43,7 +45,9 @@ export async function hasDailySubmission(
     const snap = await getDocs(q);
     if (!snap.empty) {
       const data = snap.docs[0].data() as DailyScoreDoc;
-      return { submitted: true, score: data.score, found: data.found, total: data.total };
+      let state: unknown;
+      try { state = data.state ? JSON.parse(data.state) : undefined; } catch { /* ignore */ }
+      return { submitted: true, score: data.score, found: data.found, total: data.total, state };
     }
   } catch { /* silent */ }
   return { submitted: false, score: 0, found: 0, total: 0 };
@@ -57,6 +61,7 @@ export async function submitDailyScore(
   score: number,
   found: number,
   total: number,
+  state?: unknown,
 ): Promise<boolean> {
   if (!username || score < 0) return false;
   try {
@@ -66,7 +71,7 @@ export async function submitDailyScore(
     const existing = await hasDailySubmission(username, game, dateKey);
     if (existing.submitted) return false;
 
-    await addDoc(collection(db, "daily-scores"), {
+    const doc = {
       username: username.toLowerCase(),
       game,
       dateKey,
@@ -75,7 +80,14 @@ export async function submitDailyScore(
       total,
       key: k,
       timestamp: serverTimestamp(),
-    });
+    };
+    try {
+      await addDoc(collection(db, "daily-scores"), state === undefined ? doc : { ...doc, state: JSON.stringify(state) });
+    } catch (e) {
+      // If the extra field is ever rejected, still save the score
+      if (state === undefined) throw e;
+      await addDoc(collection(db, "daily-scores"), doc);
+    }
     return true;
   } catch {
     return false;

@@ -485,8 +485,10 @@ export default function Griddle() {
     checkedRemote.current = true;
     hasDailySubmission(user.username, "griddle", dateKey).then(result => {
       if (result.submitted && !state.submitted) {
-        // Found on Firebase but not local — cross-device case
-        setState(prev => ({ ...prev, submitted: true, score: result.score }));
+        // Found on Firebase but not local — cross-device case; restore the board if it was synced
+        const remote = result.state as Partial<GriddleState> | undefined;
+        const synced = remote?.boardHash === state.boardHash && Array.isArray(remote.foundPlayers) ? remote : {};
+        setState(prev => ({ ...prev, ...synced, submitted: true, score: result.score }));
         setShowRules(false);
       } else if (!result.submitted && state.submitted) {
         // Local says submitted but Firebase has nothing — failed write, let them retry
@@ -546,12 +548,13 @@ export default function Griddle() {
       state.score,
       state.foundPlayers.length,
       totalValid,
+      { ...state, submitted: true },
     );
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
     setShowEndScreen(true);
-  }, [user?.username, dateKey, state.score, state.foundPlayers.length, totalValid]);
+  }, [user?.username, dateKey, state, totalValid]);
 
   // Out of lives: submit the score once, after a beat so the last guess's feedback lands.
   useEffect(() => {

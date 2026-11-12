@@ -185,7 +185,8 @@ function getTodayStr(): string {
 
 // --- Daily state persistence ---
 interface RoundState { guesses: number[]; stage: number; solved: boolean; failed: boolean }
-interface CPState { dateKey: string; puzzleHash: string; rounds: RoundState[]; submitted: boolean }
+// remoteScore: finished on another device before rounds were synced with the score
+interface CPState { dateKey: string; puzzleHash: string; rounds: RoundState[]; submitted: boolean; remoteScore?: number }
 
 const emptyRound = (): RoundState => ({ guesses: [], stage: 0, solved: false, failed: false });
 const makeHash = (ps: Puzzle[]) => ps.map(p => `${p.id}@${p.start}`).join(",");
@@ -349,8 +350,15 @@ export default function CareerPath() {
     if (checkedRemote.current || !user?.username || IS_LOCAL) return;
     checkedRemote.current = true;
     hasDailySubmission(user.username, "careerpath", dateKey).then(result => {
-      if (result.submitted && !state.submitted) {
-        setState(prev => ({ ...prev, submitted: true }));
+      // Also covers devices that already marked it submitted with nothing to show
+      const empty = state.rounds.every(r => r.guesses.length === 0 && !roundDone(r)) && state.remoteScore == null;
+      if (result.submitted && (!state.submitted || empty)) {
+        const remote = result.state as Partial<CPState> | undefined;
+        if (remote?.puzzleHash === state.puzzleHash && Array.isArray(remote.rounds)) {
+          setState(prev => ({ ...prev, rounds: remote.rounds!, submitted: true }));
+        } else {
+          setState(prev => ({ ...prev, submitted: true, remoteScore: result.score }));
+        }
         setShowRules(false);
       }
     });
@@ -362,9 +370,9 @@ export default function CareerPath() {
     const finished = state.rounds.filter(roundDone).length;
     recordDaily(user?.username, "careerpath", dateKey, state.submitted || played > 0 ? {
       status: state.submitted ? "done" : "playing",
-      score: totalOf(state.rounds),
+      score: state.remoteScore ?? totalOf(state.rounds),
       detail: state.submitted
-        ? `${state.rounds.filter(r => r.solved).length}/${ROUNDS} named`
+        ? state.remoteScore != null ? "Finished" : `${state.rounds.filter(r => r.solved).length}/${ROUNDS} named`
         : `${finished}/${ROUNDS} players`,
       progress: finished / ROUNDS,
     } : null);
@@ -387,7 +395,7 @@ export default function CareerPath() {
     const solved = state.rounds.filter(r => r.solved).length;
     // Don't hold the end screen hostage to a slow or blocked connection; the write keeps trying
     if (user?.username && !IS_LOCAL && !state.submitted) {
-      await Promise.race([submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS), new Promise(r => setTimeout(r, 6000))]);
+      await Promise.race([submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS, { puzzleHash: state.puzzleHash, rounds: state.rounds }), new Promise(r => setTimeout(r, 6000))]);
     }
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
@@ -485,7 +493,7 @@ export default function CareerPath() {
   );
 
   if (showEndScreen || (state.submitted && !showRules)) {
-    return <EndScreen puzzles={puzzles} rounds={state.rounds} dateKey={dateKey} navigate={navigate} username={user?.username} />;
+    return <EndScreen puzzles={puzzles} rounds={state.rounds} remoteScore={state.remoteScore ?? null} dateKey={dateKey} navigate={navigate} username={user?.username} />;
   }
 
   // --- Rules Screen ---
@@ -936,14 +944,17 @@ function RuleItem({ icon, text }: { icon: string; text: string }) {
   );
 }
 
-function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
+function EndScreen({ puzzles, rounds, remoteScore = null, dateKey, navigate, username }: {
   puzzles: Puzzle[];
   rounds: RoundState[];
+  remoteScore?: number | null;
   dateKey: string;
   navigate: (to: string) => void;
   username?: string;
 }) {
-  const total = totalOf(rounds);
+  // Played on another device with no rounds to show: just the score
+  const scoreOnly = remoteScore !== null;
+  const total = scoreOnly ? remoteScore! : totalOf(rounds);
   const [target, setTarget] = useState(0);
   useEffect(() => { const t = setTimeout(() => setTarget(total), 250); return () => clearTimeout(t); }, [total]);
   const shown = useCountUp(target, 1200);
@@ -952,7 +963,7 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
-    const text = `Career Path ${formatDate(dateKey)}\n${rounds.map(resultEmoji).join("")} ${fmtPts(total)}/${MAX_SCORE}\ndrapk.in/careerpath`;
+    const text = `Career Path ${formatDate(dateKey)}\n${scoreOnly ? "" : `${rounds.map(resultEmoji).join("")} `}${fmtPts(total)}/${MAX_SCORE}\ndrapk.in/careerpath`;
     try {
       if (navigator.share && !window.matchMedia?.("(pointer: fine)").matches) await navigator.share({ text });
       else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800); }
@@ -976,13 +987,13 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
             <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent">Career Path</span>
           </h1>
           <div className="text-6xl font-black tabular-nums bg-gradient-to-b from-white to-fuchsia-200 bg-clip-text text-transparent">{fmtPts(shown)}</div>
-          <div className="text-sm text-muted-foreground">out of {MAX_SCORE}</div>
-          <div className="flex justify-center gap-2 text-3xl mt-3">
+          <div className="text-sm text-muted-foreground">out of {MAX_SCORE}{scoreOnly ? " · played on another device" : ""}</div>
+          {!scoreOnly && <div className="flex justify-center gap-2 text-3xl mt-3">
             {rounds.map((r, i) => (
               <motion.span key={i} initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.3 + i * 0.1 }}>{resultEmoji(r)}</motion.span>
             ))}
-          </div>
+          </div>}
           <button onClick={share}
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors">
             {copied ? <><Check className="w-3.5 h-3.5 text-emerald-400" /> Copied</> : <><Share2 className="w-3.5 h-3.5" /> Share</>}
@@ -1015,7 +1026,7 @@ function EndScreen({ puzzles, rounds, dateKey, navigate, username }: {
               className="rounded-2xl border border-white/10 bg-card/60 backdrop-blur px-3.5 py-3">
               <div className="flex items-center justify-between">
                 <span className="font-bold inline-flex items-center gap-2"><MultBadge k={i} />{PLAYERS.get(pz.id)?.displayName}</span>
-                <span className="font-black tabular-nums">{resultEmoji(rounds[i])} +{fmtPts(roundPoints(rounds[i], i))}</span>
+                {!scoreOnly && <span className="font-black tabular-nums">{resultEmoji(rounds[i])} +{fmtPts(roundPoints(rounds[i], i))}</span>}
               </div>
               <CareerBar id={pz.id} windowStart={pz.start} />
             </motion.div>
