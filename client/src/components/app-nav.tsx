@@ -73,8 +73,18 @@ export function SetChip() {
     <Link
       href="/"
       aria-label={`Today's set, ${done.filter(Boolean).length} of ${DAILY_GAMES.length} done`}
-      className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 pl-1.5 pr-3 py-1 text-xs hover:bg-muted transition-colors"
+      className="relative overflow-hidden inline-flex items-center gap-2 rounded-full border border-border bg-card/70 pl-1.5 pr-3 py-1 text-xs hover:bg-muted transition-colors"
     >
+      {/* A slow shine every few seconds while there's still some of today's set to play */}
+      {done.some((d) => !d) && (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
+          initial={{ x: "-120%" }}
+          animate={{ x: "380%" }}
+          transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 5, delay: 1.5, ease: "easeInOut" }}
+        />
+      )}
       <SetMark done={user ? done : null} className="w-[22px] h-[22px]" />
       <span className="font-black tabular-nums text-foreground">{done.filter(Boolean).length}/{DAILY_GAMES.length}</span>
       <span className="font-semibold text-muted-foreground">Today</span>
