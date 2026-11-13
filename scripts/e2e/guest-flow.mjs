@@ -135,7 +135,12 @@ try {
   const ccBefore = gCC?.score ?? 0;
   await go(page, "/me");
   await wait(800);
-  check(await page.locator("text=Pick a name").count() > 0, "Me opens Pick a name for a guest");
+  // The pop-up already opened by itself once this visit (after Photo Finish), so it doesn't again;
+  // tapping "Pick a name" on Me always opens it
+  check(!(await page.locator('input[placeholder="Username"]').count()), "pop-up doesn't open by itself twice in one visit");
+  await clickText(page, /^Pick a name$/);
+  await wait(500);
+  check(await page.locator('input[placeholder="Username"]').count() > 0, "tapping Pick a name on Me opens it");
   await page.fill('input[placeholder="Username"]', "e2e_kim");
   await clickText(page, /^Claim/);
   await wait(4000);
