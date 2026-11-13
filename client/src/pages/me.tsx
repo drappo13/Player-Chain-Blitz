@@ -8,6 +8,7 @@ import { useInstall, openInstallGuide } from "@/lib/install";
 import { FriendsSection } from "@/components/friends";
 import { useInvitees } from "@/lib/friends";
 import { RemindersCard } from "@/components/reminders";
+import { claimAutoAllowed, noteAsk } from "@/lib/asks";
 import { pushState, enablePush, currentSubscription, localTestNotification, swVersion, updateSw, lastPush } from "@/lib/push";
 import { Bell } from "lucide-react";
 import { useUser, shareLink } from "@/lib/user-context";
@@ -15,7 +16,7 @@ import { useUserStats } from "@/lib/use-user-stats";
 import type { GameSlug } from "@/lib/save-score";
 import { HubPage } from "@/components/app-nav";
 import { GameIcon } from "@/components/game-icons";
-import { DAILY_GAMES, shareText, shiftDay, useStreak } from "@/lib/daily";
+import { DAILY_GAMES, shareText, shiftDay, useStreak, todayKey } from "@/lib/daily";
 import { BadgeGrid } from "@/components/badge-grid";
 import type { BadgeContext } from "@/lib/badges";
 
@@ -186,9 +187,11 @@ export default function Me() {
   const [, navigate] = useLocation();
   const { user, logout, isGuest, openClaim } = useUser();
   // Guests tapping Me want "my stuff", which starts with a name: open the pop-up (once per visit)
+  const { claimSource } = useUser();
   useEffect(() => {
-    if (!isGuest) return;
-    try { if (sessionStorage.getItem("pcb-me-claim")) return; sessionStorage.setItem("pcb-me-claim", "1"); } catch { /* ignore */ }
+    if (!isGuest || claimSource) return; // already open (e.g. from the Save your streak chip)
+    if (!claimAutoAllowed()) return; // opens by itself at most twice, ever
+    noteAsk("claim", todayKey());
     openClaim("me_open");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest]);

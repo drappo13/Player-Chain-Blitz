@@ -24,6 +24,11 @@ export function noteAsk(kind: string, today: string, extra: Partial<Record_> = {
   markAsked(kind);
 }
 
+/** The pick-a-name pop-up opens by itself at most this many times, ever (at a finish or arriving at Me).
+ *  Tapping "Save your streak" / "Pick a name" always opens it. */
+export const CLAIM_AUTO_MAX = 2;
+export const claimAutoAllowed = () => askRecord("claim").count < CLAIM_AUTO_MAX && !askedThisVisit();
+
 export function neverAsk(kind: string) {
   const r = askRecord(kind);
   try { localStorage.setItem(recKey(kind), JSON.stringify({ ...r, never: true })); } catch { /* ignore */ }
