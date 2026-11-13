@@ -42,3 +42,30 @@ export async function localTestNotification() {
   const reg = await navigator.serviceWorker.ready;
   await reg.showNotification("drapk.in", { body: "Local test: notifications work on this phone", icon: "/icon-192.png", tag: "test" });
 }
+
+/** Which service worker version is running (null = none / old one without the debug hook). */
+export async function swVersion(): Promise<string | null> {
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sw = reg?.active;
+  if (!sw) return null;
+  return new Promise((resolve) => {
+    const ch = new MessageChannel();
+    const t = setTimeout(() => resolve("old"), 1500);
+    ch.port1.onmessage = (e) => { clearTimeout(t); resolve(String(e.data)); };
+    sw.postMessage({ type: "version" }, [ch.port2]);
+  });
+}
+
+/** Force-check for a new service worker. */
+export async function updateSw() {
+  const reg = await navigator.serviceWorker.getRegistration();
+  await reg?.update();
+}
+
+/** Last push the service worker received (written by sw.js). */
+export async function lastPush(): Promise<string | null> {
+  try {
+    const r = await (await caches.open("pcb-debug")).match("/last-push");
+    return r ? await r.text() : null;
+  } catch { return null; }
+}
