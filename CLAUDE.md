@@ -36,6 +36,8 @@ Sports trivia game site at **drapk.in** — React SPA deployed via GitHub Pages.
 
 Hub pages (`/`, `/arcade`, `/leaderboard`, `/me`) share `AppNav`: a top bar on desktop and bottom tabs on phones. Home is "Today": the daily set with live progress per game, streaks and Next-up chaining between daily games (`lib/daily.ts`). Game pages hide the nav and show a floating streak/name chip linking to `/me`.
 
+No sign-up wall: new visitors play as a guest (`lib/guest.ts`) and pick a name later. Friends (`lib/friends.ts`), Yesterday's set (`?set=yesterday`), "counts for today" for CentreCircle/Griddle, Add to Home Screen guide and reminders (`lib/push.ts`, `scripts/push/send.mjs`) are described in `docs/ARCHITECTURE.md`.
+
 ## Tech Stack
 
 React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Wouter, Framer Motion, Web Audio API, Firebase Firestore, Lucide React

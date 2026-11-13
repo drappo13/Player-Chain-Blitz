@@ -9,7 +9,8 @@ import { playCorrect, playNeutral, playHighScore, playGameEnd, playExactMatch, p
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
-import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
+import { LateBanner } from "@/components/daily-next";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -264,7 +265,7 @@ const travelMs = (off: number) => Math.min(250 + off * 70, 1200);
 export default function PhotoFinish() {
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const dateKey = useMemo(() => getTodayStr(), []);
+  const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const photos = useMemo(() => photosFor(dateKey), [dateKey]);
 
   const [state, setState] = useState<PFState>(() => loadState(dateKey, photos, user?.username));
@@ -340,7 +341,7 @@ export default function PhotoFinish() {
     setSubmitting(true);
     const total = scoreOf(photos, guesses);
     const exact = guesses.filter((g, i) => g === photos[i].season).length;
-    if (user?.username && !IS_LOCAL) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS, { roundsHash: state.roundsHash, guesses });
+    if (user?.username && !IS_LOCAL) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS, { roundsHash: state.roundsHash, guesses }, { late });
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
     if (total >= 700) playHighScore(); else playGameEnd();
@@ -437,6 +438,7 @@ export default function PhotoFinish() {
       </div>
       <div className="flex items-center gap-2">
       </div>
+      {late && <LateBanner dateKey={dateKey} />}
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-amber-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
           <span className="font-semibold text-amber-300">Test build</span>
@@ -483,7 +485,7 @@ export default function PhotoFinish() {
 
             <Button className="w-full text-lg py-6 shadow-xl shadow-amber-500/20 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={() => setShowRules(false)}>
-              {isFinished ? "See today's results" : state.guesses.length > 0 ? "Back to today's photos" : "Play today's photos"}
+              {(() => { const d = late ? "yesterday's" : "today's"; return isFinished ? `See ${d} results` : state.guesses.length > 0 ? `Back to ${d} photos` : `Play ${d} photos`; })()}
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>

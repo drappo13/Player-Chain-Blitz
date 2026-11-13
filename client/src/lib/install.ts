@@ -35,6 +35,30 @@ const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
 export const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
 const isAndroid = /Android/.test(ua);
 
+/** Which browser's steps to show for adding to the home screen by hand. */
+export type GuideKind = "safari26" | "safari" | "chrome-ios" | "inapp" | "android" | "other";
+export function guideKind(): GuideKind {
+  if (/FBAN|FBAV|Instagram|Snapchat|Reddit|LinkedInApp|Twitter|GSA\/|Line\//.test(ua)) return "inapp";
+  if (isIOS) {
+    if (/CriOS/.test(ua)) return "chrome-ios";
+    const v = Number(ua.match(/Version\/(\d+)/)?.[1] ?? 0);
+    return v >= 26 ? "safari26" : "safari";
+  }
+  if (isAndroid) return "android";
+  return "other";
+}
+
+const OPEN_EVENT = "pcb-open-install-guide";
+/** Open the Add to Home Screen guide from anywhere. */
+export function openInstallGuide(source: string) {
+  trackEvent("install_guide_open", { source, kind: guideKind() });
+  window.dispatchEvent(new Event(OPEN_EVENT));
+}
+export function onOpenInstallGuide(fn: () => void) {
+  window.addEventListener(OPEN_EVENT, fn);
+  return () => window.removeEventListener(OPEN_EVENT, fn);
+}
+
 export type InstallMode = "installed" | "prompt" | "ios" | "android" | "none";
 
 export function useInstall() {

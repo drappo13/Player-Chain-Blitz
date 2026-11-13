@@ -5,11 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Switch, Route, useLocation } from "wouter";
 import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
+import { InstallSheet } from "@/components/install-sheet";
 import { isStandalone } from "@/lib/install"; // also registers the install-prompt listener early
 import { UserBadge } from "@/components/user-badge";
 import { AppNav, HUB_ROUTES } from "@/components/app-nav";
 import { lazy, Suspense, Component, useEffect, useRef, type ReactNode } from "react";
-import { trackPageView, identify } from "@/lib/firebase";
+import { trackPageView, identify, trackEvent } from "@/lib/firebase";
 import { DAILY_GAMES, useStreak, trackGameExit } from "@/lib/daily";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
@@ -177,12 +178,13 @@ function GameExitTracker({ location }: { location: string }) {
 /** Keeps analytics tied to the signed-in account, tagged with its retention stats so any
  *  report can be split by streak, days played or how they joined. */
 function AnalyticsIdentity() {
-  const { user } = useUser();
+  const { user, isGuest } = useUser();
   const { current, best, daysPlayed, view } = useStreak(user?.username);
   const doneToday = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").length;
   useEffect(() => {
     if (!user) { identify(null); return; }
-    identify(user.username.toLowerCase(), {
+    identify(isGuest ? null : user.username.toLowerCase(), {
+      account: isGuest ? "guest" : "named",
       current_streak: current,
       best_streak: best,
       days_played: daysPlayed,
@@ -190,12 +192,41 @@ function AnalyticsIdentity() {
       daily_done_today: doneToday,
       display_mode: isStandalone() ? "home_screen" : "browser",
     });
-  }, [user?.username, current, best, daysPlayed, doneToday]);
+  }, [user?.username, isGuest, current, best, daysPlayed, doneToday]);
   return null;
 }
 
-// Routes where anonymous play is allowed — UsernamePicker is opt-in instead of forced.
-const ANON_ALLOWED_ROUTES = ["/arsenal-pl-champions-2026"];
+// Opened from a reminder notification (?src=push_streak / push_morning)
+if (typeof window !== "undefined") {
+  const src = new URLSearchParams(window.location.search).get("src");
+  if (src?.startsWith("push")) trackEvent("push_open", { kind: src.replace("push_", "") });
+}
+
+/** The optional pick-a-name sheet (guests), and a log-in prompt the first time the iPhone
+ *  home-screen app opens (it doesn't share Safari's storage, so the name isn't there yet). */
+function ClaimSheet() {
+  const { isGuest, claimSource, openClaim, closeClaim } = useUser();
+  useEffect(() => {
+    if (!isGuest || !isStandalone()) return;
+    try {
+      if (localStorage.getItem("pcb-standalone-asked")) return;
+      localStorage.setItem("pcb-standalone-asked", "1");
+    } catch { return; }
+    openClaim("standalone_first");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuest]);
+  if (!isGuest || !claimSource) return null;
+  if (claimSource === "standalone_first") {
+    return <UsernamePicker initialMode="login" onClose={closeClaim} loginSubtitle="Log in with your name to bring your streak over" closeLabel="New here? Play as a guest" />;
+  }
+  return (
+    <UsernamePicker
+      onClose={closeClaim}
+      signupTitle="Pick a name"
+      signupSubtitle="Get on the leaderboards and keep your streak on any device. Your games so far come with you."
+    />
+  );
+}
 
 function AppContent() {
   const { user, loading } = useUser();
@@ -211,14 +242,14 @@ function AppContent() {
 
   if (loading) return null;
 
-  const allowAnonymous = ANON_ALLOWED_ROUTES.includes(location);
   const isHub = HUB_ROUTES.includes(location);
 
   return (
     <>
       <AnalyticsIdentity />
       <GameExitTracker location={location} />
-      {!user && !allowAnonymous && <UsernamePicker />}
+      <ClaimSheet />
+      <InstallSheet />
       {isHub ? <AppNav /> : <UserBadge />}
       <Router />
     </>

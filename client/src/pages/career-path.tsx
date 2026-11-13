@@ -11,7 +11,8 @@ import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
-import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
+import { LateBanner } from "@/components/daily-next";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -322,7 +323,7 @@ function useCountUp(target: number, ms = 600) {
 export default function CareerPath() {
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const dateKey = useMemo(() => getTodayStr(), []);
+  const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const puzzles = useMemo(() => puzzlesFor(dateKey), [dateKey]);
 
   const [state, setState] = useState<CPState>(() => loadState(dateKey, puzzles, user?.username));
@@ -403,7 +404,7 @@ export default function CareerPath() {
     const solved = state.rounds.filter(r => r.solved).length;
     // Don't hold the end screen hostage to a slow or blocked connection; the write keeps trying
     if (user?.username && !IS_LOCAL && !state.submitted) {
-      await Promise.race([submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS, { puzzleHash: state.puzzleHash, rounds: state.rounds }), new Promise(r => setTimeout(r, 6000))]);
+      await Promise.race([submitDailyScore(user.username, "careerpath", dateKey, t, solved, ROUNDS, { puzzleHash: state.puzzleHash, rounds: state.rounds }, { late }), new Promise(r => setTimeout(r, 6000))]);
     }
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
@@ -489,6 +490,7 @@ export default function CareerPath() {
       </div>
       <div className="flex items-center gap-2">
       </div>
+      {late && <LateBanner dateKey={dateKey} />}
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-violet-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg backdrop-blur">
           <span className="font-semibold text-violet-300">Test build</span>
@@ -533,7 +535,7 @@ export default function CareerPath() {
             </div>
             <Button className="w-full text-lg py-6 shadow-xl shadow-fuchsia-500/20 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold border-violet-300/50"
               onClick={() => setShowRules(false)}>
-              {state.rounds.some(r => r.guesses.length || r.stage) ? "Back to today's players" : "Play today's players"}
+              {`${state.rounds.some(r => r.guesses.length || r.stage) ? "Back to" : "Play"} ${late ? "yesterday's" : "today's"} players`}
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>

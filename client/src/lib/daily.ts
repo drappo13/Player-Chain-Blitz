@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, getCountFromServer } from "firebase/
 import { db, trackEvent } from "./firebase";
 import type { DailyGameSlug } from "./daily-score";
 import { shareLink } from "./user-context";
+import { isGuestName } from "./guest";
 
 // --- The daily set ---
 // Order is the order of the home tiles and of the "Next up" chain on end screens.
@@ -96,6 +97,19 @@ export function shiftDay(dateKey: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
+/** Which day's puzzles a daily game page shows: today's, or yesterday's set when opened with
+ *  `?set=yesterday` (playable late: counts for your streak, kept off the leaderboards). */
+export function puzzleDay(): { dateKey: string; late: boolean } {
+  const today = todayKey();
+  try {
+    if (new URLSearchParams(window.location.search).get("set") === "yesterday") return { dateKey: shiftDay(today, -1), late: true };
+  } catch { /* ignore */ }
+  return { dateKey: today, late: false };
+}
+
+/** Link to a daily game, keeping you in yesterday's set if that's where you are. */
+export const gameHref = (href: string, late: boolean) => (late ? `${href}?set=yesterday` : href);
+
 /** Milliseconds until local midnight, when the next set unlocks. */
 export function msToMidnight(): number {
   const now = new Date();
@@ -129,7 +143,12 @@ export interface DailyProgress {
   progress?: number; // 0..1 for a progress bar while playing
   count?: number; // what's been done: names found, photos guessed, players attempted
   startedAt?: number; // set on the first move, for time-to-finish analytics
+  /** Still open but enough has been played for it to count for today (CentreCircle/Griddle) */
+  counted?: boolean;
 }
+
+/** Finished, or played enough to count for today's set and streak. */
+export const countsToday = (p?: DailyProgress) => p?.status === "done" || !!p?.counted;
 
 export type DayProgress = Partial<Record<DailyGameSlug, DailyProgress>>;
 
@@ -154,7 +173,7 @@ export function recordDaily(username: string | undefined, game: DailyGameSlug, d
     const prev = day[game];
     if (p) {
       p = { ...p, startedAt: prev?.startedAt ?? (p.status === "playing" ? Date.now() : undefined) };
-      trackTransition(game, prev, p, day);
+      trackTransition(game, prev, p, day, dateKey !== todayKey());
       day[game] = p;
     }
     else if (day[game]?.status !== "done") delete day[game];
@@ -165,20 +184,25 @@ export function recordDaily(username: string | undefined, game: DailyGameSlug, d
 
 /** Analytics for a game moving between states. Only real play counts: a result restored
  *  from another device (never "playing" here) fires nothing. */
-function trackTransition(game: DailyGameSlug, prev: DailyProgress | undefined, p: DailyProgress, day: DayProgress) {
-  const base = { game, mode: "daily" };
+function trackTransition(game: DailyGameSlug, prev: DailyProgress | undefined, p: DailyProgress, day: DayProgress, late: boolean) {
+  const base = { game, mode: late ? "yesterday" : "daily" };
+  const seconds = p.startedAt ? Math.round((Date.now() - p.startedAt) / 1000) : undefined;
   if (!prev && p.status === "playing") trackEvent("game_start", base);
+  const before = DAILY_GAMES.filter((g) => countsToday(day[g.slug])).length;
+  const after = DAILY_GAMES.filter((g) => (g.slug === game ? countsToday(p) : countsToday(day[g.slug]))).length;
+  if (prev?.status === "playing" && !prev.counted && p.status === "playing" && p.counted) {
+    trackEvent("game_counted", { ...base, count: p.count, score: p.score, seconds, set_position: after });
+  }
   if (prev?.status === "playing" && p.status === "done") {
-    const doneToday = DAILY_GAMES.filter((g) => g.slug === game || day[g.slug]?.status === "done").length;
     trackEvent("game_finish", {
       ...base,
       score: p.score,
       level: p.level,
-      seconds: p.startedAt ? Math.round((Date.now() - p.startedAt) / 1000) : undefined,
-      set_position: doneToday, // 1st, 2nd… game finished today
+      seconds,
+      set_position: after, // 1st, 2nd… game done today
     });
-    if (doneToday === DAILY_GAMES.length) trackEvent("set_complete", { last_game: game });
   }
+  if (before < DAILY_GAMES.length && after === DAILY_GAMES.length && prev) trackEvent("set_complete", { last_game: game, late });
 }
 
 /** Analytics when someone leaves a daily game without finishing it: how far they got, so
@@ -196,6 +220,7 @@ export function trackGameExit(username: string | undefined, game: DailyGameSlug,
     count: p?.count ?? 0,
     score: p?.score ?? 0,
     level: p?.level,
+    counted: p?.counted || undefined,
     seconds: p?.startedAt ? Math.round((Date.now() - p.startedAt) / 1000) : undefined,
   });
 }
@@ -240,6 +265,8 @@ export interface DailyEntry {
   found?: number; // game-specific: players named, exact photos, names found
   total?: number;
   at?: number; // when it was submitted (ms)
+  open?: boolean; // still being played (score saved as it goes)
+  late?: boolean; // played the day after (Yesterday's set)
 }
 
 const historyKey = (username: string) => `pcb-dailyhist-${username.toLowerCase()}`;
@@ -258,8 +285,28 @@ function readHistoryCache(username: string | undefined): DailyEntry[] {
 const HISTORY_TTL = 5 * 60 * 1000;
 const historyFetches = new Map<string, { at: number; promise: Promise<DailyEntry[]> }>();
 
+/** A guest's history: built from what they've played on this device. */
+function localHistory(username: string): DailyEntry[] {
+  const prefix = `pcb-day-${username.toLowerCase()}-`;
+  const out: DailyEntry[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k?.startsWith(prefix)) continue;
+      const dateKey = k.slice(prefix.length);
+      const day = JSON.parse(localStorage.getItem(k) || "{}") as DayProgress;
+      for (const g of DAILY_GAMES) {
+        const p = day[g.slug];
+        if (countsToday(p)) out.push({ game: g.slug, dateKey, score: p!.score, found: p!.count, open: p!.status !== "done" || undefined });
+      }
+    }
+  } catch { /* ignore */ }
+  return out;
+}
+
 function fetchHistory(username: string): Promise<DailyEntry[]> {
   const key = username.toLowerCase();
+  if (isGuestName(key)) return Promise.resolve(localHistory(key));
   const hit = historyFetches.get(key);
   if (hit && Date.now() - hit.at < HISTORY_TTL) return hit.promise;
   const promise = getDocs(query(collection(db, "daily-scores"), where("username", "==", key))).then((snap) => {
@@ -268,7 +315,7 @@ function fetchHistory(username: string): Promise<DailyEntry[]> {
     const list: DailyEntry[] = [];
     snap.forEach((d) => {
       const x = d.data() as DailyEntry & { timestamp?: { toMillis?: () => number } };
-      list.push({ game: x.game, dateKey: x.dateKey, score: x.score, found: x.found, total: x.total, at: x.timestamp?.toMillis?.() });
+      list.push({ game: x.game, dateKey: x.dateKey, score: x.score, found: x.found, total: x.total, at: x.timestamp?.toMillis?.(), open: x.open || undefined, late: x.late || undefined });
     });
     try { localStorage.setItem(historyKey(username), JSON.stringify(list)); } catch { /* ignore */ }
     return list;
@@ -276,6 +323,12 @@ function fetchHistory(username: string): Promise<DailyEntry[]> {
   promise.catch(() => historyFetches.delete(key));
   historyFetches.set(key, { at: Date.now(), promise });
   return promise;
+}
+
+/** Forget the cached history (after a late play or claiming a name) so the next read refetches. */
+export function invalidateHistory(username?: string) {
+  if (username) historyFetches.delete(username.toLowerCase());
+  else historyFetches.clear();
 }
 
 /** All of a user's finished daily games, cached locally so the streak shows instantly. */
@@ -302,7 +355,11 @@ export function useDailyHistory(username: string | undefined): { entries: DailyE
 export function withFinished(day: DayProgress, entries: DailyEntry[], dateKey: string): DayProgress {
   const view: DayProgress = { ...day };
   for (const e of entries) {
-    if (e.dateKey === dateKey && view[e.game]?.status !== "done") {
+    if (e.dateKey !== dateKey || view[e.game]?.status === "done") continue;
+    if (e.open) {
+      // Saved while still being played: this device's own progress is newer, if it has any
+      if (!view[e.game]) view[e.game] = { status: "playing", counted: true, score: e.score, detail: `${e.found ?? 0} found`, count: e.found };
+    } else {
       view[e.game] = { status: "done", score: e.score, detail: "Finished" };
     }
   }
@@ -314,8 +371,8 @@ export function mergeToday(entries: DailyEntry[], day: DayProgress, dateKey: str
   const out = [...entries];
   for (const g of DAILY_GAMES) {
     const p = day[g.slug];
-    if (p?.status === "done" && !out.some((e) => e.game === g.slug && e.dateKey === dateKey)) {
-      out.push({ game: g.slug, dateKey, score: p.score });
+    if (countsToday(p) && !out.some((e) => e.game === g.slug && e.dateKey === dateKey)) {
+      out.push({ game: g.slug, dateKey, score: p!.score });
     }
   }
   return out;
@@ -356,7 +413,10 @@ export function useStreak(username: string | undefined) {
   const today = todayKey();
   const { entries, loading } = useDailyHistory(username);
   const day = useDayProgress(username, today);
-  const all = mergeToday(entries, day, today);
+  // Yesterday's set played today counts too (it may not have reached Firestore yet)
+  const yesterday = shiftDay(today, -1);
+  const yDay = useDayProgress(username, yesterday);
+  const all = mergeToday(mergeToday(entries, day, today), yDay, yesterday);
   const info = streakOf(all, today);
   const view = withFinished(day, entries, today);
   useEffect(() => {
@@ -403,7 +463,7 @@ async function fetchRank(dateKey: string, game: DailyGameSlug, score: number): P
 /** Where the user sits on today's board for each game they've finished, cached for a few minutes. */
 export function useTodayRanks(username: string | undefined, dateKey: string, view: DayProgress): TodayRanks {
   const [ranks, setRanks] = useState<TodayRanks>({});
-  const done = DAILY_GAMES.filter((g) => view[g.slug]?.status === "done").map((g) => [g.slug, view[g.slug]!.score] as const);
+  const done = DAILY_GAMES.filter((g) => countsToday(view[g.slug])).map((g) => [g.slug, view[g.slug]!.score] as const);
   const sig = done.map(([g, sc]) => `${g}:${sc}`).join(",");
 
   useEffect(() => {
@@ -420,6 +480,7 @@ export function useTodayRanks(username: string | undefined, dateKey: string, vie
         try {
           const r = await fetchRank(dateKey, game, score);
           if (r.of === 0) return; // nothing to rank against (e.g. offline)
+          if (isGuestName(username)) r.of += 1; // a guest isn't on the board: count them in
           out[game] = r;
           try { localStorage.setItem(k, JSON.stringify({ ...r, score, at: Date.now() })); } catch { /* ignore */ }
         } catch { /* ignore */ }
@@ -440,10 +501,10 @@ export function dayShareText(day: DayProgress, streak: number, dateKey: string):
   const date = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   const lines = DAILY_GAMES.map((g) => {
     const p = day[g.slug];
-    if (p?.status !== "done") return `${g.dot} ${g.name} —`;
-    return `${g.dot} ${g.name} ${p.score.toLocaleString()}${g.max ? `/${g.max}` : ""}`;
+    if (!countsToday(p)) return `${g.dot} ${g.name} —`;
+    return `${g.dot} ${g.name} ${p!.score.toLocaleString()}${g.max ? `/${g.max}` : ""}`;
   });
-  const done = DAILY_GAMES.filter((g) => day[g.slug]?.status === "done").length;
+  const done = DAILY_GAMES.filter((g) => countsToday(day[g.slug])).length;
   return [
     `drapk.in daily · ${date}`,
     "",

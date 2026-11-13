@@ -4,7 +4,14 @@ import { motion } from "framer-motion";
 import { ArrowRight, Check, Flame, Share2 } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { trackEvent } from "@/lib/firebase";
-import { DAILY_GAMES, DAILY_META, dayShareText, shareText, useCountdown, useStreak, type DayProgress } from "@/lib/daily";
+import {
+  DAILY_GAMES, DAILY_META, dayShareText, shareText, useCountdown, useStreak, useDayProgress, withFinished, countsToday, gameHref, shiftDay, puzzleDay,
+  type DayProgress,
+} from "@/lib/daily";
+import { ClaimCard } from "@/components/claim-card";
+import { IS_LOCALHOST } from "@/lib/guest";
+import { FriendsOnEndScreen } from "@/components/friends";
+import { ReminderAsk } from "@/components/reminders";
 import { GameIcon } from "@/components/game-icons";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
@@ -18,7 +25,7 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
         const p = day[g.slug];
         return (
           <div key={g.slug} className={`flex-1 rounded-full bg-white/10 overflow-hidden ${className}`}>
-            {p?.status === "done" && (
+            {countsToday(p) && (
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -26,7 +33,7 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
                 className={`h-full w-full origin-left ${g.bar}`}
               />
             )}
-            {p?.status === "playing" && (
+            {p?.status === "playing" && !p.counted && (
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.max(12, Math.round((p.progress ?? 0) * 100))}%`, backgroundPositionX: ["0px", "28px"] }}
@@ -45,23 +52,37 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
   );
 }
 
+/** Small pill on a daily game page when you're playing yesterday's set. */
+export function LateBanner({ dateKey }: { dateKey: string }) {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return (
+    <div className={`fixed ${IS_LOCALHOST ? "bottom-14" : "bottom-[max(0.75rem,env(safe-area-inset-bottom))]"} left-1/2 -translate-x-1/2 z-40 whitespace-nowrap rounded-full border border-sky-400/40 bg-[#0d1b2a]/90 backdrop-blur px-3 py-1.5 text-xs font-bold text-sky-200 shadow-lg pointer-events-none`}>
+      Yesterday's set · {date}
+    </div>
+  );
+}
+
 /** End-of-game footer for the daily games: carries you on to the next unfinished one. */
-export function DailyNext({ current }: { current: DailyGameSlug }) {
+export function DailyNext({ current, late = puzzleDay().late, score }: { current: DailyGameSlug; late?: boolean; score?: number }) {
   const [, navigate] = useLocation();
-  const { user } = useUser();
-  const { view: day, today, current: streak } = useStreak(user?.username);
+  const { user, isGuest } = useUser();
+  const { view: todayView, today, current: streak, entries, daysPlayed } = useStreak(user?.username);
+  const yesterday = shiftDay(today, -1);
+  const yDay = useDayProgress(user?.username, yesterday);
+  const day = late ? withFinished(yDay, entries, yesterday) : todayView;
   const countdown = useCountdown();
   const [copied, setCopied] = useState(false);
 
   const shown: DayProgress = { ...day, [current]: { ...day[current], status: "done" } as DayProgress[DailyGameSlug] };
-  const done = new Set(DAILY_GAMES.filter((g) => shown[g.slug]?.status === "done").map((g) => g.slug));
+  const done = new Set(DAILY_GAMES.filter((g) => countsToday(shown[g.slug])).map((g) => g.slug));
   const order = DAILY_GAMES.map((g) => g.slug);
   const from = order.indexOf(current);
   const next = [...order.slice(from + 1), ...order.slice(0, from)].find((s) => !done.has(s));
   const nextMeta = next ? DAILY_META[next] : null;
 
   const share = async () => {
-    if (await shareText(dayShareText(day, streak, today))) {
+    if (await shareText(dayShareText(day, streak, late ? yesterday : today))) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -69,8 +90,11 @@ export function DailyNext({ current }: { current: DailyGameSlug }) {
 
   return (
     <div className="w-full max-w-sm mx-auto text-left">
+      {isGuest && !late && <ClaimCard game={current} score={score ?? day[current]?.score} />}
+      {!isGuest && <FriendsOnEndScreen game={current} dateKey={late ? yesterday : today} />}
+      {!isGuest && <ReminderAsk daysPlayed={daysPlayed} />}
       <div className="flex items-center justify-between mb-2 text-xs font-semibold">
-        <span className="uppercase tracking-widest text-muted-foreground">Today's set</span>
+        <span className="uppercase tracking-widest text-muted-foreground">{late ? "Yesterday's set" : "Today's set"}</span>
         <span className="text-foreground tabular-nums">{done.size}/{DAILY_GAMES.length}</span>
       </div>
       <SetSegments day={shown} />
@@ -81,7 +105,7 @@ export function DailyNext({ current }: { current: DailyGameSlug }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => { trackEvent("next_up_click", { from: current, to: nextMeta.slug, done_today: done.size }); navigate(nextMeta.href); }}
+          onClick={() => { trackEvent("next_up_click", { from: current, to: nextMeta.slug, done_today: done.size }); navigate(gameHref(nextMeta.href, late)); }}
           className={`mt-4 w-full rounded-2xl border p-4 flex items-center gap-3 text-left ${nextMeta.tile}`}
         >
           <span className={`w-11 h-11 rounded-xl bg-black/25 flex items-center justify-center ${nextMeta.accent}`}>
@@ -106,13 +130,13 @@ export function DailyNext({ current }: { current: DailyGameSlug }) {
           <div className="mx-auto mb-2 w-11 h-11 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center">
             <Check className="w-6 h-6" strokeWidth={3} />
           </div>
-          <p className="text-lg font-black text-foreground">Daily set complete</p>
+          <p className="text-lg font-black text-foreground">{late ? "Yesterday's set complete" : "Daily set complete"}</p>
           {streak > 0 && (
             <p className="mt-0.5 text-sm font-semibold text-orange-300 inline-flex items-center gap-1">
               <Flame className="w-4 h-4" /> {streak}-day streak
             </p>
           )}
-          <p className="text-xs text-muted-foreground mt-1">New set in {countdown}</p>
+          {!late && <p className="text-xs text-muted-foreground mt-1">New set in {countdown}</p>}
           <button
             onClick={share}
             className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-bold"

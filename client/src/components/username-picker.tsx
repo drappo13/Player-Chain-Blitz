@@ -16,11 +16,18 @@ interface UsernamePickerProps {
   signupTitle?: string;
   /** Override the signup-mode subtitle (default: "Pick a username & avatar to get started") */
   signupSubtitle?: string;
+  /** Shows a close button / "Not now" (the sheet is optional) */
+  onClose?: () => void;
+  initialMode?: "signup" | "login";
+  /** Login-mode subtitle override */
+  loginSubtitle?: string;
+  /** Text for the dismiss link under the form */
+  closeLabel?: string;
 }
 
-export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerProps = {}) {
+export function UsernamePicker({ signupTitle, signupSubtitle, onClose, initialMode = "signup", loginSubtitle, closeLabel = "Not now" }: UsernamePickerProps = {}) {
   const { signup, login } = useUser();
-  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [mode, setMode] = useState<"signup" | "login">(initialMode);
   const [username, setUsername] = useState("");
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [error, setError] = useState("");
@@ -69,13 +76,14 @@ export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
       <div className="min-h-full flex items-start sm:items-center justify-center px-4 pt-6 pb-[60vh] sm:pt-0 sm:pb-0">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="w-full max-w-sm rounded-xl border border-border bg-card p-4 sm:p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-3 sm:mb-5">
           <h2 className="text-lg sm:text-xl font-bold text-foreground">
@@ -84,7 +92,7 @@ export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerPr
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {mode === "signup"
               ? (signupSubtitle ?? "Pick a username & avatar to get started")
-              : "Enter your username to continue"}
+              : (loginSubtitle ?? "Enter your username to continue")}
           </p>
         </div>
 
@@ -186,6 +194,12 @@ export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerPr
             ? "Already have a username? Log in"
             : "New here? Create a username"}
         </button>
+        {onClose && (
+          <button type="button" onClick={onClose}
+            className="w-full mt-2 text-xs font-semibold text-muted-foreground/80 hover:text-foreground transition-colors text-center">
+            {closeLabel}
+          </button>
+        )}
       </motion.div>
       </div>
     </div>

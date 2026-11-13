@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CalendarCheck, Gamepad2, Trophy, UserRound, Flame } from "lucide-react";
 import { useUser } from "@/lib/user-context";
+import { countsToday } from "@/lib/daily";
 import { DAILY_GAMES, useStreak } from "@/lib/daily";
 
 export const HUB_ROUTES = ["/", "/arcade", "/leaderboard", "/me"];
@@ -68,7 +69,7 @@ function Wordmark({ done }: { done: boolean[] | null }) {
 export function SetChip() {
   const { user } = useUser();
   const { view } = useStreak(user?.username);
-  const done = DAILY_GAMES.map((g) => view[g.slug]?.status === "done");
+  const done = DAILY_GAMES.map((g) => countsToday(view[g.slug]));
   return (
     <Link
       href="/"
@@ -95,17 +96,22 @@ export function SetChip() {
 /** Site navigation for the hub pages: a top bar on desktop, a header + bottom tab bar on phones. */
 export function AppNav() {
   const [location] = useLocation();
-  const { user } = useUser();
+  const { user, isGuest, openClaim } = useUser();
   const { current, playedToday, view } = useStreak(user?.username);
-  const doneToday = DAILY_GAMES.map((g) => view[g.slug]?.status === "done");
+  const doneToday = DAILY_GAMES.map((g) => countsToday(view[g.slug]));
   const left = doneToday.filter((d) => !d).length;
 
-  const userChip = user && (
+  const userChip = user && (isGuest ? (
+    <button onClick={() => openClaim("nav_chip")} className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 pl-1.5 pr-2.5 py-1 hover:bg-primary/25 transition-colors">
+      <span className="text-base leading-none">{user.avatar}</span>
+      <span className="text-xs font-bold text-foreground">Pick a name</span>
+    </button>
+  ) : (
     <Link href="/me" className="flex items-center gap-1.5 rounded-full bg-card border border-border pl-1.5 pr-2.5 py-1 hover:bg-muted transition-colors">
       <span className="text-base leading-none">{user.avatar}</span>
       <span className="text-xs font-semibold text-foreground max-w-[90px] truncate">{user.username}</span>
     </Link>
-  );
+  ));
 
   return (
     <>

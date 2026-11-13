@@ -1,9 +1,10 @@
-import { trackEvent } from "./firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db, trackEvent } from "./firebase";
 import { isIOS, isStandalone } from "./install";
 
 // Web push. On iPhone this only works from the home-screen app (iOS 16.4+), and the permission
 // prompt must come straight from a tap. Messages are sent with the matching private VAPID key.
-export const VAPID_PUBLIC = "BJ2VKS_0YB1OD5qapGXQM0e9sPQ0nZzhmjbCTscDwtpDTELtcM14MVWAg9kQ05ApaiisJZ3amriVocPLRL9kpJk";
+export const VAPID_PUBLIC = "BBFFBJ-YBC9Onwg72l_RbIi6TGBsEhYC7C72Ep8LTkBc2jz9Spbq3OT718Bd-4y-NH2J8CInE2S0DdJW86gamp4";
 
 export type PushState = "unsupported" | "needs-install" | "denied" | "default" | "granted";
 
@@ -25,9 +26,55 @@ export async function enablePush(): Promise<PushSubscriptionJSON | null> {
   trackEvent("push_permission", { result: perm });
   if (perm !== "granted") return null;
   const reg = await navigator.serviceWorker.ready;
-  const sub =
-    (await reg.pushManager.getSubscription()) ??
-    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_PUBLIC) }));
+  const key = keyBytes(VAPID_PUBLIC);
+  let sub = await reg.pushManager.getSubscription();
+  // A subscription made with an older key can't be reused
+  const old = sub?.options.applicationServerKey;
+  if (sub && old && !sameBytes(new Uint8Array(old), key)) { await sub.unsubscribe(); sub = null; }
+  sub ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+  return sub.toJSON();
+}
+
+const sameBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((v, i) => v === b[i]);
+
+// --- Reminder settings (stored with the subscription in push-subs/{username}) ---
+
+export interface ReminderPrefs { streak: boolean; morning: boolean }
+const prefsKey = (u: string) => `pcb-reminders-${u.toLowerCase()}`;
+
+export function readPrefs(username: string): ReminderPrefs | null {
+  try { return JSON.parse(localStorage.getItem(prefsKey(username)) || "null"); } catch { return null; }
+}
+
+/** Turn reminders on (asks permission — call from a tap) or update which ones you get. */
+export async function setReminders(username: string, prefs: ReminderPrefs, source: string): Promise<string | null> {
+  try {
+    const off = !prefs.streak && !prefs.morning;
+    let sub: PushSubscriptionJSON | null = null;
+    if (!off) {
+      sub = (await currentSubscriptionAnyKey()) ?? (await enablePush());
+      if (!sub) return "Notifications are blocked for drapk.in";
+    }
+    await setDoc(doc(db, "push-subs", username.toLowerCase()), {
+      ...(sub ? { endpoint: sub.endpoint, keys: sub.keys } : {}),
+      streak: prefs.streak, morning: prefs.morning, dead: false,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    try { localStorage.setItem(prefsKey(username), JSON.stringify(prefs)); } catch { /* ignore */ }
+    trackEvent("reminders_set", { streak: prefs.streak, morning: prefs.morning, source });
+    return null;
+  } catch {
+    return "Couldn't turn reminders on, try again";
+  }
+}
+
+async function currentSubscriptionAnyKey(): Promise<PushSubscriptionJSON | null> {
+  if (pushState() !== "granted") return null;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  const old = sub?.options.applicationServerKey;
+  if (!sub || (old && !sameBytes(new Uint8Array(old), keyBytes(VAPID_PUBLIC)))) return null;
   return sub.toJSON();
 }
 

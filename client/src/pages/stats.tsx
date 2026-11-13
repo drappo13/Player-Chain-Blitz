@@ -17,7 +17,7 @@ const WINDOW_DAYS = 14;
 const CACHE_KEY = "pcb-stats-cache-v3";
 const OVERLAP_MS = 5 * 60 * 1000; // re-read a few minutes back in case of late server timestamps
 
-const C = { signups: "#a78bfa", players: "#38bdf8", grid: "rgba(255,255,255,0.06)", axis: "#8a8a86" };
+const C = { signups: "#a78bfa", players: "#38bdf8", guests: "#94a3b8", grid: "rgba(255,255,255,0.06)", axis: "#8a8a86" };
 const BANDS = [
   { key: "g1", label: "1 game", colour: "#1e5a7a" },
   { key: "g2", label: "2 games", colour: "#2b84b4" },
@@ -25,11 +25,14 @@ const BANDS = [
   { key: "g4", label: "All 4", colour: "#34d399" },
 ] as const;
 
-interface Play { id: string; user: string; game: DailyGameSlug; day: string; score: number; at: number }
+interface Play { id: string; user: string; game: DailyGameSlug; day: string; score: number; at: number; late?: boolean }
 interface ArcadePlay { user: string; game: string; at: number }
+interface GuestPlay { guest: string; day: string; late: boolean; at: number }
 interface Cache {
   plays: Record<string, Play>;
   arcade: Record<string, ArcadePlay>;
+  /** Games finished by guests (no name yet), from guest-plays */
+  guests?: Record<string, GuestPlay>;
   users: Record<string, { at: number; ref?: string }>;
   playsUntil: number;
   usersUntil: number;
@@ -63,6 +66,13 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
     : { plays: {}, arcade: {}, users: {}, playsUntil: start, usersUntil: start };
   const now = Date.now();
   const since = Timestamp.fromMillis(Math.max(start, cache.playsUntil - OVERLAP_MS));
+  // Guest plays need their own Firestore rule; without it, carry on without them
+  const g = await getDocs(query(collection(db, "guest-plays"), where("at", ">=", since))).catch(() => null);
+  cache.guests ??= {};
+  g?.docs.forEach((d) => {
+    const x = d.data() as { guest?: string; dateKey?: string; late?: boolean; at?: Timestamp };
+    cache.guests![d.id] = { guest: x.guest ?? "?", day: x.dateKey ?? "", late: !!x.late, at: x.at?.toMillis() ?? Date.now() };
+  });
   const [p, a, u] = await Promise.all([
     getDocs(query(collection(db, "daily-scores"), where("timestamp", ">=", since))),
     getDocs(query(collection(db, "scores"), where("timestamp", ">=", since))),
@@ -74,8 +84,8 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
     cache.arcade[d.id] = { user: (x.username ?? "").toLowerCase(), game: x.game ?? "?", at: x.timestamp?.toMillis() ?? now };
   });
   p.docs.forEach((d) => {
-    const x = d.data() as { username: string; game: DailyGameSlug; dateKey: string; score: number; timestamp?: Timestamp };
-    cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: x.timestamp?.toMillis() ?? now };
+    const x = d.data() as { username: string; game: DailyGameSlug; dateKey: string; score: number; timestamp?: Timestamp; late?: boolean };
+    cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: x.timestamp?.toMillis() ?? now, late: x.late || undefined };
   });
   u.docs.forEach((d) => {
     const x = d.data() as { createdAt?: Timestamp; referredBy?: string };
@@ -85,15 +95,17 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   for (const [id, x] of Object.entries(cache.plays)) if (x.at < start) delete cache.plays[id];
   for (const [id, x] of Object.entries(cache.arcade)) if (x.at < start) delete cache.arcade[id];
   for (const [id, x] of Object.entries(cache.users)) if (x.at < start) delete cache.users[id];
+  for (const [id, x] of Object.entries(cache.guests ?? {})) if (x.at < start) delete cache.guests![id];
   cache.playsUntil = now;
   cache.usersUntil = now;
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch { /* ignore */ }
-  return { cache, reads: p.size + a.size + u.size };
+  return { cache, reads: p.size + a.size + u.size + (g?.size ?? 0) };
 }
 
 function crunch(cache: Cache) {
   const today = todayKey();
-  const plays = Object.values(cache.plays);
+  // Yesterday's-set plays (made the next day) stay out of the per-day numbers
+  const plays = Object.values(cache.plays).filter((p) => !p.late);
   const users = Object.entries(cache.users);
   const days7 = Array.from({ length: 7 }, (_, i) => shiftDay(today, i - 6));
 
@@ -105,6 +117,8 @@ function crunch(cache: Cache) {
     m.set(pl.user, (m.get(pl.user) ?? 0) + 1);
   }
   const signupDay = new Map(users.map(([name, x]) => [name, localDay(x.at)]));
+  const guestPlays = Object.values(cache.guests ?? {});
+  const guestsOn = (d: string) => new Set(guestPlays.filter((x) => x.day === d && !x.late).map((x) => x.guest)).size;
 
   // Last 24 hours, hour by hour
   const now = Date.now();
@@ -116,6 +130,7 @@ function crunch(cache: Cache) {
       label: new Date(h).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
       Signups: users.filter(([, x]) => inHour(x.at)).length,
       Players: new Set(plays.filter((p) => inHour(p.at)).map((p) => p.user)).size,
+      Guests: new Set(guestPlays.filter((p) => inHour(p.at)).map((p) => p.guest)).size,
     };
   });
 
@@ -124,6 +139,7 @@ function crunch(cache: Cache) {
     label: dayLabel(d),
     Signups: users.filter(([, x]) => localDay(x.at) === d).length,
     Players: byDay.get(d)?.size ?? 0,
+    Guests: guestsOn(d),
   }));
 
   // Games per player per day, and sign-ups who finished nothing that day ("bounced")
@@ -207,6 +223,7 @@ function crunch(cache: Cache) {
   return {
     last24, week, spread, bounce, returning, gamesByDay, arcadeByDay, arcade, cohorts, perGame, invites,
     tiles: {
+      guests: guestsOn(today),
       players: todayPlayers.size,
       playersY: yPlayers.size,
       returningToday: returning[returning.length - 1].Returning,
@@ -257,7 +274,7 @@ function Tile({ label, value, sub, accent }: { label: string; value: string | nu
 
 const tooltipStyle = { background: "#16181e", border: "1px solid #2a2d35", borderRadius: 12, fontSize: 12 };
 
-function TwoLines({ data }: { data: { label: string; Signups: number; Players: number }[] }) {
+function TwoLines({ data }: { data: { label: string; Signups: number; Players: number; Guests?: number }[] }) {
   return (
     <div className="h-52">
       <ResponsiveContainer width="100%" height="100%">
@@ -268,6 +285,7 @@ function TwoLines({ data }: { data: { label: string; Signups: number; Players: n
           <Tooltip contentStyle={tooltipStyle} />
           <Line type="monotone" dataKey="Signups" stroke={C.signups} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
           <Line type="monotone" dataKey="Players" stroke={C.players} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+          {data.some((d) => d.Guests) && <Line type="monotone" dataKey="Guests" stroke={C.guests} strokeWidth={2} strokeDasharray="4 3" dot={false} activeDot={{ r: 4 }} />}
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -339,19 +357,19 @@ export default function StatsPage() {
       {s && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.returningToday} returning · ${s.tiles.playersY} yesterday`} accent="text-sky-300" />
+            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.returningToday} returning · ${s.tiles.playersY} yesterday${s.tiles.guests ? ` · +${s.tiles.guests} guests` : ""}`} accent="text-sky-300" />
             <Tile label="Sign-ups today" value={s.tiles.signups} sub={`${pct(s.tiles.newPlayed, s.tiles.signups)}% finished a game`} accent="text-violet-300" />
             <Tile label="Back from yesterday" value={`${pct(s.tiles.back, s.tiles.backOf)}%`} sub={`${s.tiles.back} of ${s.tiles.backOf} players`} />
             <Tile label="Full sets today" value={s.tiles.fullSets} sub="finished all four" accent="text-emerald-300" />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-x-4">
-            <Card title="Last 24 hours" note="Per hour: new accounts, and different people finishing a daily game"
-              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }]} />}>
+            <Card title="Last 24 hours" note="Per hour: new accounts, and different people finishing a daily game (guests = no name yet)"
+              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }, { label: "Guests", colour: C.guests }]} />}>
               <TwoLines data={s.last24} />
             </Card>
-            <Card title="Last 7 days" note="Per day: new accounts, and different people finishing a daily game"
-              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }]} />}>
+            <Card title="Last 7 days" note="Per day: new accounts, and different people finishing a daily game (guests = no name yet)"
+              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }, { label: "Guests", colour: C.guests }]} />}>
               <TwoLines data={s.week} />
             </Card>
           </div>

@@ -1,5 +1,6 @@
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, trackEvent } from "./firebase";
+import { isGuestName, queuePending, IS_LOCALHOST } from "./guest";
 
 export type GameSlug =
   | "goalchain"
@@ -21,7 +22,9 @@ export async function saveScore(
 ): Promise<void> {
   if (!username || score <= 0) return;
   // The Champions quiz logs its own finish (it can be played signed out)
-  if (game !== "arsenal-champions-2026") trackEvent("game_finish", { game, mode: "arcade", score });
+  if (game !== "arsenal-champions-2026") trackEvent("game_finish", { game, mode: "arcade", score, guest: isGuestName(username) || undefined });
+  if (isGuestName(username)) { queuePending({ kind: "arcade", game, score }); return; }
+  if (IS_LOCALHOST) return;
   try {
     await addDoc(collection(db, "scores"), {
       username: username.toLowerCase(),

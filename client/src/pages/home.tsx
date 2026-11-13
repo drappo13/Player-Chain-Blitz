@@ -6,9 +6,15 @@ import { useUser } from "@/lib/user-context";
 import { trackEvent } from "@/lib/firebase";
 import { HubPage } from "@/components/app-nav";
 import { SetSegments } from "@/components/daily-next";
+import { FriendBest } from "@/components/friends";
+import { useFriendsDay, type FriendScore } from "@/lib/friends";
 import { GameIcon } from "@/components/game-icons";
 import {
   DAILY_GAMES,
+  countsToday,
+  shiftDay,
+  useDayProgress,
+  withFinished,
   dayShareText,
   shareText,
   msToMidnight,
@@ -62,9 +68,27 @@ function Confetti() {
   );
 }
 
-function SetCard({ day, streak, playedToday, today, username }: { day: DayProgress; streak: number; playedToday: boolean; today: string; username: string }) {
+/** Yesterday's set: offered once you've played today (or to save a streak). */
+function YesterdayLink({ yView, savable, newcomer }: { yView: DayProgress; savable: number; newcomer: boolean }) {
+  const left = DAILY_GAMES.filter((g) => !countsToday(yView[g.slug]));
+  if (!left.length) return null;
+  const first = left[0];
+  return (
+    <Link href={`${first.href}?set=yesterday`} onClick={() => trackEvent("yesterday_open", { from: "home", savable })}
+      className="mt-2 flex items-center justify-between gap-2 text-[11px] sm:text-xs font-semibold text-sky-300 hover:text-sky-200">
+      <span className="truncate">
+        {savable > 0
+          ? `Missed yesterday? Play yesterday's set to save your ${savable}-day streak`
+          : newcomer ? "Want more? Play yesterday's set too" : "Missed yesterday? Play yesterday's set"}
+      </span>
+      <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+    </Link>
+  );
+}
+
+function SetCard({ day, streak, playedToday, today, username, yesterday }: { day: DayProgress; streak: number; playedToday: boolean; today: string; username: string; yesterday?: React.ReactNode }) {
   const countdown = useCountdown();
-  const done = new Set(DAILY_GAMES.filter((g) => day[g.slug]?.status === "done").map((g) => g.slug));
+  const done = new Set(DAILY_GAMES.filter((g) => countsToday(day[g.slug])).map((g) => g.slug));
   const n = done.size;
   const total = DAILY_GAMES.length;
   const complete = n === total;
@@ -149,12 +173,17 @@ function SetCard({ day, streak, playedToday, today, username }: { day: DayProgre
         )}
       </div>
       <SetSegments day={day} className="h-2 sm:h-2.5" />
+      {yesterday}
     </motion.div>
   );
 }
 
-function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyProgress; rank?: { rank: number; of: number }; index: number }) {
-  const status = p?.status ?? "new";
+function DailyTile({ game, p, rank, index, friend, startHere }: {
+  game: DailyGameMeta; p?: DailyProgress; rank?: { rank: number; of: number }; index: number; friend?: FriendScore; startHere?: boolean;
+}) {
+  // A game that counts for today but is still open looks done, with a way back in
+  const counted = p?.status === "playing" && !!p.counted;
+  const status = counted ? "done" : p?.status ?? "new";
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + index * 0.06 }}>
       <Link href={game.href} data-testid={`tile-${game.slug}`}
@@ -180,6 +209,9 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
             )}
             {status === "playing" && (
               <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-black/30 px-2 py-1 text-white/85">In progress</span>
+            )}
+            {status === "new" && startHere && (
+              <span className="text-[10px] font-black uppercase tracking-wider rounded-full bg-white text-black px-2 py-1">Start here</span>
             )}
           </div>
 
@@ -209,29 +241,30 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
                   <span className="text-[28px] sm:text-3xl font-black tabular-nums">{p!.score.toLocaleString()}</span>
                   {game.max && <span className="text-sm font-bold text-white/55">/{game.max}</span>}
                 </p>
-                {p!.detail !== "Finished" && (
+                {!counted && p!.detail !== "Finished" && (
                   <p className="text-xs text-white/70 mt-1 truncate">{p!.level ? `${p!.level} \u00B7 ${p!.detail}` : p!.detail}</p>
                 )}
               </>
             )}
           </div>
 
-          <div className="mt-2">
-            {status === "done" ? (
+          <div className="mt-2 flex items-center justify-between gap-1.5 min-w-0">
+            {status === "done" && !counted ? (
               rank ? (
-                <span className={`inline-flex items-center gap-1 text-xs font-bold ${game.accent}`}>
-                  <Trophy className="w-3 h-3" /> #{rank.rank} of {rank.of} today
+                <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-bold ${game.accent}`}>
+                  <Trophy className="w-3 h-3" /> <span>#{rank.rank}<span className="font-semibold opacity-80">/{rank.of}</span></span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-white/60">
+                <span className="shrink-0 inline-flex items-center gap-0.5 text-xs font-bold text-white/60">
                   Results <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               )
             ) : (
-              <span className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-black ${game.solid}`}>
-                {status === "playing" ? "Continue" : "Play"} <ChevronRight className="w-3.5 h-3.5 -mr-1" />
+              <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-black ${game.solid}`}>
+                {status === "new" ? "Play" : counted ? "Keep going" : "Continue"} <ChevronRight className="w-3.5 h-3.5 -mr-1" />
               </span>
             )}
+            <FriendBest best={friend} />
           </div>
         </motion.div>
       </Link>
@@ -242,8 +275,21 @@ function DailyTile({ game, p, rank, index }: { game: DailyGameMeta; p?: DailyPro
 export default function Home() {
   const { user } = useUser();
   const today = todayKey();
-  const { current, playedToday, view } = useStreak(user?.username);
+  const { current, playedToday, view, entries } = useStreak(user?.username);
   const ranks = useTodayRanks(user?.username, today, view);
+  const { day: friendsDay } = useFriendsDay(user?.username, today);
+
+  // Yesterday's set: offered once you've played today, or straight away if it would save a streak
+  const yesterday = shiftDay(today, -1);
+  const yLocal = useDayProgress(user?.username, yesterday);
+  const yView = withFinished(yLocal, entries, yesterday);
+  const days = new Set(entries.map((e) => e.dateKey));
+  let savable = 0;
+  if (!days.has(yesterday)) for (let d = shiftDay(today, -2); days.has(d); d = shiftDay(d, -1)) savable++;
+  const anyToday = DAILY_GAMES.some((g) => countsToday(view[g.slug]));
+  const showYesterday = (anyToday || savable > 0) && entries.length + (anyToday ? 1 : 0) > 0;
+  // First visit: point newcomers at Career Path (it has a clear end)
+  const newcomer = entries.length === 0 && !DAILY_GAMES.some((g) => view[g.slug]);
 
   // Keep the countdown honest across midnight: reload into the new day
   useEffect(() => {
@@ -266,15 +312,17 @@ export default function Home() {
           )}
         </p>
         <h1 className="text-xl sm:text-3xl font-black text-foreground tracking-tight break-words" data-testid="text-app-title">
-          {greeting()}{user ? `, ${user.username}` : ""}
+          {greeting()}{user && !user.guest ? `, ${user.username}` : ""}
         </h1>
       </motion.div>
 
-      <SetCard day={view} streak={current} playedToday={playedToday} today={today} username={user?.username ?? ""} />
+      <SetCard day={view} streak={current} playedToday={playedToday} today={today} username={user?.username ?? ""}
+        yesterday={showYesterday ? <YesterdayLink yView={yView} savable={savable} newcomer={!entries.some((e) => e.dateKey < yesterday)} /> : null} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {DAILY_GAMES.map((g, i) => (
-          <DailyTile key={g.slug} game={g} p={view[g.slug as DailyGameSlug]} rank={ranks[g.slug]} index={i} />
+          <DailyTile key={g.slug} game={g} p={view[g.slug as DailyGameSlug]} rank={ranks[g.slug]} index={i}
+            friend={friendsDay[g.slug as DailyGameSlug]?.[0]} startHere={newcomer && g.slug === "careerpath"} />
         ))}
       </div>
 
