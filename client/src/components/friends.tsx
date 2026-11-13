@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Users, X, Plus } from "lucide-react";
 import { useUser } from "@/lib/user-context";
@@ -49,6 +49,17 @@ export function FriendsSection() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Arriving from "Add friends" on an end screen: jump here and focus the box
+  useEffect(() => {
+    if (window.location.hash !== "#friends") return;
+    const t = setTimeout(() => {
+      document.getElementById("friends")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      inputRef.current?.focus({ preventScroll: true });
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +72,14 @@ export function FriendsSection() {
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 mb-6">
+    <section id="friends" className="rounded-2xl border border-border bg-card p-4 mb-6 scroll-mt-24">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-black text-foreground flex items-center gap-1.5"><Users className="w-4 h-4 text-sky-300" /> Friends</h2>
         {list.length > 0 && <span className="text-xs text-muted-foreground tabular-nums">{list.length}</span>}
       </div>
       <form onSubmit={submit} className="flex gap-2">
         <input
+          ref={inputRef}
           value={name}
           onChange={(e) => { setName(e.target.value); setMsg(null); }}
           placeholder="Add by username"
