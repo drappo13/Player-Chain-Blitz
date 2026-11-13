@@ -427,13 +427,13 @@ export default function CentreCircle() {
     { id: "first", when: firstGuess !== null, until: guesses >= 4,
       text: firstGuess === "wrong"
         ? <>Only players with <b>Premier League</b> appearances count, and only surnames.</>
-        : <>The <b className="text-green-600">green centre letter</b> doubles your points. Legends (★) double again.</> },
+        : <>The <b className="text-green-400">green centre letter</b> doubles your points. Legends (★) double again.</> },
     { id: "tracker", when: !isFinished && (state.found.length >= 3 || misses >= 2), until: trackerOpened,
       text: <>Stuck? This shows how many names are left, by first letter.</> },
     { id: "finish", when: !isFinished && state.found.length >= countAt, until: finishTapped,
       text: <>Your score's already on the leaderboard. Tap <b>Finish</b> when you're done to see the answers.</> },
   ]);
-  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip });
+  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip, accent: "green" as const });
   const foundSet = useMemo(() => new Set(state.found), [state.found]);
   const rank = getRank(state.score, maxScore);
 
@@ -870,7 +870,7 @@ export default function CentreCircle() {
         <div className="w-full flex items-center justify-between mb-2">
           {/* How-to tips sit in the empty space under "Found", clear of the letters and buttons */}
           <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
-            onOk={tips.ok} onSkip={tips.skip} place="bottom" align="start" arrow={false}>
+            onOk={tips.ok} onSkip={tips.skip} accent="green" place="bottom" align="start" arrow={false}>
           <h3 className="text-sm font-semibold text-muted-foreground">
             Found <span className="tabular-nums">{state.found.length}</span>
             <span className="font-normal"> · {centreUpper} scores double</span>

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
 import { trackEvent } from "@/lib/firebase";
 
 // First-time tips inside the daily games, instead of a rules screen. One short line at a time,
@@ -61,39 +60,50 @@ export function useGameTips(game: string, firstTime: boolean, tips: TipDef[]) {
   };
 }
 
-/** Wrap the element a tip points at. The bubble floats above or below it, aligned left/centre/right. */
-export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", arrow = true, className = "" }: {
+const ACCENTS = {
+  green: { border: "border-green-400/45", btn: "bg-green-400 text-green-950" },
+  blue: { border: "border-sky-400/45", btn: "bg-sky-400 text-sky-950" },
+  violet: { border: "border-violet-400/45", btn: "bg-violet-400 text-violet-950" },
+  amber: { border: "border-amber-400/45", btn: "bg-amber-400 text-amber-950" },
+} as const;
+export type TipAccent = keyof typeof ACCENTS;
+
+/** Wrap the element a tip points at. The bubble floats above or below it (left/centre/right), in the
+ *  game's colour, with everything inside it: the tip, "Skip tips" and a Got it button. */
+export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", arrow = true, accent = "green", className = "" }: {
   show: boolean; children: ReactNode; text?: ReactNode; onOk?: () => void; onSkip?: () => void;
-  place?: "top" | "bottom"; align?: "start" | "center" | "end"; arrow?: boolean; className?: string;
+  place?: "top" | "bottom"; align?: "start" | "center" | "end"; arrow?: boolean; accent?: TipAccent; className?: string;
 }) {
+  const a = ACCENTS[accent];
   const x = align === "start" ? "left-0" : align === "end" ? "right-0" : "left-1/2 -translate-x-1/2";
-  const arrowX = align === "start" ? "left-5" : align === "end" ? "right-5" : "left-1/2 -translate-x-1/2";
+  const arrowX = align === "start" ? "left-6" : align === "end" ? "right-6" : "left-1/2 -translate-x-1/2";
   return (
     <div className={`relative ${className}`}>
       {children}
       <AnimatePresence>
         {show && text && (
           // Positioning lives on a plain box: framer's transform would otherwise wipe out the centring
-          <div className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2.5" : "bottom-full mb-2.5"} w-[min(280px,calc(100vw-2rem))]`}>
-          <motion.div
-            initial={{ opacity: 0, y: place === "bottom" ? -4 : 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="relative"
-            role="status"
-          >
-            {arrow && <span className={`absolute ${arrowX} ${place === "bottom" ? "-top-1.5" : "-bottom-1.5"} w-3 h-3 rotate-45 bg-white`} />}
-            <div className="relative rounded-xl bg-white text-zinc-900 shadow-xl shadow-black/40 pl-3 pr-1.5 py-2 flex items-start gap-2">
-              <p className="flex-1 text-[13px] leading-snug font-medium pt-0.5">{text}</p>
-              <button type="button" onClick={onOk} aria-label="Got it"
-                className="shrink-0 w-7 h-7 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
-                <Check className="w-4 h-4" strokeWidth={3} />
-              </button>
-            </div>
-            <button type="button" onClick={onSkip}
-              className={`absolute ${place === "bottom" ? "-bottom-5" : "-top-5"} ${align === "end" ? "right-1" : "left-1"} text-[10px] font-semibold text-white/60 hover:text-white`}>
-              Skip tips
-            </button>
-          </motion.div>
+          <div className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2" : "bottom-full mb-2"} w-[min(300px,calc(100vw-2rem))]`}>
+            <motion.div
+              initial={{ opacity: 0, y: place === "bottom" ? -4 : 4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className={`relative rounded-2xl border ${a.border} bg-[#16191f] shadow-2xl shadow-black/60 px-3.5 pt-3 pb-2.5`}
+              role="status"
+            >
+              {arrow && (
+                <span className={`absolute ${arrowX} w-3 h-3 rotate-45 bg-[#16191f] border ${a.border} ${
+                  place === "bottom" ? "-top-[7px] border-r-0 border-b-0" : "-bottom-[7px] border-l-0 border-t-0"}`} />
+              )}
+              <p className="relative text-[13px] leading-snug text-foreground/90">{text}</p>
+              <div className="relative mt-2.5 flex items-center justify-between">
+                <button type="button" onClick={onSkip} className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">
+                  Skip tips
+                </button>
+                <button type="button" onClick={onOk} className={`rounded-full px-3.5 py-1 text-xs font-black ${a.btn}`}>
+                  Got it
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

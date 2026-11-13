@@ -619,7 +619,7 @@ export default function PhotoFinish() {
                 </span>
               ))}
             </div>
-            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} place="bottom">
+            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} accent="amber" place="bottom">
             <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={lockIn}>
               Lock in
