@@ -219,11 +219,15 @@ function ClaimSheet() {
   if (claimSource === "standalone_first") {
     return <UsernamePicker initialMode="login" onClose={closeClaim} loginSubtitle="Log in with your name to bring your streak over" closeLabel="New here? Play as a guest" />;
   }
+  let ref: string | null = null;
+  try { ref = localStorage.getItem("pcb-ref"); } catch { /* ignore */ }
   return (
     <UsernamePicker
       onClose={closeClaim}
       signupTitle="Pick a name"
-      signupSubtitle="Get on the leaderboards and keep your streak on any device. Your games so far come with you."
+      signupSubtitle={ref
+        ? `${ref} invited you. Pick a name and you'll be friends, so you can see each other's scores. Your games so far come with you.`
+        : "Get on the leaderboards and keep your streak on any device. Your games so far come with you."}
     />
   );
 }

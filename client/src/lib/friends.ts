@@ -113,6 +113,32 @@ export function useFriends(username: string | undefined) {
   return { list, loading, add, remove, named };
 }
 
+const inviteesKey = (u: string) => `pcb-invitees-${u.toLowerCase()}`;
+
+/** People who signed up through your invite link (cached for 10 minutes). */
+export function useInvitees(username: string | undefined): string[] {
+  const named = !!username && !isGuestName(username);
+  const read = () => { try { return JSON.parse(localStorage.getItem(inviteesKey(username!)) || "null"); } catch { return null; } };
+  const [list, setList] = useState<string[]>(() => (named ? read()?.list ?? [] : []));
+  useEffect(() => {
+    if (!named) { setList([]); return; }
+    const c = read();
+    if (c && Date.now() - c.at < LIST_TTL) { setList(c.list); return; }
+    let cancelled = false;
+    getDocs(query(collection(db, "users"), where("referredBy", "==", username!.toLowerCase())))
+      .then((snap) => {
+        if (snap.metadata.fromCache) return;
+        const names = snap.docs.map((d) => d.id);
+        try { localStorage.setItem(inviteesKey(username!), JSON.stringify({ list: names, at: Date.now() })); } catch { /* ignore */ }
+        if (!cancelled) setList(names);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, named]);
+  return list;
+}
+
 /** New account that came through an invite link: start friends with the inviter (the inviter
  *  picks up the other direction next time their list loads). */
 export async function startFriendsFromInvite(username: string, ref: string) {
