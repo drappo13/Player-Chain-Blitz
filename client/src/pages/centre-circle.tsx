@@ -11,7 +11,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner, GoalBar, completeTarget } from "@/components/daily-next";
+import { LateBanner, GoalBar, completeTarget, useJustCompleted, CompleteFlash } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -410,6 +410,7 @@ export default function CentreCircle() {
   const isFinished = state.submitted;
   // Until today counts, the header shows progress towards that instead of the ranks
   const goalPhase = !isFinished && !late && state.found.length < countAt;
+  const justCompleted = useJustCompleted(state.found.length, countAt, !isFinished && !late);
   const foundSet = useMemo(() => new Set(state.found), [state.found]);
   const rank = getRank(state.score, maxScore);
 
@@ -727,7 +728,8 @@ export default function CentreCircle() {
           )}
         </div>
 
-        {goalPhase ? <GoalBar found={state.found.length} target={countAt} bar="bg-emerald-400" /> : <RankBar score={state.score} maxScore={maxScore} />}
+        {goalPhase ? <GoalBar found={state.found.length} target={countAt} bar="bg-emerald-400" />
+          : justCompleted ? <CompleteFlash /> : <RankBar score={state.score} maxScore={maxScore} />}
 
         {/* Hive + overlays */}
         <div className="relative w-full flex justify-center mt-4 mb-1">
