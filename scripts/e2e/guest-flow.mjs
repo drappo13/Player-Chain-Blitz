@@ -95,7 +95,8 @@ try {
   await go(page, "/centrecircle");
   await clickText(page, /^Play today/);
   await wait(600);
-  const letters = (await page.evaluate(() => [...document.querySelectorAll("button")].map((b) => b.textContent.trim()).filter((t) => /^[A-Z]$/.test(t)))).map((l) => l.toLowerCase());
+  const letters = (await page.evaluate(() => [...document.querySelectorAll('button[aria-label^="Letter "]')].map((b) => b.getAttribute("aria-label").slice(7, 8)))).map((l) => l.toLowerCase());
+  if (letters.length < 7) fail(`couldn't read the CentreCircle letters (${letters.join("")})`);
   const target = Number((await page.evaluate(() => document.body.innerText.match(/(\d+)\/(\d+)\s*\n?\s*to complete today/)?.[2])) || 6);
   const players = JSON.parse(fs.readFileSync("client/src/data/pl-players.json", "utf8"));
   const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
