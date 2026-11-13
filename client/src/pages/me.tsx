@@ -80,6 +80,9 @@ function Calendar({ counts, today }: { counts: Map<string, number>; today: strin
   );
 }
 
+/** Add to Home Screen + reminders are built but off for now (see docs/plans/growth-v1.md). */
+const SHOW_HOME_SCREEN = false;
+
 /** "Add to Home Screen": native prompt where the browser offers one, else the steps. Hidden once installed. */
 function InstallCard() {
   const { mode, install } = useInstall();
@@ -294,8 +297,9 @@ export default function Me() {
         </div>
       </section>
 
-      {!isGuest && <RemindersCard />}
-      {!isGuest && <InstallCard />}
+      {/* Add to Home Screen + reminders: held back until the home-screen journey (separate login) is tested */}
+      {SHOW_HOME_SCREEN && !isGuest && <RemindersCard />}
+      {SHOW_HOME_SCREEN && !isGuest && <InstallCard />}
 
       {!isGuest && <section className="mb-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Arcade high scores</h2>
