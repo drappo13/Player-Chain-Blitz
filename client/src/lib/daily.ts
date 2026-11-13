@@ -98,7 +98,8 @@ export function shiftDay(dateKey: string, days: number): string {
 }
 
 /** Which day's puzzles a daily game page shows: today's, or yesterday's set when opened with
- *  `?set=yesterday` (playable late: counts for your streak, kept off the leaderboards). */
+ *  `?set=yesterday`. Yesterday's set is offered to brand-new players only and is just for fun:
+ *  kept on the device, never on leaderboards, never counted for streaks or badges. */
 export function puzzleDay(): { dateKey: string; late: boolean } {
   const today = todayKey();
   try {
@@ -145,6 +146,8 @@ export interface DailyProgress {
   startedAt?: number; // set on the first move, for time-to-finish analytics
   /** Still open but enough has been played for it to count for today (CentreCircle/Griddle) */
   counted?: boolean;
+  /** Played as Yesterday's set (just for fun, never counts) */
+  late?: boolean;
 }
 
 /** Finished, or played enough to count for today's set and streak. */
@@ -172,7 +175,7 @@ export function recordDaily(username: string | undefined, game: DailyGameSlug, d
     const day = readDay(username, dateKey);
     const prev = day[game];
     if (p) {
-      p = { ...p, startedAt: prev?.startedAt ?? (p.status === "playing" ? Date.now() : undefined) };
+      p = { ...p, startedAt: prev?.startedAt ?? (p.status === "playing" ? Date.now() : undefined), late: dateKey < todayKey() || undefined };
       trackTransition(game, prev, p, day, dateKey !== todayKey());
       day[game] = p;
     }
@@ -297,7 +300,7 @@ function localHistory(username: string): DailyEntry[] {
       const day = JSON.parse(localStorage.getItem(k) || "{}") as DayProgress;
       for (const g of DAILY_GAMES) {
         const p = day[g.slug];
-        if (countsToday(p)) out.push({ game: g.slug, dateKey, score: p!.score, found: p!.count, open: p!.status !== "done" || undefined });
+        if (countsToday(p) && !p!.late) out.push({ game: g.slug, dateKey, score: p!.score, found: p!.count, open: p!.status !== "done" || undefined });
       }
     }
   } catch { /* ignore */ }
@@ -413,10 +416,7 @@ export function useStreak(username: string | undefined) {
   const today = todayKey();
   const { entries, loading } = useDailyHistory(username);
   const day = useDayProgress(username, today);
-  // Yesterday's set played today counts too (it may not have reached Firestore yet)
-  const yesterday = shiftDay(today, -1);
-  const yDay = useDayProgress(username, yesterday);
-  const all = mergeToday(mergeToday(entries, day, today), yDay, yesterday);
+  const all = mergeToday(entries, day, today);
   const info = streakOf(all, today);
   const view = withFinished(day, entries, today);
   useEffect(() => {

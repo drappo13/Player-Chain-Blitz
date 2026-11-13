@@ -14,7 +14,6 @@ import {
   countsToday,
   shiftDay,
   useDayProgress,
-  withFinished,
   dayShareText,
   shareText,
   msToMidnight,
@@ -68,19 +67,14 @@ function Confetti() {
   );
 }
 
-/** Yesterday's set: offered once you've played today (or to save a streak). */
-function YesterdayLink({ yView, savable, newcomer }: { yView: DayProgress; savable: number; newcomer: boolean }) {
+/** Yesterday's set: offered to brand-new players once they've finished a game today. */
+function YesterdayLink({ yView }: { yView: DayProgress }) {
   const left = DAILY_GAMES.filter((g) => !countsToday(yView[g.slug]));
   if (!left.length) return null;
-  const first = left[0];
   return (
-    <Link href={`${first.href}?set=yesterday`} onClick={() => trackEvent("yesterday_open", { from: "home", savable })}
+    <Link href={`${left[0].href}?set=yesterday`} onClick={() => trackEvent("yesterday_open", { from: "home" })}
       className="mt-2 flex items-center justify-between gap-2 text-[11px] sm:text-xs font-semibold text-sky-300 hover:text-sky-200">
-      <span className="truncate">
-        {savable > 0
-          ? `Missed yesterday? Play yesterday's set to save your ${savable}-day streak`
-          : newcomer ? "Want more? Play yesterday's set too" : "Missed yesterday? Play yesterday's set"}
-      </span>
+      <span className="truncate">Want more? Play yesterday's set too</span>
       <ChevronRight className="w-3.5 h-3.5 shrink-0" />
     </Link>
   );
@@ -279,16 +273,12 @@ export default function Home() {
   const ranks = useTodayRanks(user?.username, today, view);
   const { day: friendsDay } = useFriendsDay(user?.username, today);
 
-  // Yesterday's set: offered once you've played today, or straight away if it would save a streak
+  // Yesterday's set: only for brand-new players (day 0), once they've finished a game today.
+  // Everyone else comes back tomorrow for the next one.
   const yesterday = shiftDay(today, -1);
-  const yLocal = useDayProgress(user?.username, yesterday);
-  const yView = withFinished(yLocal, entries, yesterday);
-  const days = new Set(entries.map((e) => e.dateKey));
-  let savable = 0;
-  if (!days.has(yesterday)) for (let d = shiftDay(today, -2); days.has(d); d = shiftDay(d, -1)) savable++;
-  // Before the set is done it would compete with today's games (end screens offer the same game from yesterday)
-  const setDone = DAILY_GAMES.every((g) => countsToday(view[g.slug]));
-  const showYesterday = setDone || savable > 0;
+  const yView = useDayProgress(user?.username, yesterday);
+  const dayZero = !entries.some((e) => e.dateKey < today);
+  const showYesterday = dayZero && DAILY_GAMES.some((g) => countsToday(view[g.slug]));
   // First visit: point newcomers at Career Path (it has a clear end)
   const newcomer = entries.length === 0 && !DAILY_GAMES.some((g) => view[g.slug]);
 
@@ -318,7 +308,7 @@ export default function Home() {
       </motion.div>
 
       <SetCard day={view} streak={current} playedToday={playedToday} today={today} username={user?.username ?? ""}
-        yesterday={showYesterday ? <YesterdayLink yView={yView} savable={savable} newcomer={!entries.some((e) => e.dateKey < yesterday)} /> : null} />
+        yesterday={showYesterday ? <YesterdayLink yView={yView} /> : null} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {DAILY_GAMES.map((g, i) => (

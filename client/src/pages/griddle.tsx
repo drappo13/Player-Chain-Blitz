@@ -856,7 +856,7 @@ export default function Griddle() {
       {/* Tier + Coverage overlays are rendered inside the grid container below */}
       {late && <LateBanner dateKey={dateKey} />}
       <AnimatePresence>
-        {countedToast && (
+        {countedToast && !late && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="fixed top-14 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-black shadow-lg shadow-emerald-500/30">
             {late ? "That's yesterday done \u2713" : "That's today done \u2713"} Keep going for more points

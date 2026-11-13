@@ -57,7 +57,7 @@ export function LateBanner({ dateKey }: { dateKey: string }) {
   const date = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
   return (
     <div className={`fixed ${IS_LOCALHOST ? "bottom-14" : "bottom-[max(0.75rem,env(safe-area-inset-bottom))]"} left-1/2 -translate-x-1/2 z-40 whitespace-nowrap rounded-full border border-sky-400/40 bg-[#0d1b2a]/90 backdrop-blur px-3 py-1.5 text-xs font-bold text-sky-200 shadow-lg pointer-events-none`}>
-      Yesterday's set · {date}
+      Yesterday's set · {date} · just for fun
     </div>
   );
 }
@@ -69,8 +69,9 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
   const { view: todayView, today, current: streak, entries, daysPlayed } = useStreak(user?.username);
   const yesterday = shiftDay(today, -1);
   const yDay = useDayProgress(user?.username, yesterday);
-  const yView = withFinished(yDay, entries, yesterday);
+  const yView = yDay;
   const day = late ? yView : todayView;
+  const dayZero = !entries.some((e) => e.dateKey < today);
   const countdown = useCountdown();
   const [copied, setCopied] = useState(false);
 
@@ -145,7 +146,7 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
         </motion.div>
       )}
 
-      {!late && !countsToday(yView[current]) && (
+      {!late && dayZero && !countsToday(yView[current]) && (
         <button
           onClick={() => { trackEvent("yesterday_open", { from: "end_screen", game: current }); navigate(gameHref(DAILY_META[current].href, true)); }}
           className="mt-3 w-full text-center text-xs font-semibold text-sky-300 hover:text-sky-200">
