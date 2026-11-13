@@ -67,7 +67,7 @@ function Confetti() {
   );
 }
 
-/** Yesterday's set: offered to brand-new players once they've finished a game today. */
+/** Yesterday's set: offered to brand-new players once they've completed today's four. */
 function YesterdayLink({ yView }: { yView: DayProgress }) {
   const left = DAILY_GAMES.filter((g) => !countsToday(yView[g.slug]));
   if (!left.length) return null;
@@ -273,12 +273,12 @@ export default function Home() {
   const ranks = useTodayRanks(user?.username, today, view);
   const { day: friendsDay } = useFriendsDay(user?.username, today);
 
-  // Yesterday's set: only for brand-new players (day 0), once they've finished a game today.
+  // Yesterday's set: only for brand-new players (day 0), once they've completed all four today.
   // Everyone else comes back tomorrow for the next one.
   const yesterday = shiftDay(today, -1);
   const yView = useDayProgress(user?.username, yesterday);
   const dayZero = !entries.some((e) => e.dateKey < today);
-  const showYesterday = dayZero && DAILY_GAMES.some((g) => countsToday(view[g.slug]));
+  const showYesterday = dayZero && DAILY_GAMES.every((g) => countsToday(view[g.slug]));
   // First visit: point newcomers at Career Path (it has a clear end)
   const newcomer = entries.length === 0 && !DAILY_GAMES.some((g) => view[g.slug]);
 
