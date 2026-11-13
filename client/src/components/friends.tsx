@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, X, Plus } from "lucide-react";
-import { useUser } from "@/lib/user-context";
+import { Users, X, Plus, UserPlus, Check } from "lucide-react";
+import { useUser, shareLink } from "@/lib/user-context";
+import { shareText } from "@/lib/daily";
 import { useFriends, useFriendsDay, type FriendScore } from "@/lib/friends";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
@@ -42,10 +43,21 @@ export function FriendBest({ best }: { best?: FriendScore }) {
   );
 }
 
-/** Me: add friends by username, see and remove them. */
-export function FriendsSection() {
+/** Me: friends and invites in one place — add by username, send your invite link, see who joined through it. */
+export function FriendsSection({ invitees, streak }: { invitees: string[]; streak: number }) {
   const { user } = useUser();
   const { list, add, remove } = useFriends(user?.username);
+  const [copied, setCopied] = useState(false);
+  const invite = async () => {
+    const text = [
+      "Four daily Premier League games on drapk.in. A new set every day.",
+      streak > 1 ? `I'm on a ${streak}-day streak \uD83D\uDD25 come and play` : "Come and play",
+      shareLink("/", "invite"),
+    ].join("\n");
+    if (await shareText(text)) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
+  // Invitees first, then everyone else you follow
+  const shown = [...list].sort((a, b) => Number(invitees.includes(b)) - Number(invitees.includes(a)));
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -74,8 +86,13 @@ export function FriendsSection() {
   return (
     <section id="friends" className="rounded-2xl border border-border bg-card p-4 mb-6 scroll-mt-24">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-black text-foreground flex items-center gap-1.5"><Users className="w-4 h-4 text-sky-300" /> Friends</h2>
-        {list.length > 0 && <span className="text-xs text-muted-foreground tabular-nums">{list.length}</span>}
+        <h2 className="text-sm font-black text-foreground flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-sky-300" /> Friends
+          {list.length > 0 && <span className="text-xs font-semibold text-muted-foreground tabular-nums">{list.length}</span>}
+        </h2>
+        <button onClick={invite} className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3.5 py-1.5 text-xs font-black">
+          {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><UserPlus className="w-3.5 h-3.5" /> Invite</>}
+        </button>
       </div>
       <form onSubmit={submit} className="flex gap-2">
         <input
@@ -94,15 +111,13 @@ export function FriendsSection() {
         </button>
       </form>
       {msg && <p className="mt-2 text-xs text-amber-300">{msg}</p>}
-      {list.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Their scores show on your games and leaderboards. Anyone who joins through your invite link is added automatically.
-        </p>
-      ) : (
+      {list.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {list.map((f) => (
-            <span key={f} className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-border pl-2.5 pr-1 py-1 text-xs font-semibold text-foreground">
+          {shown.map((f) => (
+            <span key={f} className={`inline-flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-1 text-xs font-semibold text-foreground ${
+              invitees.includes(f) ? "bg-primary/10 border-primary/40" : "bg-white/5 border-border"}`}>
               {f}
+              {invitees.includes(f) && <span className="text-[10px] font-bold text-primary">joined via you</span>}
               <button onClick={() => remove(f)} aria-label={`Remove ${f}`} className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-muted-foreground">
                 <X className="w-3 h-3" />
               </button>
@@ -110,6 +125,11 @@ export function FriendsSection() {
           ))}
         </div>
       )}
+      <p className="mt-3 text-xs text-muted-foreground">
+        {invitees.length > 0
+          ? `${invitees.length} ${invitees.length === 1 ? "mate has" : "mates have"} joined from your invite link`
+          : "Their scores show on your games and leaderboards. Anyone who joins through your invite link is added automatically."}
+      </p>
     </section>
   );
 }

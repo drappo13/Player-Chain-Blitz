@@ -9,6 +9,8 @@ import { trackEvent } from "@/lib/firebase";
  *  The pick-a-name sheet also opens by itself at the first finish and once on a later day, then never again. */
 export function ClaimCard({ game, score }: { game: string; score?: number }) {
   const { openClaim } = useUser();
+  let invitedBy: string | null = null;
+  try { invitedBy = localStorage.getItem("pcb-ref"); } catch { /* ignore */ }
   useEffect(() => {
     const today = todayKey();
     const r = askRecord("claim");
@@ -25,7 +27,7 @@ export function ClaimCard({ game, score }: { game: string; score?: number }) {
         <UserPlus className="w-5 h-5" />
       </span>
       <p className="flex-1 min-w-0 text-sm font-bold text-foreground leading-snug">
-        {score != null && score > 0 ? <>Pick a name to put <span className="tabular-nums">{score.toLocaleString()}</span> on the leaderboard</> : "Pick a name to get on the leaderboards"}
+        {invitedBy ? <>Pick a name to see how <span className="text-primary">{invitedBy}</span> did and put your score on the board</> : score != null && score > 0 ? <>Pick a name to put <span className="tabular-nums">{score.toLocaleString()}</span> on the leaderboard</> : "Pick a name to get on the leaderboards"}
       </p>
       <button
         onClick={() => { trackEvent("claim_prompt_click", { source: "end_screen", game }); openClaim("end_screen"); }}

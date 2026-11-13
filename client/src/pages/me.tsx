@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone } from "lucide-react";
 import { useInstall, openInstallGuide } from "@/lib/install";
 import { FriendsSection } from "@/components/friends";
+import { useInvitees } from "@/lib/friends";
 import { RemindersCard } from "@/components/reminders";
 import { pushState, enablePush, currentSubscription, localTestNotification, swVersion, updateSw, lastPush } from "@/lib/push";
 import { Bell } from "lucide-react";
@@ -76,49 +77,6 @@ function Calendar({ counts, today }: { counts: Map<string, number>; today: strin
         </div>
       ))}
     </div>
-  );
-}
-
-/** How many people signed up through this user's invite link. */
-function useInviteCount(username: string | undefined): number {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!username) return;
-    getCountFromServer(query(collection(db, "users"), where("referredBy", "==", username.toLowerCase())))
-      .then((snap) => setN(snap.data().count))
-      .catch(() => {});
-  }, [username]);
-  return n;
-}
-
-function InviteCard({ username, streak, invites }: { username: string; streak: number; invites: number }) {
-  const [copied, setCopied] = useState(false);
-  const invite = async () => {
-    const text = [
-      "Four daily Premier League games on drapk.in. A new set every day.",
-      streak > 1 ? `I'm on a ${streak}-day streak \uD83D\uDD25 come and play` : "Come and play",
-      shareLink("/", "invite"),
-    ].join("\n");
-    if (await shareText(text)) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-  return (
-    <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/15 via-card to-card p-4 mb-6 flex items-center gap-3">
-      <span className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
-        <UserPlus className="w-5 h-5" />
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-black text-foreground">Invite a mate</p>
-        <p className="text-xs text-muted-foreground">
-          {invites > 0 ? `${invites} ${invites === 1 ? "mate has" : "mates have"} joined from your link` : "Send your link. When they sign up you unlock Recruiter"}
-        </p>
-      </div>
-      <button onClick={invite} className="shrink-0 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-black">
-        {copied ? "Copied!" : "Invite"}
-      </button>
-    </section>
   );
 }
 
@@ -245,7 +203,8 @@ export default function Me() {
     };
   });
   const fullSets = [...counts.values()].filter((n) => n >= DAILY_GAMES.length).length;
-  const invites = useInviteCount(named);
+  const inviteeNames = useInvitees(named);
+  const invites = inviteeNames.length;
   const arcadePlays = Object.values(stats).reduce((sum, s) => sum + (s?.plays ?? 0), 0)
     - DAILY_GAMES.reduce((sum, g) => sum + (stats[g.slug]?.plays ?? 0), 0);
   const badgeCtx: BadgeContext = useMemo(
@@ -283,13 +242,7 @@ export default function Me() {
           </button>
         </section>
       ) : (
-        <>
-          <BadgeGrid ctx={badgeCtx} username={user.username} />
-          <InviteCard username={user.username} streak={current} invites={invites} />
-          <FriendsSection />
-          <InstallCard />
-          <RemindersCard />
-        </>
+        <FriendsSection invitees={inviteeNames} streak={current} />
       )}
 
       {!isGuest && user.username.toLowerCase() === "tiger" && <PushTestCard />}
@@ -305,6 +258,8 @@ export default function Me() {
         </div>
         <Calendar counts={counts} today={today} />
       </section>
+
+      {!isGuest && <BadgeGrid ctx={badgeCtx} username={user.username} />}
 
       <section className="mb-6">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Daily games</h2>
@@ -328,6 +283,9 @@ export default function Me() {
           ))}
         </div>
       </section>
+
+      {!isGuest && <RemindersCard />}
+      {!isGuest && <InstallCard />}
 
       {!isGuest && <section className="mb-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Arcade high scores</h2>
