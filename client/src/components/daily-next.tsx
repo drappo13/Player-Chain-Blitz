@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Flame, Share2 } from "lucide-react";
@@ -77,6 +77,43 @@ export function GoalBar({ found, target, bar }: { found: number; target: number;
         ))}
       </div>
     </div>
+  );
+}
+
+/** True for a few seconds right after `found` reaches `target` during play (not on load). */
+export function useJustCompleted(found: number, target: number, active: boolean): boolean {
+  const prev = useRef(found);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const crossed = active && prev.current < target && found >= target;
+    prev.current = found;
+    if (!crossed) return;
+    setOn(true);
+    const t = setTimeout(() => setOn(false), 3000);
+    return () => clearTimeout(t);
+  }, [found, target, active]);
+  return on;
+}
+
+/** The moment today counts: a green tick where the goal counter was. */
+export function CompleteFlash({ compact = false }: { compact?: boolean }) {
+  return (
+    <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 320, damping: 16 }}
+      className={compact
+        ? "text-right text-xs leading-tight text-emerald-300"
+        : "w-full flex items-center justify-center gap-2 rounded-full bg-emerald-400/15 border border-emerald-400/40 py-1 text-xs font-bold text-emerald-300"}>
+      {compact ? (
+        <>
+          <span className="inline-flex items-center gap-1 font-black"><Check className="w-3.5 h-3.5" strokeWidth={3.5} /> Today complete</span>
+          <span className="block text-muted-foreground">keep going for more points</span>
+        </>
+      ) : (
+        <>
+          <span className="w-4 h-4 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3.5} /></span>
+          Today complete · keep going for more points
+        </>
+      )}
+    </motion.div>
   );
 }
 

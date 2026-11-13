@@ -12,7 +12,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner, GoalBar, completeTarget } from "@/components/daily-next";
+import { LateBanner, completeTarget, useJustCompleted, CompleteFlash } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -482,6 +482,7 @@ export default function Griddle() {
   const livesMode = dateKey >= LIVES_FROM;
   const outOfLives = livesMode && state.livesLeft <= 0;
   const isFinished = state.submitted || outOfLives;
+  const justCompleted = useJustCompleted(state.foundPlayers.length, countAt, !isFinished && !late);
   const autoFinishing = useRef(false);
 
   // Check remote submission on load — handles cross-device AND failed writes
@@ -943,7 +944,7 @@ export default function Griddle() {
                 <span className="font-black text-sky-300">{state.foundPlayers.length}/{countAt}</span>
                 <span className="block text-muted-foreground">to complete today</span>
               </div>
-            ) : <>
+            ) : justCompleted ? <CompleteFlash compact /> : <>
             <div className="text-xs text-muted-foreground">{state.foundPlayers.length} / {totalValid} found</div>
             {tierInfo.current ? (
               <>
