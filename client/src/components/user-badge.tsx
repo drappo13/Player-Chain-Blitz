@@ -20,7 +20,7 @@ export function UserBadge() {
     return (
       <button onClick={() => openClaim("game_chip")} className={`${CHIP} bg-card border-primary/40 hover:bg-muted`}>
         {flame}
-        <span className="text-foreground font-bold text-xs">Pick a name</span>
+        <span className="text-foreground font-bold text-xs">{streak > 0 ? "Save your streak" : "Pick a name"}</span>
       </button>
     );
   }

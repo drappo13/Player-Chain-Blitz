@@ -11,7 +11,7 @@ import { UserBadge } from "@/components/user-badge";
 import { AppNav, HUB_ROUTES } from "@/components/app-nav";
 import { lazy, Suspense, Component, useEffect, useRef, type ReactNode } from "react";
 import { trackPageView, identify, trackEvent } from "@/lib/firebase";
-import { DAILY_GAMES, useStreak, trackGameExit } from "@/lib/daily";
+import { DAILY_GAMES, useStreak, trackGameExit, cachedStreak } from "@/lib/daily";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
 // Lazy-load all pages — isolates crashes so one broken page can't kill the whole app
@@ -205,7 +205,7 @@ if (typeof window !== "undefined") {
 /** The optional pick-a-name sheet (guests), and a log-in prompt the first time the iPhone
  *  home-screen app opens (it doesn't share Safari's storage, so the name isn't there yet). */
 function ClaimSheet() {
-  const { isGuest, claimSource, openClaim, closeClaim } = useUser();
+  const { user, isGuest, claimSource, openClaim, closeClaim } = useUser();
   useEffect(() => {
     if (!isGuest || !isStandalone()) return;
     try {
@@ -221,13 +221,16 @@ function ClaimSheet() {
   }
   let ref: string | null = null;
   try { ref = localStorage.getItem("pcb-ref"); } catch { /* ignore */ }
+  const streak = cachedStreak(user?.username);
   return (
     <UsernamePicker
       onClose={closeClaim}
       signupTitle="Pick a name"
       signupSubtitle={ref
-        ? `${ref} invited you. Pick a name and you'll be friends, so you can see each other's scores. Your games so far come with you.`
-        : "Get on the leaderboards and keep your streak on any device. Your games so far come with you."}
+        ? `${ref} invited you. Pick a name and you'll be friends, so you can see each other's scores.`
+        : streak > 0
+          ? `Save your ${streak}-day streak and get on the leaderboards.`
+          : "Get on the leaderboards and keep your streak on any device."}
     />
   );
 }

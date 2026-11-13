@@ -179,6 +179,13 @@ function useMemberSince(username: string | undefined, firstDay?: string): string
 export default function Me() {
   const [, navigate] = useLocation();
   const { user, logout, isGuest, openClaim } = useUser();
+  // Guests tapping Me want "my stuff", which starts with a name: open the pop-up (once per visit)
+  useEffect(() => {
+    if (!isGuest) return;
+    try { if (sessionStorage.getItem("pcb-me-claim")) return; sessionStorage.setItem("pcb-me-claim", "1"); } catch { /* ignore */ }
+    openClaim("me_open");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuest]);
   const { current, best, daysPlayed, entries, today } = useStreak(user?.username);
   // Guests have nothing in Firestore: skip those reads
   const named = isGuest ? undefined : user?.username;
