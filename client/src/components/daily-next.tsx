@@ -59,27 +59,23 @@ export function completeTarget(game: "centrecircle" | "griddle", total: number):
     : Math.min(10, Math.max(5, Math.round(total * 0.035)));
 }
 
-/** In-game line for the open-ended games: "Find 8 to complete today" with progress, then a tick. */
-export function TodayGoal({ found, target }: { found: number; target: number }) {
-  const done = found >= target;
+/** Open-ended games, before today counts: one segment per answer needed. Shown in place of the
+ *  usual rank progress until the target is hit, then the normal progression takes over. */
+export function GoalBar({ found, target, bar }: { found: number; target: number; bar: string }) {
   return (
-    <div className={`w-full flex items-center gap-2 text-xs font-semibold mb-3 ${done ? "text-emerald-300" : "text-muted-foreground"}`}>
-      {done ? (
-        <motion.span initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="inline-flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3.5} /></span>
-          Today complete · keep going for more points
-        </motion.span>
-      ) : (
-        <>
-          <span className="shrink-0">Find {target} to complete today</span>
-          <span className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden min-w-[40px]">
-            <motion.span className="block h-full rounded-full bg-emerald-400" initial={false}
-              animate={{ width: `${(found / target) * 100}%` }} transition={{ duration: 0.3 }} />
+    <div className="w-full">
+      <div className="flex items-center justify-between text-xs mb-1.5">
+        <span className="font-bold text-foreground">Complete today</span>
+        <span className="text-muted-foreground tabular-nums">{target - found} to go</span>
+      </div>
+      <div className="flex gap-1">
+        {Array.from({ length: target }, (_, i) => (
+          <span key={i} className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.span className={`block h-full rounded-full ${bar}`} initial={false}
+              animate={{ width: i < found ? "100%" : "0%" }} transition={{ duration: 0.3 }} />
           </span>
-          <span className="shrink-0 tabular-nums">{found}/{target}</span>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
