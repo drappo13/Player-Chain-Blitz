@@ -161,19 +161,22 @@ function PushTestCard() {
 }
 
 /** When the account was made (falls back to the first daily game). */
-function useMemberSince(username: string | undefined, firstDay?: string): string | null {
+/** From the account doc (one read): when it was made (falls back to the first daily game) and who invited them. */
+function useAccountInfo(username: string | undefined, firstDay?: string): { memberSince: string | null; invitedBy: string | null } {
   const [created, setCreated] = useState<Date | null>(null);
+  const [invitedBy, setInvitedBy] = useState<string | null>(null);
   useEffect(() => {
     if (!username) return;
     getDoc(doc(db, "users", username.toLowerCase()))
       .then((snap) => {
-        const ts = snap.exists() ? (snap.data() as { createdAt?: { toDate?: () => Date } }).createdAt : undefined;
-        if (ts?.toDate) setCreated(ts.toDate());
+        const x = snap.exists() ? (snap.data() as { createdAt?: { toDate?: () => Date }; referredBy?: string }) : undefined;
+        if (x?.createdAt?.toDate) setCreated(x.createdAt.toDate());
+        if (x?.referredBy) setInvitedBy(x.referredBy.toLowerCase());
       })
       .catch(() => {});
   }, [username]);
   const when = created ?? (firstDay ? new Date(firstDay) : null);
-  return when ? when.toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : null;
+  return { memberSince: when ? when.toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : null, invitedBy };
 }
 
 export default function Me() {
@@ -192,7 +195,7 @@ export default function Me() {
   const { stats } = useUserStats(named);
 
   const firstDay = useMemo(() => entries.map((e) => e.dateKey).sort()[0], [entries]);
-  const memberSince = useMemberSince(named, firstDay);
+  const { memberSince, invitedBy } = useAccountInfo(named, firstDay);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -249,7 +252,7 @@ export default function Me() {
           </button>
         </section>
       ) : (
-        <FriendsSection invitees={inviteeNames} streak={current} />
+        <FriendsSection invitees={inviteeNames} invitedBy={invitedBy} streak={current} />
       )}
 
       {!isGuest && user.username.toLowerCase() === "tiger" && <PushTestCard />}
