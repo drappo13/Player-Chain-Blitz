@@ -147,7 +147,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const snap = await withTimeout(getDoc(doc(db, "users", key)));
       if (snap.exists()) return { ok: false, error: "Username taken" };
       const userData: User = { username: trimmed, avatar };
-      const record = { ...userData, createdAt: serverTimestamp() };
+      const g = readGuest();
+      const guestGames = guestGamesFinished();
+      // fromGuest links the account to its guest plays, so /stats can count guests who picked a name
+      const record = { ...userData, createdAt: serverTimestamp(), ...(g ? { fromGuest: g.username.toLowerCase(), guestGames } : {}) };
       const ref = readReferrer();
       if (ref && ref !== key) {
         // Credit whoever invited them; if the extra field is ever rejected, sign up without it
@@ -159,8 +162,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         await withTimeout(setDoc(doc(db, "users", key), record));
       }
-      const g = readGuest();
-      const guestGames = guestGamesFinished();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
       await adoptGuest(g, trimmed);
       setUser(userData);

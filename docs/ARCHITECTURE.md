@@ -100,6 +100,7 @@ Config (root):
 ```json
 { "username": "fred", "avatar": "⚽", "createdAt": "<serverTimestamp>" }
 ```
+- Optional: `referredBy` (invite link), `fromGuest` + `guestGames` (signed up from a guest on that device — links to `guest-plays` for /stats)
 
 **`scores`** — arcade game scores, auto-generated IDs
 ```json

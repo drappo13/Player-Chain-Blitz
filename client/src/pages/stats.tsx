@@ -33,7 +33,7 @@ interface Cache {
   arcade: Record<string, ArcadePlay>;
   /** Games finished by guests (no name yet), from guest-plays */
   guests?: Record<string, GuestPlay>;
-  users: Record<string, { at: number; ref?: string }>;
+  users: Record<string, { at: number; ref?: string; fromGuest?: string; guestGames?: number }>;
   playsUntil: number;
   usersUntil: number;
 }
@@ -88,8 +88,8 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
     cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: x.timestamp?.toMillis() ?? now, late: x.late || undefined };
   });
   u.docs.forEach((d) => {
-    const x = d.data() as { createdAt?: Timestamp; referredBy?: string };
-    cache.users[d.id] = { at: x.createdAt?.toMillis() ?? now, ref: x.referredBy };
+    const x = d.data() as { createdAt?: Timestamp; referredBy?: string; fromGuest?: string; guestGames?: number };
+    cache.users[d.id] = { at: x.createdAt?.toMillis() ?? now, ref: x.referredBy, fromGuest: x.fromGuest, guestGames: x.guestGames };
   });
   // Drop anything that has fallen out of the window
   for (const [id, x] of Object.entries(cache.plays)) if (x.at < start) delete cache.plays[id];
@@ -218,13 +218,42 @@ function crunch(cache: Cache) {
     const sc = plays.filter((p) => p.day === today && p.game === g.slug).map((p) => p.score);
     return { game: g, n: sc.length, avg: sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null, best: sc.length ? Math.max(...sc) : null };
   });
+  // --- Guests: people playing without a name (guest-plays), and which of them picked one (users.fromGuest)
+  const converted = new Map(users.filter(([, x]) => x.fromGuest).map(([n, x]) => [x.fromGuest!, { user: n, at: x.at }]));
+  const weekGuestPlays = guestPlays.filter((p) => p.day >= days7[0] && !p.late);
+  const guestDays = new Map<string, Set<string>>();
+  for (const p of weekGuestPlays) { if (!guestDays.has(p.guest)) guestDays.set(p.guest, new Set()); guestDays.get(p.guest)!.add(p.day); }
+  const firstGuestDay = new Map<string, string>();
+  for (const p of guestPlays) if (!p.late && (!firstGuestDay.has(p.guest) || p.day < firstGuestDay.get(p.guest)!)) firstGuestDay.set(p.guest, p.day);
+  const weekGuests = [...guestDays.keys()];
+  const guestFunnel = {
+    guests: weekGuests.length,
+    named: weekGuests.filter((g) => converted.has(g)).length,
+    stayingGuest: weekGuests.filter((g) => !converted.has(g) && guestDays.get(g)!.size >= 2).length,
+    oneAndDone: weekGuests.filter((g) => !converted.has(g) && guestDays.get(g)!.size === 1).length,
+    gamesPerGuest: weekGuests.length ? Math.round((weekGuestPlays.length / weekGuests.length) * 10) / 10 : 0,
+    gamesBeforeName: (() => { const n = users.filter(([, x]) => x.fromGuest && x.guestGames != null); return n.length ? Math.round((n.reduce((a, [, x]) => a + x.guestGames!, 0) / n.length) * 10) / 10 : null; })(),
+    days: days7.map((d) => {
+      const on = new Set(weekGuestPlays.filter((p) => p.day === d).map((p) => p.guest));
+      return {
+        label: dayLabel(d),
+        guests: on.size,
+        newGuests: [...on].filter((g) => firstGuestDay.get(g) === d).length,
+        named: users.filter(([, x]) => x.fromGuest && localDay(x.at) === d).length,
+      };
+    }),
+  };
+  // Today's players without double counting: named players + guests who haven't picked a name since
+  const guestsTodayUnnamed = [...new Set(guestPlays.filter((p) => p.day === today && !p.late).map((p) => p.guest))].filter((g) => !converted.has(g)).length;
+
   const invites = users.filter(([, x]) => x.ref).sort((a, b) => b[1].at - a[1].at).map(([n, x]) => ({ user: n, by: x.ref!, at: x.at }));
 
   return {
-    last24, week, spread, bounce, returning, gamesByDay, arcadeByDay, arcade, cohorts, perGame, invites,
+    last24, week, spread, bounce, returning, gamesByDay, arcadeByDay, arcade, cohorts, perGame, invites, guestFunnel,
     tiles: {
-      guests: guestsOn(today),
-      players: todayPlayers.size,
+      guests: guestsTodayUnnamed,
+      named: todayPlayers.size,
+      players: todayPlayers.size + guestsTodayUnnamed,
       playersY: yPlayers.size,
       returningToday: returning[returning.length - 1].Returning,
       signups: newToday.length,
@@ -357,7 +386,7 @@ export default function StatsPage() {
       {s && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.returningToday} returning · ${s.tiles.playersY} yesterday${s.tiles.guests ? ` · +${s.tiles.guests} guests` : ""}`} accent="text-sky-300" />
+            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.named} named · ${s.tiles.guests} guests · ${s.tiles.returningToday} returning`} accent="text-sky-300" />
             <Tile label="Sign-ups today" value={s.tiles.signups} sub={`${pct(s.tiles.newPlayed, s.tiles.signups)}% finished a game`} accent="text-violet-300" />
             <Tile label="Back from yesterday" value={`${pct(s.tiles.back, s.tiles.backOf)}%`} sub={`${s.tiles.back} of ${s.tiles.backOf} players`} />
             <Tile label="Full sets today" value={s.tiles.fullSets} sub="finished all four" accent="text-emerald-300" />
@@ -403,6 +432,38 @@ export default function StatsPage() {
           </Card>
 
           <CohortCard cohorts={s.cohorts} />
+
+          <Card title="Guests" note="Last 7 days. Guests play without a name. Picked a name = signed up from a guest on that device. Staying guest = played on 2+ days without picking a name (happy as they are)">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              {[
+                { label: "Guests who played", value: s.guestFunnel.guests, sub: `${s.guestFunnel.gamesPerGuest} games each` },
+                { label: "Picked a name", value: `${pct(s.guestFunnel.named, s.guestFunnel.guests)}%`, sub: `${s.guestFunnel.named} of ${s.guestFunnel.guests}${s.guestFunnel.gamesBeforeName != null ? ` · after ${s.guestFunnel.gamesBeforeName} games` : ""}` },
+                { label: "Staying guest", value: `${pct(s.guestFunnel.stayingGuest, s.guestFunnel.guests)}%`, sub: `${s.guestFunnel.stayingGuest} back on 2+ days, no name` },
+                { label: "One day, no name", value: `${pct(s.guestFunnel.oneAndDone, s.guestFunnel.guests)}%`, sub: `${s.guestFunnel.oneAndDone} so far` },
+              ].map((t) => (
+                <div key={t.label} className="rounded-xl bg-white/[0.03] border border-border px-3 py-2">
+                  <p className="text-[10px] text-muted-foreground">{t.label}</p>
+                  <p className="text-lg font-black tabular-nums text-foreground">{t.value}</p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">{t.sub}</p>
+                </div>
+              ))}
+            </div>
+            <table className="w-full text-xs tabular-nums">
+              <thead className="text-[10px] text-muted-foreground">
+                <tr><th className="text-left font-semibold py-1">Day</th><th className="text-right font-semibold">Guests</th><th className="text-right font-semibold">New guests</th><th className="text-right font-semibold">Picked a name</th></tr>
+              </thead>
+              <tbody>
+                {s.guestFunnel.days.map((d) => (
+                  <tr key={d.label} className="border-t border-border/60">
+                    <td className="py-1.5 text-foreground">{d.label}</td>
+                    <td className="text-right text-foreground">{d.guests || "–"}</td>
+                    <td className="text-right text-muted-foreground">{d.newGuests || "–"}</td>
+                    <td className="text-right font-bold text-emerald-300">{d.named || "–"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
 
           <Card title="Arcade" note="Arcade games finished per day, by game"
             right={<div className="text-right text-xs text-muted-foreground tabular-nums"><p><span className="text-foreground font-black">{s.arcade.today}</span> today · {s.arcade.todayPlayers} players</p><p>{s.arcade.week} this week · {s.arcade.weekPlayers} players</p></div>}>
