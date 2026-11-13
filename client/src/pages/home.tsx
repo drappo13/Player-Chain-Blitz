@@ -286,8 +286,9 @@ export default function Home() {
   const days = new Set(entries.map((e) => e.dateKey));
   let savable = 0;
   if (!days.has(yesterday)) for (let d = shiftDay(today, -2); days.has(d); d = shiftDay(d, -1)) savable++;
-  const anyToday = DAILY_GAMES.some((g) => countsToday(view[g.slug]));
-  const showYesterday = (anyToday || savable > 0) && entries.length + (anyToday ? 1 : 0) > 0;
+  // Before the set is done it would compete with today's games (end screens offer the same game from yesterday)
+  const setDone = DAILY_GAMES.every((g) => countsToday(view[g.slug]));
+  const showYesterday = setDone || savable > 0;
   // First visit: point newcomers at Career Path (it has a clear end)
   const newcomer = entries.length === 0 && !DAILY_GAMES.some((g) => view[g.slug]);
 
