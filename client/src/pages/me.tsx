@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone, Share, SquarePlus, EllipsisVertical } from "lucide-react";
 import { useInstall } from "@/lib/install";
-import { pushState, enablePush, currentSubscription, localTestNotification } from "@/lib/push";
+import { pushState, enablePush, currentSubscription, localTestNotification, swVersion, updateSw, lastPush } from "@/lib/push";
 import { Bell } from "lucide-react";
 import { useUser, shareLink } from "@/lib/user-context";
 import { useUserStats } from "@/lib/use-user-stats";
@@ -175,7 +175,16 @@ function PushTestCard() {
   const [state, setState] = useState(pushState());
   const [sub, setSub] = useState<string>("");
   const [msg, setMsg] = useState("");
-  useEffect(() => { currentSubscription().then((s) => s && setSub(JSON.stringify(s))).catch(() => {}); }, []);
+  const [sw, setSw] = useState<string>("…");
+  const [last, setLast] = useState<string>("…");
+  const refreshDebug = () => {
+    swVersion().then((v) => setSw(v ?? "none")).catch((e) => setSw(String(e)));
+    lastPush().then((p) => setLast(p ?? "never")).catch(() => setLast("?"));
+  };
+  useEffect(() => {
+    currentSubscription().then((s) => s && setSub(JSON.stringify(s))).catch(() => {});
+    refreshDebug();
+  }, []);
   const turnOn = async () => {
     try {
       const s = await enablePush();
@@ -194,7 +203,8 @@ function PushTestCard() {
         <span className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-300 flex items-center justify-center shrink-0"><Bell className="w-5 h-5" /></span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-black text-foreground">Notifications (test, admin only)</p>
-          <p className="text-xs text-muted-foreground">Status: {state}</p>
+          <p className="text-xs text-muted-foreground">Status: {state} · Worker: {sw}</p>
+          <p className="text-[10px] text-muted-foreground break-all">Last push: {last}</p>
         </div>
       </div>
       {state === "needs-install" && <p className="text-xs text-muted-foreground">Open drapk.in from your home screen icon, then come back here.</p>}
@@ -204,6 +214,8 @@ function PushTestCard() {
         {(state === "default" || (state === "granted" && !sub)) && <button onClick={turnOn} className={btn}>Turn on notifications</button>}
         {state === "granted" && <button onClick={() => localTestNotification().catch((e) => setMsg(String(e)))} className={btn}>Test on this phone</button>}
         {sub && <button onClick={copy} className={btn}>Copy subscription</button>}
+        <button onClick={() => updateSw().then(() => setTimeout(refreshDebug, 1500)).catch((e) => setMsg(String(e)))} className={btn}>Update worker</button>
+        <button onClick={refreshDebug} className={btn}>Refresh</button>
       </div>
       {msg && <p className="text-xs text-amber-300">{msg}</p>}
       {sub && <textarea readOnly value={sub} rows={3} className="w-full rounded-lg bg-background border border-border p-2 text-[10px] font-mono text-muted-foreground" />}
