@@ -789,7 +789,6 @@ export default function CentreCircle() {
             <Trophy className="w-5 h-5" /> View Results & Leaderboard
           </button>
         ) : (
-          <TipAnchor {...tipProps("start")} place="bottom" className="w-full">
           <motion.div key={shake} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
             className="relative w-full h-14">
             <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
@@ -813,7 +812,6 @@ export default function CentreCircle() {
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-green-300 outline-none" />
           </motion.div>
-          </TipAnchor>
         )}
 
         {/* Feedback */}
@@ -870,7 +868,9 @@ export default function CentreCircle() {
 
         {/* Found header + tracker / submit */}
         <div className="w-full flex items-center justify-between mb-2">
-          <TipAnchor {...tipProps("first")} place="bottom" align="start">
+          {/* How-to tips sit in the empty space under "Found", clear of the letters and buttons */}
+          <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
+            onOk={tips.ok} onSkip={tips.skip} place="bottom" align="start" arrow={false}>
           <h3 className="text-sm font-semibold text-muted-foreground">
             Found <span className="tabular-nums">{state.found.length}</span>
             <span className="font-normal"> · {centreUpper} scores double</span>

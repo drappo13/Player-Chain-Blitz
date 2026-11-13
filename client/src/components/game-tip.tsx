@@ -62,9 +62,9 @@ export function useGameTips(game: string, firstTime: boolean, tips: TipDef[]) {
 }
 
 /** Wrap the element a tip points at. The bubble floats above or below it, aligned left/centre/right. */
-export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", className = "" }: {
+export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", arrow = true, className = "" }: {
   show: boolean; children: ReactNode; text?: ReactNode; onOk?: () => void; onSkip?: () => void;
-  place?: "top" | "bottom"; align?: "start" | "center" | "end"; className?: string;
+  place?: "top" | "bottom"; align?: "start" | "center" | "end"; arrow?: boolean; className?: string;
 }) {
   const x = align === "start" ? "left-0" : align === "end" ? "right-0" : "left-1/2 -translate-x-1/2";
   const arrowX = align === "start" ? "left-5" : align === "end" ? "right-5" : "left-1/2 -translate-x-1/2";
@@ -81,7 +81,7 @@ export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom"
             className="relative"
             role="status"
           >
-            <span className={`absolute ${arrowX} ${place === "bottom" ? "-top-1.5" : "-bottom-1.5"} w-3 h-3 rotate-45 bg-white`} />
+            {arrow && <span className={`absolute ${arrowX} ${place === "bottom" ? "-top-1.5" : "-bottom-1.5"} w-3 h-3 rotate-45 bg-white`} />}
             <div className="relative rounded-xl bg-white text-zinc-900 shadow-xl shadow-black/40 pl-3 pr-1.5 py-2 flex items-start gap-2">
               <p className="flex-1 text-[13px] leading-snug font-medium pt-0.5">{text}</p>
               <button type="button" onClick={onOk} aria-label="Got it"
