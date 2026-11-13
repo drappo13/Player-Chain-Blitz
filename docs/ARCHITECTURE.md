@@ -129,8 +129,7 @@ Config (root):
 **`friends`** — `friends/{username}` = `{ list: string[], updatedAt }` (one-way follows, max 50; `lib/friends.ts`).
 Invitees are merged in automatically; a new account from an invite link starts with the inviter.
 
-**`guest-plays`** — one anonymous doc per game a guest finishes: `{ guest, game, dateKey, score, late, at }`.
-Only used by /stats to count guest players.
+**`guest-plays`** — retired (first guest release only). Guests now write ordinary `daily-scores`/`scores`.
 
 **`push-subs`** — `push-subs/{username}` = `{ endpoint, keys, tz, streak, morning, dead, updatedAt }` for reminders
 (`lib/push.ts`; UI switched off for now via `SHOW_HOME_SCREEN` / `SHOW_REMINDER_ASK`). Sent by `scripts/push/send.mjs` (VAPID private key lives outside the repo in `~/.drapkin/vapid.json`).
@@ -157,6 +156,8 @@ service cloud.firestore {
   }
 }
 ```
+
+`firestore.rules` in the repo mirrors the console (publish changes there). `.github/workflows/e2e.yml` runs `scripts/e2e/guest-flow.mjs` against a Firestore emulator with these rules on every non-main branch push: guest play, save-as-you-go, picking a name, leaderboards, the rules themselves and /stats. Builds with `VITE_EMULATOR=1` talk to the emulator only; normal localhost builds never write scores (`WRITES_ENABLED` in `lib/guest.ts`).
 
 **Key constraints:**
 - New collections MUST be added to rules or all access silently fails
@@ -258,7 +259,7 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 - Today's progress: every daily game calls `recordDaily()` (`lib/daily.ts`) whenever its state changes, writing a small summary (status, score, detail, level, progress 0–1) to `pcb-day-{username}-{dateKey}`. The home tiles, set tracker and Next-up read this. Games finished on another device come from the user's `daily-scores` docs instead.
 - Counts for today: CentreCircle and Griddle count (streak, set, badges) once you reach a target (`completeTarget()` in `components/daily-next.tsx`: 6 CentreCircle names, 10 Griddle players — around the 30–40th percentile of people who submit) while still open. Until it counts, the header shows "3/8 to complete today" and a segmented `GoalBar` in place of the rank progress; then the normal progression returns; the set chip pulses when it ticks up — `counted: true` in the progress, `countsToday()` everywhere that used to check `status === "done"`. Their score is saved as they go once counted; "Finish" locks the game and shows answers.
 - Yesterday's set: any daily game opened with `?set=yesterday` plays the previous day (`puzzleDay()` in `lib/daily.ts`) with a "just for fun" `LateBanner`. It's offered only to day-0 players (no history before today) once they've completed all four — on Today and on the set-complete end screen. Nothing is sent to Firestore; local progress is marked `late` so it never counts for streaks, sets or badges.
-- Guests: first-time visitors play as a guest (`lib/guest.ts`, `guest-xxxxxxxx` username, can't collide with real names). Their leaderboard writes are queued in `pcb-pending`; picking a name (or logging in) renames every local key to the account and sends the queue (earlier days as `late`). Guest history comes from local progress. The pick-a-name sheet opens by itself at the first finish and once on a later day (`ClaimCard`, `lib/asks.ts` — one ask per visit).
+- Guests: first-time visitors play as a guest (`lib/guest.ts`): id `guest-xxxxxxxx` (a hyphen, so it can't collide with real names). A guest is an ordinary player in Firestore — `daily-scores`/`scores` written as usual with `guest: true` — with no `users` doc, and kept off leaderboards (`topRows`, arcade boards filter `guest-`). Picking a name (or logging in) runs `claimGuestGames()`: each guest game is copied to the account (fresh `timestamp`, original as `playedAt`, `fromGuest`; an open CentreCircle/Griddle stays open under the account's key) and the guest copy is marked `claimedBy` (the only change rules allow to guest docs). The account's `users` doc records `fromGuest` + `guestGames`; /stats uses those to drop converted guests' copies so each person counts once. Scores the first release queued on devices (`pcb-pending`) are sent once as the guest. The pick-a-name sheet opens by itself at the first finish and once on a later day (`ClaimCard`, `lib/asks.ts` — one ask per visit).
 - Streaks: `useStreak()` reads all the user's `daily-scores` (cached in `pcb-dailyhist-{username}`) plus today's local progress. A streak is consecutive days with at least one finished daily game, alive until the end of the day after the last play. Days played = distinct dates.
 - Adding a daily game to the set: add it to `DAILY_GAMES` in `lib/daily.ts` (order = home tile order and Next-up chain), an icon in `components/game-icons.tsx`, and a `recordDaily()` call in its persist effect plus `<DailyNext current=… />` on its end screen.
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
