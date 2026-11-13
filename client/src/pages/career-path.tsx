@@ -13,6 +13,7 @@ import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner } from "@/components/daily-next";
+import { useGameTips, TipAnchor } from "@/components/game-tip";
 import { EndBoard } from "@/components/end-board";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
@@ -338,10 +339,17 @@ export default function CareerPath() {
   const [burst, setBurst] = useState<{ id: number; colours: string[] } | null>(null);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [showRules, setShowRules] = useState(() => {
+  // No rules screen: one tip for first-timers; (i) still opens the full rules
+  const [showRules, setShowRules] = useState(false);
+  const [firstTime] = useState(() => {
     const s = loadState(dateKey, puzzles, user?.username);
     return s.rounds.every(r => r.guesses.length === 0 && r.stage === 0) && !s.submitted && !hasPlayedBefore(user?.username, "careerpath");
   });
+  const anyGuess = state.rounds.some(r => r.guesses.length > 0 || r.stage > 0);
+  const tips = useGameTips("careerpath", firstTime && !late, [
+    { id: "start", when: !anyGuess && !state.submitted, until: anyGuess,
+      text: <>Who's this? Make a guess to reveal more clues.</> },
+  ]);
   const checkedRemote = useRef(false);
 
   const puzzle = puzzles[current];
@@ -632,6 +640,7 @@ export default function CareerPath() {
         {/* Guess box, or the answer */}
         {!done ? (
           <div className="w-full mt-4">
+            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} place="top" align="start">
             <div className="relative">
               <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={onKeyDown}
                 placeholder="Who is it?" aria-label="Guess a player" autoComplete="off" autoCorrect="off" spellCheck={false}
@@ -651,6 +660,7 @@ export default function CareerPath() {
                 )}
               </AnimatePresence>
             </div>
+            </TipAnchor>
             <div className="flex items-center justify-between gap-3 mt-2.5">
               <span className="text-xs text-muted-foreground min-w-0">
                 {/* The clue name never splits across lines; on narrow phones it drops below as one piece */}
