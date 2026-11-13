@@ -369,10 +369,13 @@ Events go to Google Analytics, not Firestore (free, no read/write cost). `trackE
 | `next_up_click` | `DailyNext` | from, to, done_today |
 | `share` | `shareLink()` (every share message) | path, source (`game` / `day` / `invite`) |
 | `invite_landing` | `?ref=` on load (`user-context`) | ref, path, signed_in |
+| `signup_prompt_view` | sign-up screen shown to someone with no account (`username-picker`) | path, invited |
+| `signup_typing` | first keystroke in the username box | mode (`signup` / `login`) |
 | `sign_up` / `login` | `user-context` | invited, ref |
+| `install_click` / `install_result` / `app_installed` | Add to Home Screen card on `/me` (`lib/install.ts`) | method (`prompt` / `ios` / `android`), outcome |
 | `badge_unlock` | `BadgeGrid` (first view after unlocking) | badge |
 
-User ID = lowercase username (so retention counts people, not devices). User properties: `acquisition` (invite/organic), `referred_by`, `signup_month` (set at sign-up), `current_streak`, `best_streak`, `days_played`, `days_played_band`, `daily_done_today` (refreshed by `AnalyticsIdentity` in `App.tsx`).
+User ID = lowercase username (so retention counts people, not devices). User properties: `acquisition` (invite/organic), `referred_by`, `signup_month` (set at sign-up), `current_streak`, `best_streak`, `days_played`, `days_played_band`, `daily_done_today`, `display_mode` (`home_screen` / `browser`) (refreshed by `AnalyticsIdentity` in `App.tsx`).
 
 ---
 

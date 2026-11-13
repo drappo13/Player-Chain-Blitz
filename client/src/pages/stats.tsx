@@ -367,7 +367,7 @@ export default function StatsPage() {
             </Card>
           </div>
 
-          <Card title="Sign-ups who finished nothing" note="Share of each day's new accounts that didn't finish a daily game that day. Includes people who bounced at the sign-up screen">
+          <Card title="Sign-ups who finished nothing" note="Share of each day's new accounts that didn't finish a daily game that day. People who leave at the sign-up screen never get an account, so they're not here (see GA: signup_prompt_view)">
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {s.bounce.map((b) => (
                 <div key={b.label} className="rounded-xl bg-white/[0.03] border border-border px-2 py-2 text-center">

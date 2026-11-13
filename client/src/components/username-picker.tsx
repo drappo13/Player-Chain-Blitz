@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trackEvent } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUser } from "@/lib/user-context";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,14 @@ export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerPr
   const [submitting, setSubmitting] = useState(false);
 
   const [takenUsername, setTakenUsername] = useState("");
+
+  // Funnel for people who never get an account: shown → typed a name → sign_up / login.
+  const typed = useRef(false);
+  useEffect(() => {
+    let invited = false;
+    try { invited = !!localStorage.getItem("pcb-ref"); } catch { /* ignore */ }
+    trackEvent("signup_prompt_view", { path: window.location.pathname, invited });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +95,7 @@ export function UsernamePicker({ signupTitle, signupSubtitle }: UsernamePickerPr
               value={username}
               onChange={(e) => {
                 setUsername(e.target.value);
+                if (!typed.current) { typed.current = true; trackEvent("signup_typing", { mode }); }
                 setError("");
                 setTakenUsername("");
               }}

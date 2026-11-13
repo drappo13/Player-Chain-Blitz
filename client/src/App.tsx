@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Switch, Route, useLocation } from "wouter";
 import { UserProvider, useUser } from "@/lib/user-context";
 import { UsernamePicker } from "@/components/username-picker";
+import { isStandalone } from "@/lib/install"; // also registers the install-prompt listener early
 import { UserBadge } from "@/components/user-badge";
 import { AppNav, HUB_ROUTES } from "@/components/app-nav";
 import { lazy, Suspense, Component, useEffect, useRef, type ReactNode } from "react";
@@ -187,6 +188,7 @@ function AnalyticsIdentity() {
       days_played: daysPlayed,
       days_played_band: daysPlayed >= 30 ? "30+" : daysPlayed >= 7 ? "7-29" : daysPlayed >= 2 ? "2-6" : daysPlayed === 1 ? "1" : "0",
       daily_done_today: doneToday,
+      display_mode: isStandalone() ? "home_screen" : "browser",
     });
   }, [user?.username, current, best, daysPlayed, doneToday]);
   return null;

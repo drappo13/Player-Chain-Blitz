@@ -3,7 +3,8 @@ import { collection, doc, getCountFromServer, getDoc, query, where } from "fireb
 import { db } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus } from "lucide-react";
+import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone, Share, SquarePlus, EllipsisVertical } from "lucide-react";
+import { useInstall } from "@/lib/install";
 import { useUser, shareLink } from "@/lib/user-context";
 import { useUserStats } from "@/lib/use-user-stats";
 import type { GameSlug } from "@/lib/save-score";
@@ -117,6 +118,56 @@ function InviteCard({ username, streak, invites }: { username: string; streak: n
   );
 }
 
+/** "Add to Home Screen": native prompt where the browser offers one, else the steps. Hidden once installed. */
+function InstallCard() {
+  const { mode, install } = useInstall();
+  const [open, setOpen] = useState(false);
+  if (mode === "installed" || mode === "none") return null;
+  const onClick = () => {
+    if (mode === "prompt") { install(); return; }
+    if (!open) install(); // logs the click; no native dialog on these browsers
+    setOpen((o) => !o);
+  };
+  const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
+    <li className="flex items-center gap-2 text-xs text-foreground">
+      <span className="w-5 h-5 rounded-full bg-white/10 text-[11px] font-black flex items-center justify-center shrink-0">{n}</span>
+      <span className="flex items-center gap-1 flex-wrap">{children}</span>
+    </li>
+  );
+  return (
+    <section className="rounded-2xl border border-border bg-card p-4 mb-6">
+      <div className="flex items-center gap-3">
+        <span className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center shrink-0">
+          <Smartphone className="w-5 h-5" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-foreground">Add to Home Screen</p>
+          <p className="text-xs text-muted-foreground">Opens like an app. One tap to today's set</p>
+        </div>
+        <button onClick={onClick} className="shrink-0 rounded-full bg-emerald-500 text-white px-4 py-2 text-sm font-black">
+          {mode === "prompt" ? "Add" : open ? "Done" : "How"}
+        </button>
+      </div>
+      {open && (
+        <ol className="mt-3 pt-3 border-t border-border space-y-2">
+          {mode === "ios" ? (
+            <>
+              <Step n={1}>Tap <Share className="w-4 h-4 text-sky-400" /> Share in Safari's toolbar (in Chrome it's top right)</Step>
+              <Step n={2}>Scroll down and tap <SquarePlus className="w-4 h-4" /> <b>Add to Home Screen</b></Step>
+              <Step n={3}>Open drapk.in from your home screen. You may need to log in once with your username</Step>
+            </>
+          ) : (
+            <>
+              <Step n={1}>Tap the <EllipsisVertical className="w-4 h-4" /> menu in your browser</Step>
+              <Step n={2}>Tap <b>Add to Home screen</b> or <b>Install app</b></Step>
+            </>
+          )}
+        </ol>
+      )}
+    </section>
+  );
+}
+
 /** When the account was made (falls back to the first daily game). */
 function useMemberSince(username: string | undefined, firstDay?: string): string | null {
   const [created, setCreated] = useState<Date | null>(null);
@@ -188,6 +239,8 @@ export default function Me() {
       <BadgeGrid ctx={badgeCtx} username={user.username} />
 
       <InviteCard username={user.username} streak={current} invites={invites} />
+
+      <InstallCard />
 
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex items-center justify-between mb-3 gap-3">
