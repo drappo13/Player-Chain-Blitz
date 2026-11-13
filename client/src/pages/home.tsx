@@ -202,7 +202,9 @@ function DailyTile({ game, p, rank, index, friend, startHere }: {
               </motion.span>
             )}
             {status === "playing" && (
-              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-black/30 px-2 py-1 text-white/85">In progress</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider rounded-full bg-black/30 px-2 py-1 text-white/85 tabular-nums">
+                {p!.goal != null ? `${p!.count ?? 0} found` : "In progress"}
+              </span>
             )}
             {status === "new" && startHere && (
               <span className="text-[10px] font-black uppercase tracking-wider rounded-full bg-white text-black px-2 py-1">Start here</span>
@@ -216,9 +218,8 @@ function DailyTile({ game, p, rank, index, friend, startHere }: {
             {status === "playing" && p!.goal != null && (
               // Open-ended games before they count: count down to completing today
               <>
-                <p className={`text-sm font-black leading-tight ${game.accent}`}>{Math.max(0, p!.goal - (p!.count ?? 0))} more to complete today</p>
-                <p className="text-xs font-semibold text-white/85 truncate">{p!.detail}</p>
-                <div className="mt-1.5 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                <p className={`text-sm font-black leading-tight truncate ${game.accent}`}>{Math.max(0, p!.goal - (p!.count ?? 0))} more to complete</p>
+                <div className="mt-2 h-1.5 rounded-full bg-black/30 overflow-hidden">
                   <motion.div className={`h-full rounded-full ${game.bar}`} initial={{ width: 0 }}
                     animate={{ width: `${Math.max(4, Math.round(((p!.count ?? 0) / p!.goal) * 100))}%` }} transition={{ duration: 0.7, delay: 0.2 }} />
                 </div>
