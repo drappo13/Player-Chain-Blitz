@@ -26,9 +26,10 @@ function writeList(u: string, list: string[]) {
   window.dispatchEvent(new Event(EVENT));
 }
 
+/** Save first, then show it: a failed save never leaves a friend on screen that isn't really there. */
 async function saveList(u: string, list: string[]) {
-  writeList(u, list);
   await setDoc(doc(db, "friends", u.toLowerCase()), { list, updatedAt: serverTimestamp() });
+  writeList(u, list);
 }
 
 const loads = new Map<string, Promise<string[]>>();
