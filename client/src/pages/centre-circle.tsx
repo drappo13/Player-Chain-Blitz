@@ -12,6 +12,7 @@ import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner, completeTarget, useCompleteGoal, GoalCount, GoalSlot } from "@/components/daily-next";
+import { useGameTips, TipAnchor, useOnce } from "@/components/game-tip";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -398,10 +399,15 @@ export default function CentreCircle() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
-  const [showRules, setShowRules] = useState(() => {
+  // No rules screen: first-timers learn from tips as they play; (i) still opens the full rules
+  const [showRules, setShowRules] = useState(false);
+  const [firstTime] = useState(() => {
     const s = loadState(dateKey, board, user?.username);
     return s.found.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "centrecircle");
   });
+  const [firstGuess, setFirstGuess] = useState<"right" | "wrong" | null>(null);
+  const [guesses, setGuesses] = useState(0);
+  const [misses, setMisses] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
   const floatId = useRef(0);
@@ -410,6 +416,24 @@ export default function CentreCircle() {
   const isFinished = state.submitted;
   // Until today counts, the header shows progress towards that instead of the ranks
   const goal = useCompleteGoal(state.found.length, countAt, !isFinished && !late);
+
+  // First-time tips, in order, each at the moment it's useful
+  const typed = useOnce(input.length > 0);
+  const trackerOpened = useOnce(showTracker);
+  const finishTapped = useOnce(showConfirm);
+  const tips = useGameTips("centrecircle", firstTime && !late, [
+    { id: "start", when: state.found.length === 0 && !isFinished, until: typed,
+      text: <>Spell the <b>surname</b> of any Premier League player using these letters. Letters can repeat.</> },
+    { id: "first", when: firstGuess !== null, until: guesses >= 4,
+      text: firstGuess === "wrong"
+        ? <>Only players with <b>Premier League</b> appearances count, and only surnames.</>
+        : <>The <b className="text-green-600">green centre letter</b> doubles your points. Legends (★) double again.</> },
+    { id: "tracker", when: !isFinished && (state.found.length >= 3 || misses >= 2), until: trackerOpened,
+      text: <>Stuck? This shows how many names are left, by first letter.</> },
+    { id: "finish", when: !isFinished && state.found.length >= countAt, until: finishTapped,
+      text: <>Your score's already on the leaderboard. Tap <b>Finish</b> when you're done to see the answers.</> },
+  ]);
+  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip });
   const foundSet = useMemo(() => new Set(state.found), [state.found]);
   const rank = getRank(state.score, maxScore);
 
@@ -460,6 +484,12 @@ export default function CentreCircle() {
 
   const showFeedbackMsg = useCallback((fb: Feedback, duration = 2600) => {
     trackEvent("guess", { game: "centrecircle", mode: "daily", result: fb.type ?? "other", points: fb.points });
+    const right = fb.type === "correct" || fb.type === "pangram";
+    if (right || fb.type === "wrong") {
+      setFirstGuess((f) => f ?? (right ? "right" : "wrong"));
+      setGuesses((n) => n + 1);
+      setMisses((n) => (right ? 0 : n + 1));
+    }
     setFeedback(fb);
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
@@ -759,6 +789,7 @@ export default function CentreCircle() {
             <Trophy className="w-5 h-5" /> View Results & Leaderboard
           </button>
         ) : (
+          <TipAnchor {...tipProps("start")} place="bottom" className="w-full">
           <motion.div key={shake} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
             className="relative w-full h-14">
             <div aria-hidden className="absolute inset-0 flex items-center justify-center text-[28px] font-black uppercase tracking-[0.08em] pointer-events-none whitespace-pre">
@@ -782,6 +813,7 @@ export default function CentreCircle() {
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className="absolute inset-0 w-full bg-transparent text-center text-[28px] font-black uppercase tracking-[0.08em] text-transparent caret-green-300 outline-none" />
           </motion.div>
+          </TipAnchor>
         )}
 
         {/* Feedback */}
@@ -819,6 +851,7 @@ export default function CentreCircle() {
               className="h-11 w-11 rounded-full border border-border bg-card/60 text-muted-foreground hover:text-foreground active:scale-95 transition flex items-center justify-center">
               <Shuffle className="w-5 h-5" />
             </button>
+            <TipAnchor {...tipProps("tracker")} place="bottom">
             <button type="button" onClick={() => setShowTracker(v => { if (!v) trackEvent("hints_open", { game: "centrecircle", mode: "daily" }); return !v; })} aria-pressed={showTracker}
               aria-label="Hints" title="Tracker — what's left to find"
               className={`h-11 w-11 rounded-full border active:scale-95 transition flex items-center justify-center ${showTracker
@@ -826,6 +859,7 @@ export default function CentreCircle() {
                 : "border-border bg-card/60 text-muted-foreground hover:text-foreground"}`}>
               <ListChecks className="w-5 h-5" />
             </button>
+            </TipAnchor>
             <button type="button" onClick={submitWord}
               className="h-11 px-6 rounded-full border border-green-500/40 bg-green-500/15 text-green-300 font-semibold hover:bg-green-500/25 active:scale-95 transition">
               Enter
@@ -836,17 +870,21 @@ export default function CentreCircle() {
 
         {/* Found header + tracker / submit */}
         <div className="w-full flex items-center justify-between mb-2">
+          <TipAnchor {...tipProps("first")} place="bottom" align="start">
           <h3 className="text-sm font-semibold text-muted-foreground">
             Found <span className="tabular-nums">{state.found.length}</span>
             <span className="font-normal"> · {centreUpper} scores double</span>
           </h3>
+          </TipAnchor>
           {!isFinished && (
             <div className="flex items-center gap-1.5">
               {state.found.length > 0 && (
+                <TipAnchor {...tipProps("finish")} place="bottom" align="end">
                 <button type="button" onClick={() => setShowConfirm(true)} title="I'm done — finish and see the answers"
                   className="h-[34px] px-2.5 inline-flex items-center gap-1.5 rounded-lg bg-card/80 border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-green-500/50 transition-colors">
                   <Flag className="w-4 h-4" /> Finish
                 </button>
+                </TipAnchor>
               )}
             </div>
           )}

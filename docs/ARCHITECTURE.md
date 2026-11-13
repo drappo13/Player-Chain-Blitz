@@ -199,7 +199,7 @@ useShare() → { share, copied }
 Lifecycle: Rules screen → Playing → Submitted (locked) → End screen
 
 ### Rules Screen
-Shown only the first time someone plays that game (skipped if there's progress today, the game was ever played on this device (`hasPlayedBefore` in `lib/daily.ts`), or it's already submitted). Rules + "Play" button; the info button reopens it.
+No longer shown automatically: first-timers get in-game tips instead (`components/game-tip.tsx`: `useGameTips` + `TipAnchor` — one short bubble at a time next to what it's about, gone when you do the thing or tap ✓, "Skip tips" turns them off; shown once per game, `pcb-tips-{game}`). CentreCircle and Griddle have four (how to play, after the first guess right/wrong, the tracker, Finish); Career Path and Photo Finish one each. The (i) button still opens the full rules.
 
 ### Playing Screen
 - No timer. Input + flag button (submits score).
@@ -403,6 +403,7 @@ Events go to Google Analytics, not Firestore (free, no read/write cost). `trackE
 | `game_counted` | CentreCircle/Griddle reached 5 (counts for today) | game, mode, count, score, seconds, set_position |
 | `yesterday_open` | Yesterday's set link (day-0 players) | from (`home` / `end_screen`), game |
 | `friend_add` / `friend_remove` | Friends on Me, or automatically via invite | method, friends |
+| `tip_view` / `tip_done` / `tips_skip` | first-time in-game tips (`game-tip.tsx`) | game, tip, how |
 | `install_guide_open` | Add to Home Screen guide opened | source, kind |
 | `reminder_ask_view` / `_yes` / `_no` | end-screen ask on day 2+ (install on iPhone browser, else reminders) | kind |
 | `reminders_set` | reminder settings saved | streak, morning, source |

@@ -11,6 +11,7 @@ import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner } from "@/components/daily-next";
+import { useGameTips, TipAnchor } from "@/components/game-tip";
 import { EndBoard } from "@/components/end-board";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
@@ -282,10 +283,16 @@ export default function PhotoFinish() {
   const [submitting, setSubmitting] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const remoteScore = state.remoteScore ?? null;
-  const [showRules, setShowRules] = useState(() => {
+  // No rules screen: one tip for first-timers; (i) still opens the full rules
+  const [showRules, setShowRules] = useState(false);
+  const [firstTime] = useState(() => {
     const s = loadState(dateKey, photos, user?.username);
     return s.guesses.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "photofinish");
   });
+  const tips = useGameTips("photofinish", firstTime && !late, [
+    { id: "start", when: state.guesses.length === 0 && !state.submitted, until: state.guesses.length > 0,
+      text: <>Which season was this photo from? Drag to it, then <b>Lock in</b>. Closer = more points.</> },
+  ]);
   const checkedRemote = useRef(false);
 
   const score = scoreOf(photos, state.guesses);
@@ -612,10 +619,12 @@ export default function PhotoFinish() {
                 </span>
               ))}
             </div>
+            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} place="bottom">
             <Button className="w-full mt-4 text-base py-6 bg-gradient-to-r from-amber-300 to-orange-400 hover:from-amber-400 hover:to-orange-500 text-amber-950 font-bold border-amber-300/70"
               onClick={lockIn}>
               Lock in
             </Button>
+            </TipAnchor>
           </div>
         ) : (
           <div className="w-full mt-4">

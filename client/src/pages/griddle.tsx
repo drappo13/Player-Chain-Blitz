@@ -13,6 +13,7 @@ import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner, completeTarget, useCompleteGoal, GoalCount, GoalSlot } from "@/components/daily-next";
+import { useGameTips, TipAnchor, useOnce } from "@/components/game-tip";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -470,11 +471,15 @@ export default function Griddle() {
   const [scorePulse, setScorePulse] = useState(false);
   const prevTierRef = useRef<string | null>(null);
   const floatId = useRef(0);
-  const [showRules, setShowRules] = useState(() => {
-    // Skip rules if they already have progress or submitted
+  // No rules screen: first-timers learn from tips as they play; (i) still opens the full rules
+  const [showRules, setShowRules] = useState(false);
+  const [firstTime] = useState(() => {
     const s = loadState(dateKey, boardClubs, user?.username);
     return s.foundPlayers.length === 0 && !s.submitted && !hasPlayedBefore(user?.username, "griddle");
   });
+  const [firstGuess, setFirstGuess] = useState<"right" | "wrong" | null>(null);
+  const [guesses, setGuesses] = useState(0);
+  const [misses, setMisses] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeout = useRef<ReturnType<typeof setTimeout>>();
   const checkedRemote = useRef(false);
@@ -483,6 +488,24 @@ export default function Griddle() {
   const outOfLives = livesMode && state.livesLeft <= 0;
   const isFinished = state.submitted || outOfLives;
   const goal = useCompleteGoal(state.foundPlayers.length, countAt, !isFinished && !late);
+
+  // First-time tips, in order, each at the moment it's useful
+  const typed = useOnce(input.length > 0);
+  const trackerOpened = useOnce(showTracker);
+  const finishTapped = useOnce(showConfirm);
+  const tips = useGameTips("griddle", firstTime && !late, [
+    { id: "start", when: state.foundPlayers.length === 0 && !isFinished, until: typed,
+      text: <>Name a player who played for <b>2 or more</b> of these clubs. Premier League apps only.</> },
+    { id: "first", when: firstGuess !== null, until: guesses >= 4,
+      text: firstGuess === "wrong"
+        ? <>Players who don't fit cost a life (♥). Typos and repeats are free.</>
+        : <>More clubs, more points. Clubs next to each other score 2×, a full row 5×.</> },
+    { id: "tracker", when: !isFinished && (state.foundPlayers.length >= 3 || misses >= 2), until: trackerOpened,
+      text: <>Stuck? This shows how many players are left for each club.</> },
+    { id: "finish", when: !isFinished && state.foundPlayers.length >= countAt, until: finishTapped,
+      text: <>Your score's already on the leaderboard. Tap the <b>flag</b> when you're done to see the answers.</> },
+  ]);
+  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip });
   const autoFinishing = useRef(false);
 
   // Check remote submission on load — handles cross-device AND failed writes
@@ -543,6 +566,12 @@ export default function Griddle() {
 
   const showFeedbackMsg = useCallback((fb: Feedback, duration = 3000) => {
     trackEvent("guess", { game: "griddle", mode: "daily", result: fb.type ?? "other", points: fb.points });
+    if (fb.type === "correct" || fb.type === "wrong") {
+      const right = fb.type === "correct";
+      setFirstGuess((f) => f ?? (right ? "right" : "wrong"));
+      setGuesses((n) => n + 1);
+      setMisses((n) => (right ? 0 : n + 1));
+    }
     setFeedback(fb);
     if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
@@ -1067,11 +1096,15 @@ export default function Griddle() {
           </button>
         ) : (
           <form onSubmit={handleSubmit} className="w-full mb-3 flex gap-2">
+            <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
+              onOk={tips.ok} onSkip={tips.skip} place="bottom" align="start" className="flex-1 flex">
             <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
               placeholder="Enter a player name..."
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-              className={`flex-1 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
+              className={`flex-1 min-w-0 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
             />
+            </TipAnchor>
+            <TipAnchor {...tipProps("tracker")} place="bottom" align="end" className="flex">
             <button type="button" onClick={() => setShowTracker(v => { if (!v) trackEvent("hints_open", { game: "griddle", mode: "daily" }); return !v; })} aria-pressed={showTracker}
               className={`px-3 py-3 rounded-xl border transition-colors ${showTracker
                 ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
@@ -1079,12 +1112,15 @@ export default function Griddle() {
               title="Tracker — what's left to find">
               <ListChecks className="w-5 h-5" />
             </button>
+            </TipAnchor>
             {state.foundPlayers.length > 0 && (
+              <TipAnchor {...tipProps("finish")} place="bottom" align="end" className="flex">
               <button type="button" onClick={() => setShowConfirm(true)}
                 className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
                 title="I'm done — finish and see the answers">
                 <Flag className="w-5 h-5" />
               </button>
+              </TipAnchor>
             )}
           </form>
         )}
