@@ -75,6 +75,8 @@ export async function submitDailyScore(
   opts: { late?: boolean } = {},
 ): Promise<boolean> {
   if (!username || score < 0) return false;
+  // Yesterday's set is just for fun: kept on the device, never sent
+  if (opts.late) return true;
   // Guests: keep it for when they pick a name, and log an anonymous play for the stats page
   if (isGuestName(username)) {
     queuePending({ kind: "daily", game, dateKey, score, found, total, state, late: opts.late });
@@ -123,6 +125,7 @@ const LIVE_EVERY = 15000;
 const live = new Map<string, { args: LiveArgs; last: number; timer?: ReturnType<typeof setTimeout> }>();
 
 async function writeLive(a: LiveArgs, final: boolean): Promise<boolean> {
+  if (a.late) return true; // Yesterday's set is just for fun: nothing is sent
   if (isGuestName(a.username)) {
     queuePending({ kind: "daily", game: a.game, dateKey: a.dateKey, score: a.score, found: a.found, total: a.total, state: a.state, late: a.late });
     logGuestPlay(a.username, a.game, a.dateKey, a.score, a.late);

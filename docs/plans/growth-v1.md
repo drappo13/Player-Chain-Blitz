@@ -33,6 +33,8 @@ Data we have (13 Nov 2026):
    on a schedule is the next step.
 9. **Copy:** no "counted" wording — tile shows "✓ 640 · keep going"; toast "That's today done ✓ Keep going for
    more points". Name ask: "Pick a name to put 780 on the leaderboard". No "Can you beat 780?".
+10b. **Yesterday's set (after testing):** day-0 players only, after their first finished game, and just for fun
+   (device only — no leaderboards, no streak). Everyone else comes back tomorrow; no streak repair.
 10. **Rules tightened:** nobody can delete push subscriptions or other people's scores.
 
 Order of build (each is shippable on its own):
