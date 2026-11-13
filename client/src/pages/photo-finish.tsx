@@ -11,11 +11,10 @@ import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner } from "@/components/daily-next";
+import { EndBoard } from "@/components/end-board";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
-import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
-import { LeaderboardTable } from "@/components/leaderboard-table";
 
 // --- Photos ---
 // Each photo is the lead image of a BBC Sport Premier League match report.
@@ -757,8 +756,6 @@ function EndScreen({ photos, guesses, remoteScore = null, dateKey, navigate, use
   const rank = rankFor(total);
   const shownTotal = useTween(total, 1200, { initial: 0, delay: 200 });
   const offs = photos.map((p, i) => (guesses[i] === undefined ? null : Math.abs(guesses[i] - p.season)));
-  const [lbPeriod, setLbPeriod] = useState<DailyPeriod>("today");
-  const { entries, loading } = useDailyLeaderboard("photofinish", lbPeriod, 10, 1000);
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
@@ -810,24 +807,11 @@ function EndScreen({ photos, guesses, remoteScore = null, dateKey, navigate, use
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="w-full mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <Trophy className="w-3 h-3" />Leaderboard
-            </div>
-            <div className="flex gap-1">
-              {(["today", "yesterday"] as const).map(p => (
-                <button key={p} onClick={() => setLbPeriod(p)}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
-                    lbPeriod === p ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  {p === "today" ? "Today" : "Yesterday"}
-                </button>
-              ))}
-            </div>
-          </div>
-          <LeaderboardTable entries={entries} loading={loading} period="today" onPeriodChange={() => {}}
-            currentUser={username} accentBg="bg-amber-500/10 border-amber-500/30" scoreLabel="Score" mini max={10} />
-        </motion.div>
+        <EndBoard game="photofinish" dateKey={dateKey} accentBg="bg-amber-500/10 border-amber-500/30" />
+
+        <div className="w-full mb-8">
+          <DailyNext current="photofinish" />
+        </div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full mb-6">
           <h3 className="text-sm font-semibold text-muted-foreground mb-2">Today's photos</h3>
@@ -850,10 +834,6 @@ function EndScreen({ photos, guesses, remoteScore = null, dateKey, navigate, use
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-          className="w-full text-center py-4 text-muted-foreground">
-          <DailyNext current="photofinish" />
-        </motion.div>
       </div>
     </div>
   );

@@ -12,14 +12,13 @@ import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner } from "@/components/daily-next";
+import { EndBoard } from "@/components/end-board";
 
 /** Names found before the board counts for today (streak, set) — still open after that. */
 const COUNT_AT = 5;
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
-import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
-import { LeaderboardTable } from "@/components/leaderboard-table";
 
 // Board version — bump to reshuffle the order boards are dealt in
 const BOARD_VERSION = 3;
@@ -1204,8 +1203,6 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
     () => answers.filter(a => !found.has(a.key)).sort((a, b) => Number(b.pangram) - Number(a.pangram)),
     [answers, found],
   );
-  const [lbPeriod, setLbPeriod] = useState<DailyPeriod>("today");
-  const { entries, loading } = useDailyLeaderboard("centrecircle", lbPeriod, 10, 1000);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -1235,24 +1232,11 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
           </span>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="w-full mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <Trophy className="w-3 h-3" />Leaderboard
-            </div>
-            <div className="flex gap-1">
-              {(["today", "yesterday"] as const).map(p => (
-                <button key={p} onClick={() => setLbPeriod(p)}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-colors ${
-                    lbPeriod === p ? "bg-foreground/10 text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  {p === "today" ? "Today" : "Yesterday"}
-                </button>
-              ))}
-            </div>
-          </div>
-          <LeaderboardTable entries={entries} loading={loading} period="today" onPeriodChange={() => {}}
-            currentUser={username} accentBg="bg-green-500/10 border-green-500/30" scoreLabel="Score" mini max={10} />
-        </motion.div>
+        <EndBoard game="centrecircle" dateKey={dateKey} accentBg="bg-green-500/10 border-green-500/30" />
+
+        <div className="w-full mb-8">
+          <DailyNext current="centrecircle" />
+        </div>
 
         {missed.length > 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="w-full mb-6">
@@ -1275,10 +1259,6 @@ function EndScreen({ state, answers, board, maxScore, dateKey, formatDate, navig
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-          className="w-full text-center py-4 text-muted-foreground">
-          <DailyNext current="centrecircle" />
-        </motion.div>
       </div>
     </div>
   );
