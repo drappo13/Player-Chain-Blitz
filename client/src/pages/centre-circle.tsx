@@ -11,7 +11,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner, GoalBar, completeTarget, useJustCompleted, CompleteFlash } from "@/components/daily-next";
+import { LateBanner, completeTarget, useCompleteGoal, GoalCount, GoalSlot } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -409,8 +409,7 @@ export default function CentreCircle() {
 
   const isFinished = state.submitted;
   // Until today counts, the header shows progress towards that instead of the ranks
-  const goalPhase = !isFinished && !late && state.found.length < countAt;
-  const justCompleted = useJustCompleted(state.found.length, countAt, !isFinished && !late);
+  const goal = useCompleteGoal(state.found.length, countAt, !isFinished && !late);
   const foundSet = useMemo(() => new Set(state.found), [state.found]);
   const rank = getRank(state.score, maxScore);
 
@@ -436,6 +435,7 @@ export default function CentreCircle() {
     recordDaily(user?.username, "centrecircle", dateKey, state.submitted || state.found.length > 0 ? {
       status: state.submitted ? "done" : "playing",
       counted: !state.submitted && state.found.length >= countAt,
+      goal: countAt,
       score: state.score,
       detail: `${state.found.length}/${answers.length} found`,
       level: getRank(state.score, maxScore).label,
@@ -718,18 +718,14 @@ export default function CentreCircle() {
               )}
             </AnimatePresence>
           </div>
-          {goalPhase ? (
-            <div className="text-right text-xs tabular-nums leading-tight">
-              <span className="font-black text-emerald-300">{state.found.length}/{countAt}</span>
-              <span className="block text-muted-foreground">to complete today</span>
-            </div>
-          ) : (
+          {goal.goalPhase ? <GoalCount found={state.found.length} target={countAt} accent="text-emerald-300" /> : (
             <div className="text-right text-xs text-muted-foreground tabular-nums">{state.found.length} / {answers.length} found</div>
           )}
         </div>
 
-        {goalPhase ? <GoalBar found={state.found.length} target={countAt} bar="bg-emerald-400" />
-          : justCompleted ? <CompleteFlash /> : <RankBar score={state.score} maxScore={maxScore} />}
+        <GoalSlot found={state.found.length} target={countAt} {...goal} bar="bg-emerald-400">
+          <RankBar score={state.score} maxScore={maxScore} />
+        </GoalSlot>
 
         {/* Hive + overlays */}
         <div className="relative w-full flex justify-center mt-4 mb-1">

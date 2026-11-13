@@ -12,7 +12,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner, completeTarget, useJustCompleted, CompleteFlash } from "@/components/daily-next";
+import { LateBanner, completeTarget, useCompleteGoal, GoalCount, GoalSlot } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -482,7 +482,7 @@ export default function Griddle() {
   const livesMode = dateKey >= LIVES_FROM;
   const outOfLives = livesMode && state.livesLeft <= 0;
   const isFinished = state.submitted || outOfLives;
-  const justCompleted = useJustCompleted(state.foundPlayers.length, countAt, !isFinished && !late);
+  const goal = useCompleteGoal(state.foundPlayers.length, countAt, !isFinished && !late);
   const autoFinishing = useRef(false);
 
   // Check remote submission on load — handles cross-device AND failed writes
@@ -510,6 +510,7 @@ export default function Griddle() {
     recordDaily(user?.username, "griddle", dateKey, isFinished || found > 0 ? {
       status: isFinished ? "done" : "playing",
       counted: !isFinished && found >= countAt,
+      goal: countAt,
       score: state.score,
       detail: isFinished ? `${found} found` : `${found} found \u00B7 ${state.livesLeft} ${state.livesLeft === 1 ? "life" : "lives"} left`,
       level: getCurrentTier(found, totalValid).current?.label ?? "Unranked",
@@ -939,12 +940,7 @@ export default function Griddle() {
             </AnimatePresence>
           </div>
           <div className="text-right flex flex-col items-end gap-1">
-            {!isFinished && !late && state.foundPlayers.length < countAt ? (
-              <div className="text-xs tabular-nums leading-tight">
-                <span className="font-black text-sky-300">{state.foundPlayers.length}/{countAt}</span>
-                <span className="block text-muted-foreground">to complete today</span>
-              </div>
-            ) : justCompleted ? <CompleteFlash compact /> : <>
+            {goal.goalPhase ? <GoalCount found={state.foundPlayers.length} target={countAt} accent="text-sky-300" /> : <>
             <div className="text-xs text-muted-foreground">{state.foundPlayers.length} / {totalValid} found</div>
             {tierInfo.current ? (
               <>
@@ -965,6 +961,8 @@ export default function Griddle() {
             </>}
           </div>
         </div>
+
+        <GoalSlot found={state.foundPlayers.length} target={countAt} {...goal} bar="bg-sky-400" className="mb-4" />
 
         {/* 3x3 Grid + overlays */}
         <div className="w-full relative mb-4">
