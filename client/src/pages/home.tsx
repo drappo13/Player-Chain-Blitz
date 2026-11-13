@@ -213,7 +213,18 @@ function DailyTile({ game, p, rank, index, friend, startHere }: {
 
           <div className="flex-1 min-h-0 mt-0.5">
             {status === "new" && <p className="text-xs text-white/70 leading-snug line-clamp-2">{game.tagline}</p>}
-            {status === "playing" && (
+            {status === "playing" && p!.goal != null && (
+              // Open-ended games before they count: count down to completing today
+              <>
+                <p className={`text-sm font-black leading-tight ${game.accent}`}>{Math.max(0, p!.goal - (p!.count ?? 0))} more to complete today</p>
+                <p className="text-xs font-semibold text-white/85 truncate">{p!.detail}</p>
+                <div className="mt-1.5 h-1.5 rounded-full bg-black/30 overflow-hidden">
+                  <motion.div className={`h-full rounded-full ${game.bar}`} initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(4, Math.round(((p!.count ?? 0) / p!.goal) * 100))}%` }} transition={{ duration: 0.7, delay: 0.2 }} />
+                </div>
+              </>
+            )}
+            {status === "playing" && p!.goal == null && (
               <>
                 {p!.level && <p className={`text-sm font-black leading-tight ${game.accent}`}>{p!.level}</p>}
                 <p className="text-xs font-semibold text-white/85 truncate">{p!.detail}</p>

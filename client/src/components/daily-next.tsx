@@ -35,7 +35,7 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
             {p?.status === "playing" && !p.counted && (
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.max(12, Math.round((p.progress ?? 0) * 100))}%`, backgroundPositionX: ["0px", "28px"] }}
+                animate={{ width: `${Math.max(12, Math.round((p.goal ? (p.count ?? 0) / p.goal : p.progress ?? 0) * 100))}%`, backgroundPositionX: ["0px", "28px"] }}
                 transition={{
                   width: { delay: 0.2 + i * 0.08, duration: 0.7, ease: "easeOut" },
                   backgroundPositionX: { duration: 1.2, repeat: Infinity, ease: "linear" },
@@ -79,39 +79,49 @@ export function GoalBar({ found, target, bar }: { found: number; target: number;
   );
 }
 
-/** True for a few seconds right after `found` reaches `target` during play (not on load). */
-export function useJustCompleted(found: number, target: number, active: boolean): boolean {
+/** Shared "complete today" state for the open-ended games (CentreCircle, Griddle).
+ *  goalPhase: still working towards the target. justCompleted: the few seconds after hitting it mid-game. */
+export function useCompleteGoal(found: number, target: number, active: boolean) {
   const prev = useRef(found);
-  const [on, setOn] = useState(false);
+  const [justCompleted, setJust] = useState(false);
   useEffect(() => {
     const crossed = active && prev.current < target && found >= target;
     prev.current = found;
     if (!crossed) return;
-    setOn(true);
-    const t = setTimeout(() => setOn(false), 3000);
+    setJust(true);
+    const t = setTimeout(() => setJust(false), 3000);
     return () => clearTimeout(t);
   }, [found, target, active]);
-  return on;
+  return { goalPhase: active && found < target, justCompleted };
 }
 
-/** The moment today counts: a green tick where the goal counter was. */
-export function CompleteFlash({ compact = false }: { compact?: boolean }) {
+/** Header, top right, while working towards the target: "3/6 to complete today". */
+export function GoalCount({ found, target, accent }: { found: number; target: number; accent: string }) {
+  return (
+    <div className="text-right text-xs tabular-nums leading-tight">
+      <span className={`font-black ${accent}`}>{found}/{target}</span>
+      <span className="block text-muted-foreground">to complete today</span>
+    </div>
+  );
+}
+
+/** Under the header: the segmented goal bar, then the "Today complete" moment, then whatever the
+ *  game normally shows there (`children`, e.g. CentreCircle's rank bar; nothing for Griddle). */
+export function GoalSlot({ found, target, goalPhase, justCompleted, bar, className = "", children }: {
+  found: number; target: number; goalPhase: boolean; justCompleted: boolean; bar: string; className?: string; children?: React.ReactNode;
+}) {
+  if (goalPhase) return <div className={`w-full ${className}`}><GoalBar found={found} target={target} bar={bar} /></div>;
+  if (justCompleted) return <div className={`w-full ${className}`}><CompleteFlash /></div>;
+  return <>{children}</>;
+}
+
+/** The moment today counts: a green tick where the goal bar was. */
+export function CompleteFlash() {
   return (
     <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 320, damping: 16 }}
-      className={compact
-        ? "text-right text-xs leading-tight text-emerald-300"
-        : "w-full flex items-center justify-center gap-2 rounded-full bg-emerald-400/15 border border-emerald-400/40 py-1 text-xs font-bold text-emerald-300"}>
-      {compact ? (
-        <>
-          <span className="inline-flex items-center gap-1 font-black"><Check className="w-3.5 h-3.5" strokeWidth={3.5} /> Today complete</span>
-          <span className="block text-muted-foreground">keep going for more points</span>
-        </>
-      ) : (
-        <>
-          <span className="w-4 h-4 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3.5} /></span>
-          Today complete · keep going for more points
-        </>
-      )}
+      className="w-full flex items-center justify-center gap-2 rounded-full bg-emerald-400/15 border border-emerald-400/40 py-1 text-xs font-bold text-emerald-300">
+      <span className="w-4 h-4 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3.5} /></span>
+      Today complete · keep going for more points
     </motion.div>
   );
 }

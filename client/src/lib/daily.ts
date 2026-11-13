@@ -146,6 +146,8 @@ export interface DailyProgress {
   startedAt?: number; // set on the first move, for time-to-finish analytics
   /** Still open but enough has been played for it to count for today (CentreCircle/Griddle) */
   counted?: boolean;
+  /** Open-ended games: answers needed to complete today (the tile counts down to it) */
+  goal?: number;
   /** Played as Yesterday's set (just for fun, never counts) */
   late?: boolean;
 }
