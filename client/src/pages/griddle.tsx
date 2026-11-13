@@ -505,7 +505,7 @@ export default function Griddle() {
     { id: "finish", when: !isFinished && state.foundPlayers.length >= countAt, until: finishTapped,
       text: <>Your score's already on the leaderboard. Tap the <b>flag</b> when you're done to see the answers.</> },
   ]);
-  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip });
+  const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip, accent: "blue" as const });
   const autoFinishing = useRef(false);
 
   // Check remote submission on load — handles cross-device AND failed writes
@@ -1097,7 +1097,7 @@ export default function Griddle() {
         ) : (
           <form onSubmit={handleSubmit} className="w-full mb-3 flex gap-2">
             <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
-              onOk={tips.ok} onSkip={tips.skip} place="bottom" align="start" className="flex-1 flex">
+              onOk={tips.ok} onSkip={tips.skip} accent="blue" place="bottom" align="start" className="flex-1 flex">
             <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
               placeholder="Enter a player name..."
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
@@ -1225,7 +1225,7 @@ export default function Griddle() {
         )}
 
         {/* Empty state */}
-        {state.foundPlayers.length === 0 && (
+        {state.foundPlayers.length === 0 && tips.tip?.id !== "start" && (
           <div className="w-full text-center py-8 text-muted-foreground">
             <p className="text-sm">Name a player who appeared for at least 2 clubs on the board</p>
             <p className="text-xs mt-2 opacity-60">More clubs = more points. Adjacent clubs 2x, complete row/col/diag 5x.</p>

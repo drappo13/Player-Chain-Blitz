@@ -640,7 +640,7 @@ export default function CareerPath() {
         {/* Guess box, or the answer */}
         {!done ? (
           <div className="w-full mt-4">
-            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} place="top" align="start">
+            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} accent="violet" place="top" align="start">
             <div className="relative">
               <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={onKeyDown}
                 placeholder="Who is it?" aria-label="Guess a player" autoComplete="off" autoCorrect="off" spellCheck={false}
