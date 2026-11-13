@@ -12,7 +12,7 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner, TodayGoal, completeTarget } from "@/components/daily-next";
+import { LateBanner, GoalBar, completeTarget } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
 import { trackEvent } from "@/lib/firebase";
@@ -938,6 +938,12 @@ export default function Griddle() {
             </AnimatePresence>
           </div>
           <div className="text-right flex flex-col items-end gap-1">
+            {!isFinished && !late && state.foundPlayers.length < countAt ? (
+              <div className="text-xs tabular-nums leading-tight">
+                <span className="font-black text-sky-300">{state.foundPlayers.length}/{countAt}</span>
+                <span className="block text-muted-foreground">to complete today</span>
+              </div>
+            ) : <>
             <div className="text-xs text-muted-foreground">{state.foundPlayers.length} / {totalValid} found</div>
             {tierInfo.current ? (
               <>
@@ -955,6 +961,7 @@ export default function Griddle() {
                 {Math.ceil(TIERS[0].pct * totalValid)} more for {TIERS[0].label}
               </span>
             )}
+            </>}
           </div>
         </div>
 
@@ -1154,7 +1161,6 @@ export default function Griddle() {
           );
         })()}
 
-        {!isFinished && !late && <TodayGoal found={state.foundPlayers.length} target={countAt} />}
 
         {/* Found players list */}
         {state.foundPlayers.length > 0 && (
