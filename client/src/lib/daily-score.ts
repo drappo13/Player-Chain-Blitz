@@ -12,7 +12,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { isGuestName, queuePending, logGuestPlay, IS_LOCALHOST } from "./guest";
+import { isGuestName, WRITES_ENABLED } from "./guest";
 
 export type DailyGameSlug = "griddle" | "centrecircle" | "photofinish" | "careerpath";
 
@@ -31,6 +31,10 @@ export interface DailyScoreDoc {
   late?: boolean;
   /** Saved while still being played (CentreCircle/Griddle); the score can only go up until Finish */
   open?: boolean;
+  /** Played as a guest (no name yet): kept off leaderboards */
+  guest?: boolean;
+  /** Guest game copied to this account when they picked a name (stats count it once) */
+  claimedBy?: string;
   timestamp: unknown; // serverTimestamp
 }
 
@@ -44,7 +48,6 @@ export async function hasDailySubmission(
   game: DailyGameSlug,
   dateKey: string,
 ): Promise<{ submitted: boolean; score: number; found: number; total: number; state?: unknown }> {
-  if (isGuestName(username)) return { submitted: false, score: 0, found: 0, total: 0 };
   try {
     const k = makeKey(username, game, dateKey);
     const q = query(
@@ -77,13 +80,7 @@ export async function submitDailyScore(
   if (!username || score < 0) return false;
   // Yesterday's set is just for fun: kept on the device, never sent
   if (opts.late) return true;
-  // Guests: keep it for when they pick a name, and log an anonymous play for the stats page
-  if (isGuestName(username)) {
-    queuePending({ kind: "daily", game, dateKey, score, found, total, state, late: opts.late });
-    logGuestPlay(username, game, dateKey, score, opts.late);
-    return true;
-  }
-  if (IS_LOCALHOST) return true;
+  if (!WRITES_ENABLED) return true;
   try {
     const k = makeKey(username, game, dateKey);
 
@@ -100,7 +97,7 @@ export async function submitDailyScore(
       total,
       key: k,
       timestamp: serverTimestamp(),
-      ...(opts.late ? { late: true } : {}),
+      ...(isGuestName(username) ? { guest: true } : {}),
     };
     try {
       await addDoc(collection(db, "daily-scores"), state === undefined ? doc : { ...doc, state: JSON.stringify(state) });
@@ -126,18 +123,13 @@ const live = new Map<string, { args: LiveArgs; last: number; timer?: ReturnType<
 
 async function writeLive(a: LiveArgs, final: boolean): Promise<boolean> {
   if (a.late) return true; // Yesterday's set is just for fun: nothing is sent
-  if (isGuestName(a.username)) {
-    queuePending({ kind: "daily", game: a.game, dateKey: a.dateKey, score: a.score, found: a.found, total: a.total, state: a.state, late: a.late });
-    logGuestPlay(a.username, a.game, a.dateKey, a.score, a.late);
-    return true;
-  }
-  if (IS_LOCALHOST) return true;
+  if (!WRITES_ENABLED) return true;
   const k = makeKey(a.username, a.game, a.dateKey);
   const data = {
     username: a.username.toLowerCase(), game: a.game, dateKey: a.dateKey, score: a.score, found: a.found, total: a.total,
     key: k, timestamp: serverTimestamp(), open: !final,
     ...(a.state === undefined ? {} : { state: JSON.stringify(a.state) }),
-    ...(a.late ? { late: true } : {}),
+    ...(isGuestName(a.username) ? { guest: true } : {}),
   };
   try {
     await setDoc(doc(db, "daily-scores", k), data);
@@ -212,17 +204,17 @@ async function topRows(game: DailyGameSlug, dateKey: string, max: number): Promi
   const base = [where("dateKey", "==", dateKey), where("game", "==", game)];
   const toRow = (d: { id: string; data: () => unknown }): Row => {
     const x = d.data() as DailyScoreDoc;
-    return { id: d.id, username: x.username, score: x.score, found: x.found, late: x.late };
+    return { id: d.id, username: x.username, score: x.score, found: x.found, late: x.late || isGuestName(x.username) };
   };
   let rows: Row[];
   try {
-    const snap = await getDocs(query(collection(db, "daily-scores"), ...base, orderBy("score", "desc"), limit(max)));
+    const snap = await getDocs(query(collection(db, "daily-scores"), ...base, orderBy("score", "desc"), limit(max * 2 + 10)));
     rows = snap.docs.map(toRow);
   } catch {
     const snap = await getDocs(query(collection(db, "daily-scores"), ...base));
     rows = snap.docs.map(toRow);
   }
-  // Yesterday's-set plays don't go on the boards. Ties in document order, as before
+  // Guests and old yesterday's-set plays don't go on the boards. Ties in document order, as before
   return rows.filter((r) => !r.late).sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1)).slice(0, max);
 }
 

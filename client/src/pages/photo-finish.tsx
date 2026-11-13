@@ -340,7 +340,8 @@ export default function PhotoFinish() {
     setSubmitting(true);
     const total = scoreOf(photos, guesses);
     const exact = guesses.filter((g, i) => g === photos[i].season).length;
-    if (user?.username && !IS_LOCAL) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS, { roundsHash: state.roundsHash, guesses }, { late });
+    // (submitDailyScore itself skips writing on test builds unless they use the emulator)
+    if (user?.username) await submitDailyScore(user.username, "photofinish", dateKey, total, exact, ROUNDS, { roundsHash: state.roundsHash, guesses }, { late });
     setState(prev => ({ ...prev, submitted: true }));
     setSubmitting(false);
     if (total >= 700) playHighScore(); else playGameEnd();

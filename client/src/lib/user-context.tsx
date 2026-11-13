@@ -2,10 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, trackEvent, identify } from "./firebase";
 import {
-  getOrCreateGuest, readGuest, clearGuest, migrateGuestKeys, readPending, clearPending, guestGamesFinished, type GuestUser,
+  getOrCreateGuest, readGuest, clearGuest, migrateGuestKeys, guestGamesFinished, claimGuestGames, flushLegacyPending, type GuestUser,
 } from "./guest";
-import { submitDailyScore, type DailyGameSlug } from "./daily-score";
-import { saveScore, type GameSlug } from "./save-score";
 import { startFriendsFromInvite } from "./friends";
 
 // Invite links look like drapk.in/?ref=username; remember the inviter until sign-up
@@ -78,20 +76,17 @@ function withTimeout<T>(p: Promise<T>): Promise<T> {
   return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS))]);
 }
 
-/** Send everything a guest did to the new account: their finished games land on the boards. */
+/** A guest picked (or logged into) a name: their games are copied to the account in Firestore (guest
+ *  copies marked claimedBy), and everything on this device moves to the account. */
 async function adoptGuest(guest: GuestUser | null, username: string) {
   if (!guest) return;
-  const pending = readPending();
+  try {
+    await flushLegacyPending(guest.username); // anything the first release left queued
+    await claimGuestGames(guest.username, username);
+  } catch { /* the account still works; worst case the guest games stay unclaimed */ }
   migrateGuestKeys(guest.username, username);
-  clearPending();
   clearGuest();
-  for (const p of pending) {
-    try {
-      if (p.kind === "daily") await submitDailyScore(username, p.game as DailyGameSlug, p.dateKey, p.score, p.found, p.total, p.state, { late: p.late });
-      else await saveScore(username, p.game as GameSlug, p.score);
-    } catch { /* keep going */ }
-  }
-  // History and ranks were cached for the guest name: refetch for the account
+  // History was cached under the guest id: lib/daily.ts drops its cache on this
   window.dispatchEvent(new Event("pcb-account-changed"));
 }
 
@@ -109,7 +104,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch {}
     setAccount(named);
     // No account on this device: play as a guest straight away
-    if (!named) setGuest(getOrCreateGuest());
+    if (!named) {
+      const g = getOrCreateGuest();
+      setGuest(g);
+      flushLegacyPending(g.username).catch(() => {});
+    }
     setLoading(false);
   }, []);
 

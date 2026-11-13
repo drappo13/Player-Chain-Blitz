@@ -25,14 +25,12 @@ const BANDS = [
   { key: "g4", label: "All 4", colour: "#34d399" },
 ] as const;
 
-interface Play { id: string; user: string; game: DailyGameSlug; day: string; score: number; at: number; late?: boolean }
-interface ArcadePlay { user: string; game: string; at: number }
-interface GuestPlay { guest: string; day: string; late: boolean; at: number }
+interface Play { id: string; user: string; game: DailyGameSlug; day: string; score: number; at: number; late?: boolean; fromGuest?: string }
+interface ArcadePlay { user: string; game: string; at: number; fromGuest?: string }
 interface Cache {
   plays: Record<string, Play>;
   arcade: Record<string, ArcadePlay>;
-  /** Games finished by guests (no name yet), from guest-plays */
-  guests?: Record<string, GuestPlay>;
+
   users: Record<string, { at: number; ref?: string; fromGuest?: string; guestGames?: number }>;
   playsUntil: number;
   usersUntil: number;
@@ -66,13 +64,6 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
     : { plays: {}, arcade: {}, users: {}, playsUntil: start, usersUntil: start };
   const now = Date.now();
   const since = Timestamp.fromMillis(Math.max(start, cache.playsUntil - OVERLAP_MS));
-  // Guest plays need their own Firestore rule; without it, carry on without them
-  const g = await getDocs(query(collection(db, "guest-plays"), where("at", ">=", since))).catch(() => null);
-  cache.guests ??= {};
-  g?.docs.forEach((d) => {
-    const x = d.data() as { guest?: string; dateKey?: string; late?: boolean; at?: Timestamp };
-    cache.guests![d.id] = { guest: x.guest ?? "?", day: x.dateKey ?? "", late: !!x.late, at: x.at?.toMillis() ?? Date.now() };
-  });
   const [p, a, u] = await Promise.all([
     getDocs(query(collection(db, "daily-scores"), where("timestamp", ">=", since))),
     getDocs(query(collection(db, "scores"), where("timestamp", ">=", since))),
@@ -80,12 +71,12 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   ]);
   if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
   a.docs.forEach((d) => {
-    const x = d.data() as { username?: string; game?: string; timestamp?: Timestamp };
-    cache.arcade[d.id] = { user: (x.username ?? "").toLowerCase(), game: x.game ?? "?", at: x.timestamp?.toMillis() ?? now };
+    const x = d.data() as { username?: string; game?: string; timestamp?: Timestamp; playedAt?: Timestamp; fromGuest?: string };
+    cache.arcade[d.id] = { user: (x.username ?? "").toLowerCase(), game: x.game ?? "?", at: (x.playedAt ?? x.timestamp)?.toMillis?.() ?? now, fromGuest: x.fromGuest };
   });
   p.docs.forEach((d) => {
-    const x = d.data() as { username: string; game: DailyGameSlug; dateKey: string; score: number; timestamp?: Timestamp; late?: boolean };
-    cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: x.timestamp?.toMillis() ?? now, late: x.late || undefined };
+    const x = d.data() as { username: string; game: DailyGameSlug; dateKey: string; score: number; timestamp?: Timestamp; playedAt?: Timestamp; late?: boolean; fromGuest?: string };
+    cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: (x.playedAt ?? x.timestamp)?.toMillis?.() ?? now, late: x.late || undefined, fromGuest: x.fromGuest };
   });
   u.docs.forEach((d) => {
     const x = d.data() as { createdAt?: Timestamp; referredBy?: string; fromGuest?: string; guestGames?: number };
@@ -95,17 +86,24 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   for (const [id, x] of Object.entries(cache.plays)) if (x.at < start) delete cache.plays[id];
   for (const [id, x] of Object.entries(cache.arcade)) if (x.at < start) delete cache.arcade[id];
   for (const [id, x] of Object.entries(cache.users)) if (x.at < start) delete cache.users[id];
-  for (const [id, x] of Object.entries(cache.guests ?? {})) if (x.at < start) delete cache.guests![id];
   cache.playsUntil = now;
   cache.usersUntil = now;
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch { /* ignore */ }
-  return { cache, reads: p.size + a.size + u.size + (g?.size ?? 0) };
+  return { cache, reads: p.size + a.size + u.size };
 }
 
 function crunch(cache: Cache) {
   const today = todayKey();
-  // Yesterday's-set plays (made the next day) stay out of the per-day numbers
-  const plays = Object.values(cache.plays).filter((p) => !p.late);
+  const isGuest = (u: string) => u.startsWith("guest-");
+  // Guests who picked a name: their games were copied to the account, so their guest copies are dropped
+  // (the account's copy counts). Known from the account (users.fromGuest) or the copies themselves.
+  const convertedGuests = new Map<string, string>();
+  for (const [n, x] of Object.entries(cache.users)) if (x.fromGuest) convertedGuests.set(x.fromGuest, n);
+  for (const p of Object.values(cache.plays)) if (p.fromGuest) convertedGuests.set(p.fromGuest, p.user);
+  for (const p of Object.values(cache.arcade)) if (p.fromGuest) convertedGuests.set(p.fromGuest, p.user);
+  // Every daily game (old yesterday's-set plays aside), guests included
+  const allPlays = Object.values(cache.plays).filter((p) => !p.late);
+  const plays = allPlays.filter((p) => !(isGuest(p.user) && convertedGuests.has(p.user)));
   const users = Object.entries(cache.users);
   const days7 = Array.from({ length: 7 }, (_, i) => shiftDay(today, i - 6));
 
@@ -117,8 +115,9 @@ function crunch(cache: Cache) {
     m.set(pl.user, (m.get(pl.user) ?? 0) + 1);
   }
   const signupDay = new Map(users.map(([name, x]) => [name, localDay(x.at)]));
-  const guestPlays = Object.values(cache.guests ?? {});
-  const guestsOn = (d: string) => new Set(guestPlays.filter((x) => x.day === d && !x.late).map((x) => x.guest)).size;
+  const guestPlays = plays.filter((p) => isGuest(p.user));
+  const guestsOn = (d: string) => new Set(guestPlays.filter((x) => x.day === d).map((x) => x.user)).size;
+  const namedOn = (d: string) => [...(byDay.get(d)?.keys() ?? [])].filter((u) => !isGuest(u)).length;
 
   // Last 24 hours, hour by hour
   const now = Date.now();
@@ -129,8 +128,8 @@ function crunch(cache: Cache) {
     return {
       label: new Date(h).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
       Signups: users.filter(([, x]) => inHour(x.at)).length,
-      Players: new Set(plays.filter((p) => inHour(p.at)).map((p) => p.user)).size,
-      Guests: new Set(guestPlays.filter((p) => inHour(p.at)).map((p) => p.guest)).size,
+      Players: new Set(plays.filter((p) => inHour(p.at) && !isGuest(p.user)).map((p) => p.user)).size,
+      Guests: new Set(guestPlays.filter((p) => inHour(p.at)).map((p) => p.user)).size,
     };
   });
 
@@ -138,7 +137,7 @@ function crunch(cache: Cache) {
   const week = days7.map((d) => ({
     label: dayLabel(d),
     Signups: users.filter(([, x]) => localDay(x.at) === d).length,
-    Players: byDay.get(d)?.size ?? 0,
+    Players: namedOn(d),
     Guests: guestsOn(d),
   }));
 
@@ -173,7 +172,7 @@ function crunch(cache: Cache) {
   });
 
   // Arcade: games per day by game, today's totals
-  const arcadePlays = Object.values(cache.arcade);
+  const arcadePlays = Object.values(cache.arcade).filter((p) => !(isGuest(p.user) && convertedGuests.has(p.user)));
   const arcadeByDay = days7.map((d) => {
     const row: Record<string, number | string> = { label: dayLabel(d) };
     for (const g of ARCADE) row[g.slug] = arcadePlays.filter((p) => localDay(p.at) === d && p.game === g.slug).length;
@@ -218,23 +217,23 @@ function crunch(cache: Cache) {
     const sc = plays.filter((p) => p.day === today && p.game === g.slug).map((p) => p.score);
     return { game: g, n: sc.length, avg: sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null, best: sc.length ? Math.max(...sc) : null };
   });
-  // --- Guests: people playing without a name (guest-plays), and which of them picked one (users.fromGuest)
-  const converted = new Map(users.filter(([, x]) => x.fromGuest).map(([n, x]) => [x.fromGuest!, { user: n, at: x.at }]));
-  const weekGuestPlays = guestPlays.filter((p) => p.day >= days7[0] && !p.late);
+  // --- Guests: everyone who played without a name this week, and which of them picked one
+  const rawGuestPlays = allPlays.filter((p) => isGuest(p.user));
+  const weekGuestPlays = rawGuestPlays.filter((p) => p.day >= days7[0]);
   const guestDays = new Map<string, Set<string>>();
-  for (const p of weekGuestPlays) { if (!guestDays.has(p.guest)) guestDays.set(p.guest, new Set()); guestDays.get(p.guest)!.add(p.day); }
+  for (const p of weekGuestPlays) { if (!guestDays.has(p.user)) guestDays.set(p.user, new Set()); guestDays.get(p.user)!.add(p.day); }
   const firstGuestDay = new Map<string, string>();
-  for (const p of guestPlays) if (!p.late && (!firstGuestDay.has(p.guest) || p.day < firstGuestDay.get(p.guest)!)) firstGuestDay.set(p.guest, p.day);
+  for (const p of rawGuestPlays) if (!firstGuestDay.has(p.user) || p.day < firstGuestDay.get(p.user)!) firstGuestDay.set(p.user, p.day);
   const weekGuests = [...guestDays.keys()];
   const guestFunnel = {
     guests: weekGuests.length,
-    named: weekGuests.filter((g) => converted.has(g)).length,
-    stayingGuest: weekGuests.filter((g) => !converted.has(g) && guestDays.get(g)!.size >= 2).length,
-    oneAndDone: weekGuests.filter((g) => !converted.has(g) && guestDays.get(g)!.size === 1).length,
+    named: weekGuests.filter((g) => convertedGuests.has(g)).length,
+    stayingGuest: weekGuests.filter((g) => !convertedGuests.has(g) && guestDays.get(g)!.size >= 2).length,
+    oneAndDone: weekGuests.filter((g) => !convertedGuests.has(g) && guestDays.get(g)!.size === 1).length,
     gamesPerGuest: weekGuests.length ? Math.round((weekGuestPlays.length / weekGuests.length) * 10) / 10 : 0,
     gamesBeforeName: (() => { const n = users.filter(([, x]) => x.fromGuest && x.guestGames != null); return n.length ? Math.round((n.reduce((a, [, x]) => a + x.guestGames!, 0) / n.length) * 10) / 10 : null; })(),
     days: days7.map((d) => {
-      const on = new Set(weekGuestPlays.filter((p) => p.day === d).map((p) => p.guest));
+      const on = new Set(weekGuestPlays.filter((p) => p.day === d).map((p) => p.user));
       return {
         label: dayLabel(d),
         guests: on.size,
@@ -243,8 +242,7 @@ function crunch(cache: Cache) {
       };
     }),
   };
-  // Today's players without double counting: named players + guests who haven't picked a name since
-  const guestsTodayUnnamed = [...new Set(guestPlays.filter((p) => p.day === today && !p.late).map((p) => p.guest))].filter((g) => !converted.has(g)).length;
+  const guestsTodayUnnamed = guestsOn(today);
 
   const invites = users.filter(([, x]) => x.ref).sort((a, b) => b[1].at - a[1].at).map(([n, x]) => ({ user: n, by: x.ref!, at: x.at }));
 
@@ -252,8 +250,8 @@ function crunch(cache: Cache) {
     last24, week, spread, bounce, returning, gamesByDay, arcadeByDay, arcade, cohorts, perGame, invites, guestFunnel,
     tiles: {
       guests: guestsTodayUnnamed,
-      named: todayPlayers.size,
-      players: todayPlayers.size + guestsTodayUnnamed,
+      named: namedOn(today),
+      players: todayPlayers.size,
       playersY: yPlayers.size,
       returningToday: returning[returning.length - 1].Returning,
       signups: newToday.length,

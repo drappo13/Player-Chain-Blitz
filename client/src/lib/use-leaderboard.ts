@@ -9,6 +9,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { isGuestName } from "./guest";
 import type { GameSlug } from "./save-score";
 
 export interface LeaderboardEntry {
@@ -69,6 +70,7 @@ async function fetchGameLeaderboard(
   const bestByUser = new Map<string, number>();
   snap.forEach((d) => {
     const data = d.data() as { username: string; score: number; timestamp?: Timestamp };
+    if (isGuestName(data.username)) return; // guests aren't on the leaderboards
     if (startOfDay && data.timestamp) {
       const docDate = data.timestamp.toDate();
       if (docDate < startOfDay) return;
@@ -118,6 +120,7 @@ async function fetchGlobalLeaderboard(
   const userStats = new Map<string, { plays: number; totalScore: number }>();
   snap.forEach((d) => {
     const data = d.data() as { username: string; score: number; timestamp?: Timestamp };
+    if (isGuestName(data.username)) return; // guests aren't on the leaderboards
     if (startOfDay && data.timestamp) {
       const docDate = data.timestamp.toDate();
       if (docDate < startOfDay) return;
