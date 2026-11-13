@@ -2,21 +2,18 @@ import { useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { todayKey } from "@/lib/daily";
-import { askedThisVisit, askRecord, noteAsk } from "@/lib/asks";
+import { claimAutoAllowed, noteAsk } from "@/lib/asks";
 import { trackEvent } from "@/lib/firebase";
 
 /** On a guest's end screen: put this score on the leaderboard by picking a name.
- *  The pick-a-name sheet also opens by itself at the first finish and once on a later day, then never again. */
+ *  The pick-a-name sheet also opens by itself here, within the shared twice-ever limit (lib/asks.ts). */
 export function ClaimCard({ game, score }: { game: string; score?: number }) {
   const { openClaim } = useUser();
   let invitedBy: string | null = null;
   try { invitedBy = localStorage.getItem("pcb-ref"); } catch { /* ignore */ }
   useEffect(() => {
-    const today = todayKey();
-    const r = askRecord("claim");
-    const due = r.count === 0 || (r.count === 1 && r.lastDay !== today);
-    if (!due || askedThisVisit()) return;
-    const t = setTimeout(() => { noteAsk("claim", today); openClaim("end_screen_auto"); }, 1400);
+    if (!claimAutoAllowed()) return;
+    const t = setTimeout(() => { noteAsk("claim", todayKey()); openClaim("end_screen_auto"); }, 1400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
