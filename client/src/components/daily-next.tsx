@@ -51,12 +51,11 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
   );
 }
 
-/** How many answers make CentreCircle/Griddle count for today: a share of the board (about the
- *  bottom fifth of players who submit), within sensible bounds. */
+/** How many answers make CentreCircle/Griddle count for today. Flat numbers: effort doesn't scale with
+ *  board size (CentreCircle medians were 8 on a 53-name board and 13 on a 185-name one), and these sit
+ *  around the 30–40th percentile of people who submit — a bit of effort, not a lot. Capped for tiny boards. */
 export function completeTarget(game: "centrecircle" | "griddle", total: number): number {
-  return game === "centrecircle"
-    ? Math.min(10, Math.max(4, Math.round(total * 0.05)))
-    : Math.min(10, Math.max(5, Math.round(total * 0.035)));
+  return Math.min(game === "centrecircle" ? 6 : 10, Math.max(1, Math.floor(total / 3)));
 }
 
 /** Open-ended games, before today counts: one segment per answer needed. Shown in place of the
