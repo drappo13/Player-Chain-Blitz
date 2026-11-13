@@ -424,7 +424,7 @@ export default function CentreCircle() {
   const tips = useGameTips("centrecircle", firstTime && !late, [
     { id: "start", when: state.found.length === 0 && !isFinished, until: typed,
       text: <>Spell the <b>surname</b> of any Premier League player using these letters. Letters can repeat.</> },
-    { id: "first", when: firstGuess !== null, until: guesses >= 4,
+    { id: "first", when: firstGuess !== null, until: guesses >= 2,
       text: firstGuess === "wrong"
         ? <>Only players with <b>Premier League</b> appearances count, and only surnames.</>
         : <>The <b className="text-green-400">green centre letter</b> doubles your points. Legends (★) double again.</> },
@@ -867,15 +867,14 @@ export default function CentreCircle() {
 
 
         {/* Found header + tracker / submit */}
-        <div className="w-full flex items-center justify-between mb-2">
-          {/* How-to tips sit in the empty space under "Found", clear of the letters and buttons */}
-          <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
-            onOk={tips.ok} onSkip={tips.skip} accent="green" place="bottom" align="start" arrow={false}>
+        {/* How-to tips sit full width in the empty space under "Found", clear of the letters and buttons */}
+        <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
+          onOk={tips.ok} onSkip={tips.skip} accent="green" place="bottom" arrow={false} full className="w-full mb-2">
+        <div className="w-full flex items-center justify-between">
           <h3 className="text-sm font-semibold text-muted-foreground">
             Found <span className="tabular-nums">{state.found.length}</span>
             <span className="font-normal"> · {centreUpper} scores double</span>
           </h3>
-          </TipAnchor>
           {!isFinished && (
             <div className="flex items-center gap-1.5">
               {state.found.length > 0 && (
@@ -889,6 +888,7 @@ export default function CentreCircle() {
             </div>
           )}
         </div>
+        </TipAnchor>
 
         <AnimatePresence initial={false}>
           {showTracker && !isFinished && (

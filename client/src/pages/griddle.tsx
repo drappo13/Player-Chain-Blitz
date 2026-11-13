@@ -496,7 +496,7 @@ export default function Griddle() {
   const tips = useGameTips("griddle", firstTime && !late, [
     { id: "start", when: state.foundPlayers.length === 0 && !isFinished, until: typed,
       text: <>Name a player who played for <b>2 or more</b> of these clubs. Premier League apps only.</> },
-    { id: "first", when: firstGuess !== null, until: guesses >= 4,
+    { id: "first", when: firstGuess !== null, until: guesses >= 2,
       text: firstGuess === "wrong"
         ? <>Players who don't fit cost a life (♥). Typos and repeats are free.</>
         : <>More clubs, more points. Clubs next to each other score 2×, a full row 5×.</> },
@@ -1095,15 +1095,14 @@ export default function Griddle() {
             View Results & Leaderboard
           </button>
         ) : (
-          <form onSubmit={handleSubmit} className="w-full mb-3 flex gap-2">
-            <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
-              onOk={tips.ok} onSkip={tips.skip} accent="blue" place="bottom" align="start" className="flex-1 flex">
+          <TipAnchor show={tips.tip?.id === "start" || tips.tip?.id === "first"} text={tips.tip?.id === "start" || tips.tip?.id === "first" ? tips.tip.text : undefined}
+            onOk={tips.ok} onSkip={tips.skip} accent="blue" place="bottom" align="start" full className="w-full mb-3">
+          <form onSubmit={handleSubmit} className="w-full flex gap-2">
             <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
               placeholder="Enter a player name..."
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className={`flex-1 min-w-0 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
             />
-            </TipAnchor>
             <TipAnchor {...tipProps("tracker")} place="bottom" align="end" className="flex">
             <button type="button" onClick={() => setShowTracker(v => { if (!v) trackEvent("hints_open", { game: "griddle", mode: "daily" }); return !v; })} aria-pressed={showTracker}
               className={`px-3 py-3 rounded-xl border transition-colors ${showTracker
@@ -1123,6 +1122,7 @@ export default function Griddle() {
               </TipAnchor>
             )}
           </form>
+          </TipAnchor>
         )}
 
         {/* Tracker — opened from the list button beside the flag */}
