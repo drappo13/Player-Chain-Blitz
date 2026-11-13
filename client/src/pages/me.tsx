@@ -5,6 +5,8 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone, Share, SquarePlus, EllipsisVertical } from "lucide-react";
 import { useInstall } from "@/lib/install";
+import { pushState, enablePush, currentSubscription, localTestNotification } from "@/lib/push";
+import { Bell } from "lucide-react";
 import { useUser, shareLink } from "@/lib/user-context";
 import { useUserStats } from "@/lib/use-user-stats";
 import type { GameSlug } from "@/lib/save-score";
@@ -168,6 +170,47 @@ function InstallCard() {
   );
 }
 
+/** Admin-only push test: turn on, fire a local test, copy the subscription for a server-sent test. */
+function PushTestCard() {
+  const [state, setState] = useState(pushState());
+  const [sub, setSub] = useState<string>("");
+  const [msg, setMsg] = useState("");
+  useEffect(() => { currentSubscription().then((s) => s && setSub(JSON.stringify(s))).catch(() => {}); }, []);
+  const turnOn = async () => {
+    try {
+      const s = await enablePush();
+      setState(pushState());
+      if (s) setSub(JSON.stringify(s));
+      else setMsg("Permission not granted");
+    } catch (e) { setMsg(String(e)); }
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(sub); setMsg("Copied"); } catch { setMsg("Couldn't copy, select the text below"); }
+  };
+  const btn = "rounded-full bg-sky-500 text-white px-3 py-1.5 text-xs font-black";
+  return (
+    <section className="rounded-2xl border border-dashed border-sky-500/50 bg-card p-4 mb-6 space-y-3">
+      <div className="flex items-center gap-3">
+        <span className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-300 flex items-center justify-center shrink-0"><Bell className="w-5 h-5" /></span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-black text-foreground">Notifications (test, admin only)</p>
+          <p className="text-xs text-muted-foreground">Status: {state}</p>
+        </div>
+      </div>
+      {state === "needs-install" && <p className="text-xs text-muted-foreground">Open drapk.in from your home screen icon, then come back here.</p>}
+      {state === "unsupported" && <p className="text-xs text-muted-foreground">This browser can't do push notifications.</p>}
+      {state === "denied" && <p className="text-xs text-muted-foreground">Blocked. Turn them back on in Settings › Notifications › drapk.in.</p>}
+      <div className="flex flex-wrap gap-2">
+        {(state === "default" || (state === "granted" && !sub)) && <button onClick={turnOn} className={btn}>Turn on notifications</button>}
+        {state === "granted" && <button onClick={() => localTestNotification().catch((e) => setMsg(String(e)))} className={btn}>Test on this phone</button>}
+        {sub && <button onClick={copy} className={btn}>Copy subscription</button>}
+      </div>
+      {msg && <p className="text-xs text-amber-300">{msg}</p>}
+      {sub && <textarea readOnly value={sub} rows={3} className="w-full rounded-lg bg-background border border-border p-2 text-[10px] font-mono text-muted-foreground" />}
+    </section>
+  );
+}
+
 /** When the account was made (falls back to the first daily game). */
 function useMemberSince(username: string | undefined, firstDay?: string): string | null {
   const [created, setCreated] = useState<Date | null>(null);
@@ -241,6 +284,8 @@ export default function Me() {
       <InviteCard username={user.username} streak={current} invites={invites} />
 
       <InstallCard />
+
+      {user.username.toLowerCase() === "tiger" && <PushTestCard />}
 
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex items-center justify-between mb-3 gap-3">
