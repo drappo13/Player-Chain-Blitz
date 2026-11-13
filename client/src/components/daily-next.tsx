@@ -212,13 +212,17 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
         </motion.div>
       )}
 
-      {!late && dayZero && !countsToday(yView[current]) && (
-        <button
-          onClick={() => { trackEvent("yesterday_open", { from: "end_screen", game: current }); navigate(gameHref(DAILY_META[current].href, true)); }}
-          className="mt-3 w-full text-center text-xs font-semibold text-sky-300 hover:text-sky-200">
-          Liked it? Play yesterday's {DAILY_META[current].name} ›
-        </button>
-      )}
+      {/* Day 0, set complete: offer yesterday's set (just for fun) */}
+      {!late && dayZero && !nextMeta && (() => {
+        const first = DAILY_GAMES.find((g) => !countsToday(yView[g.slug]));
+        return first && (
+          <button
+            onClick={() => { trackEvent("yesterday_open", { from: "end_screen", game: current }); navigate(gameHref(first.href, true)); }}
+            className="mt-3 w-full text-center text-xs font-semibold text-sky-300 hover:text-sky-200">
+            Want more? Play yesterday's set too ›
+          </button>
+        );
+      })()}
 
       <div className="text-center">
         <button onClick={() => navigate("/")} className="mt-4 text-sm font-semibold text-muted-foreground hover:text-foreground">
