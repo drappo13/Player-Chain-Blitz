@@ -446,7 +446,7 @@ function getHitDotBg(hits: number): string {
 // --- Component ---
 export default function Griddle() {
   const [, navigate] = useLocation();
-  const { user } = useUser();
+  const { user, isGuest } = useUser();
   const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const boardClubs = useMemo(() => generateBoard(dateKey), [dateKey]);
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
@@ -503,7 +503,10 @@ export default function Griddle() {
     { id: "tracker", when: !isFinished && (state.foundPlayers.length >= 3 || misses >= 2), until: trackerOpened,
       text: <>Stuck? This shows how many players are left for each club.</> },
     { id: "finish", when: !isFinished && state.foundPlayers.length >= countAt, until: finishTapped,
-      text: <>Your score's already on the leaderboard. Tap the <b>flag</b> when you're done to see the answers.</> },
+      // Named players' scores save to the board as they play; guests are kept off boards until they pick a name
+      text: isGuest
+        ? <>Pick a name to get your score on the leaderboard. Tap the <b>flag</b> when you're done to see the answers.</>
+        : <>Your score's already on the leaderboard. Tap the <b>flag</b> when you're done to see the answers.</> },
   ]);
   const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip, accent: "blue" as const });
   const autoFinishing = useRef(false);
