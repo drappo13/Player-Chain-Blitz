@@ -132,7 +132,7 @@ Invitees are merged in automatically; a new account from an invite link starts w
 Only used by /stats to count guest players.
 
 **`push-subs`** — `push-subs/{username}` = `{ endpoint, keys, tz, streak, morning, dead, updatedAt }` for reminders
-(`lib/push.ts`). Sent by `scripts/push/send.mjs` (VAPID private key lives outside the repo in `~/.drapkin/vapid.json`).
+(`lib/push.ts`; UI switched off for now via `SHOW_HOME_SCREEN` / `SHOW_REMINDER_ASK`). Sent by `scripts/push/send.mjs` (VAPID private key lives outside the repo in `~/.drapkin/vapid.json`).
 
 ### Security Rules (Firebase Console)
 

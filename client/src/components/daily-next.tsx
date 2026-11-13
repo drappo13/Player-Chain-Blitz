@@ -11,6 +11,8 @@ import {
 import { ClaimCard } from "@/components/claim-card";
 import { IS_LOCALHOST } from "@/lib/guest";
 import { ReminderAsk } from "@/components/reminders";
+
+const SHOW_REMINDER_ASK = false;
 import { GameIcon } from "@/components/game-icons";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
@@ -167,7 +169,8 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
   return (
     <div className="w-full max-w-sm mx-auto text-left">
       {isGuest && !late && <ClaimCard game={current} score={score ?? day[current]?.score} />}
-      {!isGuest && <ReminderAsk daysPlayed={daysPlayed} />}
+      {/* Reminder / Add to Home Screen ask: off until that journey is tested */}
+      {SHOW_REMINDER_ASK && !isGuest && <ReminderAsk daysPlayed={daysPlayed} />}
       <div className="flex items-center justify-between mb-2 text-xs font-semibold">
         <span className="uppercase tracking-widest text-muted-foreground">{late ? "Yesterday's set" : "Today's set"}</span>
         <span className="text-foreground tabular-nums">{done.size}/{DAILY_GAMES.length}</span>

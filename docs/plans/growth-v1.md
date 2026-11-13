@@ -11,6 +11,10 @@ Data we have (13 Nov 2026):
 - Griddle submitted (n=249): median 19 players, p25 = 10, p10 = 4.
 - Invites: 4 so far, one second-generation chain.
 
+## Shipped 13 Nov 2026
+
+Everything below except **Add to Home Screen and reminders**: built, but switched off (`SHOW_HOME_SCREEN` in `pages/me.tsx`, `SHOW_REMINDER_ASK` in `components/daily-next.tsx`) until the home-screen journey — separate login on iPhone — has been tested properly.
+
 ## Changes after product review (these override the sections below)
 
 1. **Save as you go instead of next-day auto-submit.** Once CentreCircle/Griddle counts (5 names/players),
