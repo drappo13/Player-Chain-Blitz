@@ -174,10 +174,10 @@ function crunch(cache: Cache) {
       .sort((a, b) => b.week - a.week),
   };
 
-  // Cohorts: everyone who signed up on a day, and when they played after
+  // Cohorts by sign-up day: "all" = every sign-up; "played" = only those who finished a daily
+  // game on the day they signed up (people who actually engaged, without the bounces).
   const cohortDays = Array.from({ length: 10 }, (_, i) => shiftDay(today, -i)).filter((d) => [...signupDay.values()].includes(d));
-  const cohorts = cohortDays.map((d) => {
-    const members = [...signupDay].filter(([, sd]) => sd === d).map(([n]) => n);
+  const cohortRow = (d: string, members: string[]) => {
     const playedOn = (offset: number) => {
       const k = shiftDay(d, offset);
       if (k > today) return null;
@@ -186,7 +186,12 @@ function crunch(cache: Cache) {
     };
     const everBack = members.filter((n) => [...byDay].some(([k, m]) => k > d && m.has(n))).length;
     return { day: d, size: members.length, d: Array.from({ length: 7 }, (_, i) => playedOn(i)), everBack, open: d === today };
-  });
+  };
+  const signedUpOn = (d: string) => [...signupDay].filter(([, sd]) => sd === d).map(([n]) => n);
+  const cohorts = {
+    all: cohortDays.map((d) => cohortRow(d, signedUpOn(d))),
+    played: cohortDays.map((d) => cohortRow(d, signedUpOn(d).filter((n) => byDay.get(d)?.has(n)))).filter((c) => c.size > 0),
+  };
 
   // Today: tiles and per-game
   const todayPlayers = byDay.get(today) ?? new Map();
@@ -379,38 +384,7 @@ export default function StatsPage() {
             </div>
           </Card>
 
-          <Card title="Cohorts" note="Everyone who signed up on a day, and the share who finished a daily game on each day after. Ever back = played on any later day">
-            <div className="overflow-x-auto -mx-1">
-              <table className="w-full text-xs tabular-nums border-separate" style={{ borderSpacing: "3px" }}>
-                <thead className="text-[10px] text-muted-foreground">
-                  <tr>
-                    <th className="text-left font-semibold px-1">Signed up</th><th className="text-right font-semibold px-1">People</th>
-                    {["Day 0", "Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6"].map((h) => <th key={h} className="font-semibold px-1">{h}</th>)}
-                    <th className="font-semibold px-1">Ever back</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {s.cohorts.map((c) => (
-                    <tr key={c.day}>
-                      <td className="px-1 py-1 text-foreground whitespace-nowrap">{dayLabel(c.day)}</td>
-                      <td className="px-1 text-right text-muted-foreground">{c.size}</td>
-                      {c.d.map((n, i) => {
-                        const p = n === null ? null : pct(n, c.size);
-                        return (
-                          <td key={i} className="text-center rounded-md px-1.5 py-1.5 text-foreground" style={cellStyle(p)} title={n === null ? "" : `${n} of ${c.size}`}>
-                            {p === null ? "" : `${p}%`}
-                          </td>
-                        );
-                      })}
-                      <td className="text-center rounded-md px-1.5 py-1.5 font-bold text-emerald-200" style={c.open ? {} : { background: `rgba(52,211,153,${0.1 + (pct(c.everBack, c.size) / 100) * 0.6})` }}>
-                        {c.open ? "" : `${pct(c.everBack, c.size)}%`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          <CohortCard cohorts={s.cohorts} />
 
           <Card title="Arcade" note="Arcade games finished per day, by game"
             right={<div className="text-right text-xs text-muted-foreground tabular-nums"><p><span className="text-foreground font-black">{s.arcade.today}</span> today · {s.arcade.todayPlayers} players</p><p>{s.arcade.week} this week · {s.arcade.weekPlayers} players</p></div>}>
@@ -463,5 +437,58 @@ export default function StatsPage() {
         </>
       )}
     </HubPage>
+  );
+}
+
+type CohortRow = { day: string; size: number; d: (number | null)[]; everBack: number; open: boolean };
+
+function CohortCard({ cohorts }: { cohorts: { all: CohortRow[]; played: CohortRow[] } }) {
+  const [mode, setMode] = useState<"played" | "all">("played");
+  const rows = cohorts[mode];
+  const first = mode === "played" ? 1 : 0; // Day 0 is 100% by definition for players
+  const heads = ["Day 0", "Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6"].slice(first);
+  const note = mode === "played"
+    ? "People who signed up and finished a daily game that same day, and the share who finished one on each day after. Leaves out sign-up bounces. Ever back = played on any later day"
+    : "Everyone who signed up on a day, and the share who finished a daily game on each day after. Ever back = played on any later day";
+  const toggle = (
+    <div className="flex rounded-full bg-white/5 p-0.5 text-[11px] font-bold">
+      {([["played", "Players"], ["all", "All sign-ups"]] as const).map(([k, label]) => (
+        <button key={k} onClick={() => setMode(k)} className={`rounded-full px-2.5 py-1 ${mode === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>
+      ))}
+    </div>
+  );
+  return (
+    <Card title="Cohorts" note={note} right={toggle}>
+      <div className="overflow-x-auto -mx-1">
+        <table className="w-full text-xs tabular-nums border-separate" style={{ borderSpacing: "3px" }}>
+          <thead className="text-[10px] text-muted-foreground">
+            <tr>
+              <th className="text-left font-semibold px-1">Signed up</th><th className="text-right font-semibold px-1">People</th>
+              {heads.map((h) => <th key={h} className="font-semibold px-1">{h}</th>)}
+              <th className="font-semibold px-1">Ever back</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c.day}>
+                <td className="px-1 py-1 text-foreground whitespace-nowrap">{dayLabel(c.day)}</td>
+                <td className="px-1 text-right text-muted-foreground">{c.size}</td>
+                {c.d.slice(first).map((n, i) => {
+                  const p = n === null ? null : pct(n, c.size);
+                  return (
+                    <td key={i} className="text-center rounded-md px-1.5 py-1.5 text-foreground" style={cellStyle(p)} title={n === null ? "" : `${n} of ${c.size}`}>
+                      {p === null ? "" : `${p}%`}
+                    </td>
+                  );
+                })}
+                <td className="text-center rounded-md px-1.5 py-1.5 font-bold text-emerald-200" style={c.open ? {} : { background: `rgba(52,211,153,${0.1 + (pct(c.everBack, c.size) / 100) * 0.6})` }}>
+                  {c.open ? "" : `${pct(c.everBack, c.size)}%`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }
