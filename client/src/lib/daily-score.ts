@@ -113,12 +113,13 @@ export async function submitDailyScore(
 }
 
 // --- Save as you go (CentreCircle, Griddle) ---
-// Once a game counts for today its score is written and kept up to date as it rises (at most every
-// 15s, plus when the page is hidden). The doc id is the key, so later saves update the same doc;
+// Once a game counts for today its score is written straight away, then kept up to date as it rises
+// (at most every 5 minutes, plus whenever the page is hidden and at Finish). Opening the game again
+// saves the current score at once, so a tab killed without warning only leaves the board briefly behind. The doc id is the key, so later saves update the same doc;
 // Firestore rules only let an open doc's score go up. Finish writes it one last time with open: false.
 
 type LiveArgs = { username: string; game: DailyGameSlug; dateKey: string; score: number; found: number; total: number; state?: unknown; late?: boolean };
-const LIVE_EVERY = 15000;
+const LIVE_EVERY = 5 * 60 * 1000; // nobody watches the board live; leaving the page and Finish always save
 const live = new Map<string, { args: LiveArgs; last: number; timer?: ReturnType<typeof setTimeout> }>();
 
 async function writeLive(a: LiveArgs, final: boolean): Promise<boolean> {
@@ -154,7 +155,7 @@ if (typeof document !== "undefined") {
   });
 }
 
-/** Called on every change once the game counts for today: saves now, then at most every 15s. */
+/** Called on every change once the game counts for today: saves now, then at most every 5 minutes. */
 export function saveLiveScore(a: LiveArgs) {
   const k = makeKey(a.username, a.game, a.dateKey);
   const e = live.get(k);
