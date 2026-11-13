@@ -16,7 +16,7 @@ const EVENT = "pcb-friends-changed";
 
 const listKey = (u: string) => `pcb-friends-${u.toLowerCase()}`;
 const todayCacheKey = (u: string, d: string) => `pcb-friends-today-${u.toLowerCase()}-${d}`;
-const invitesCheckedKey = (u: string) => `pcb-friends-invites-${u.toLowerCase()}`;
+const invitesCheckedKey = (u: string) => `pcb-friends-invited-${u.toLowerCase()}`; // invitees already added
 
 function readList(u: string): { list: string[]; at: number } | null {
   try { return JSON.parse(localStorage.getItem(listKey(u)) || "null"); } catch { return null; }
@@ -47,18 +47,17 @@ async function loadList(u: string): Promise<string[]> {
       const snap = await getDoc(doc(db, "friends", key));
       list = snap.exists() ? ((snap.data() as { list?: string[] }).list ?? []) : [];
     } catch { return cached?.list ?? []; }
-    // Invitees become friends automatically
-    const today = new Date().toDateString();
+    // Invitees become friends automatically (checked whenever the list refreshes; each invitee is
+    // only added once, so removing one later sticks)
     try {
-      if (localStorage.getItem(invitesCheckedKey(key)) !== today) {
-        const inv = await getDocs(query(collection(db, "users"), where("referredBy", "==", key)));
-        const names = inv.docs.map((d) => d.id).filter((n) => n !== key && !list.includes(n));
-        if (names.length) {
-          list = [...list, ...names].slice(0, MAX_FRIENDS);
-          await setDoc(doc(db, "friends", key), { list, updatedAt: serverTimestamp() });
-        }
-        localStorage.setItem(invitesCheckedKey(key), today);
+      const inv = await getDocs(query(collection(db, "users"), where("referredBy", "==", key)));
+      const added: string[] = JSON.parse(localStorage.getItem(invitesCheckedKey(key)) || "[]");
+      const names = inv.docs.map((d) => d.id).filter((n) => n !== key && !list.includes(n) && !added.includes(n));
+      if (names.length) {
+        list = [...list, ...names].slice(0, MAX_FRIENDS);
+        await setDoc(doc(db, "friends", key), { list, updatedAt: serverTimestamp() });
       }
+      localStorage.setItem(invitesCheckedKey(key), JSON.stringify([...new Set([...added, ...inv.docs.map((d) => d.id)])]));
     } catch { /* ignore */ }
     writeList(key, list);
     return list;
