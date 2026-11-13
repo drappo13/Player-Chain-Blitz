@@ -373,7 +373,7 @@ const finePointer = () => typeof window !== "undefined" && window.matchMedia?.("
 // --- Component ---
 export default function CentreCircle() {
   const [, navigate] = useLocation();
-  const { user } = useUser();
+  const { user, isGuest } = useUser();
   const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const board = useMemo(() => boardFor(dateKey), [dateKey]);
   const answers = useMemo(() => answersFor(board), [board]);
@@ -431,7 +431,10 @@ export default function CentreCircle() {
     { id: "tracker", when: !isFinished && (state.found.length >= 3 || misses >= 2), until: trackerOpened,
       text: <>Stuck? This shows how many names are left, by first letter.</> },
     { id: "finish", when: !isFinished && state.found.length >= countAt, until: finishTapped,
-      text: <>Your score's already on the leaderboard. Tap <b>Finish</b> when you're done to see the answers.</> },
+      // Named players' scores save to the board as they play; guests are kept off boards until they pick a name
+      text: isGuest
+        ? <>Pick a name to get your score on the leaderboard. Tap <b>Finish</b> when you're done to see the answers.</>
+        : <>Your score's already on the leaderboard. Tap <b>Finish</b> when you're done to see the answers.</> },
   ]);
   const tipProps = (id: string) => ({ show: tips.tip?.id === id, text: tips.tip?.id === id ? tips.tip.text : undefined, onOk: tips.ok, onSkip: tips.skip, accent: "green" as const });
   const foundSet = useMemo(() => new Set(state.found), [state.found]);
