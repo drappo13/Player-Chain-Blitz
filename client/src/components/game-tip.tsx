@@ -73,10 +73,12 @@ export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom"
       {children}
       <AnimatePresence>
         {show && text && (
+          // Positioning lives on a plain box: framer's transform would otherwise wipe out the centring
+          <div className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2.5" : "bottom-full mb-2.5"} w-[min(280px,calc(100vw-2rem))]`}>
           <motion.div
             initial={{ opacity: 0, y: place === "bottom" ? -4 : 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2.5" : "bottom-full mb-2.5"} w-[min(280px,calc(100vw-2rem))]`}
+            className="relative"
             role="status"
           >
             <span className={`absolute ${arrowX} ${place === "bottom" ? "-top-1.5" : "-bottom-1.5"} w-3 h-3 rotate-45 bg-white`} />
@@ -92,6 +94,7 @@ export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom"
               Skip tips
             </button>
           </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
