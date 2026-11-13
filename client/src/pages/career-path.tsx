@@ -13,7 +13,7 @@ import { useUser, shareLink } from "@/lib/user-context";
 import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner } from "@/components/daily-next";
-import { useGameTips, TipAnchor } from "@/components/game-tip";
+import { useGameTips, TipAnchor, useOnce } from "@/components/game-tip";
 import { EndBoard } from "@/components/end-board";
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
@@ -346,8 +346,10 @@ export default function CareerPath() {
     return s.rounds.every(r => r.guesses.length === 0 && r.stage === 0) && !s.submitted && !hasPlayedBefore(user?.username, "careerpath");
   });
   const anyGuess = state.rounds.some(r => r.guesses.length > 0 || r.stage > 0);
+  // Gone as soon as they start typing, so it never sits on the name suggestions
+  const typed = useOnce(query.length > 0);
   const tips = useGameTips("careerpath", firstTime && !late, [
-    { id: "start", when: !anyGuess && !state.submitted, until: anyGuess,
+    { id: "start", when: !anyGuess && !state.submitted, until: anyGuess || typed,
       text: <>Who's this? Make a guess to reveal more clues.</> },
   ]);
   const checkedRemote = useRef(false);
@@ -640,7 +642,7 @@ export default function CareerPath() {
         {/* Guess box, or the answer */}
         {!done ? (
           <div className="w-full mt-4">
-            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} accent="violet" place="top" align="start" full>
+            <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} accent="violet" place="bottom" align="start" full>
             <div className="relative">
               <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={onKeyDown}
                 placeholder="Who is it?" aria-label="Guess a player" autoComplete="off" autoCorrect="off" spellCheck={false}
