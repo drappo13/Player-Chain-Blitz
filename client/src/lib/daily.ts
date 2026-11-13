@@ -482,7 +482,8 @@ export function useTodayRanks(username: string | undefined, dateKey: string, vie
         try {
           const r = await fetchRank(dateKey, game, score);
           if (r.of === 0) return; // nothing to rank against (e.g. offline)
-          if (isGuestName(username)) r.of += 1; // a guest isn't on the board: count them in
+          // You might not be on the board yet (guest, score still saving): count yourself in
+          if (r.rank > r.of) r.of = r.rank;
           out[game] = r;
           try { localStorage.setItem(k, JSON.stringify({ ...r, score, at: Date.now() })); } catch { /* ignore */ }
         } catch { /* ignore */ }

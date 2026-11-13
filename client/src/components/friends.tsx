@@ -44,7 +44,7 @@ export function FriendBest({ best }: { best?: FriendScore }) {
 }
 
 /** Me: friends and invites in one place — add by username, send your invite link, see who joined through it. */
-export function FriendsSection({ invitees, streak }: { invitees: string[]; streak: number }) {
+export function FriendsSection({ invitees, invitedBy, streak }: { invitees: string[]; invitedBy?: string | null; streak: number }) {
   const { user } = useUser();
   const { list, add, remove } = useFriends(user?.username);
   const [copied, setCopied] = useState(false);
@@ -56,8 +56,9 @@ export function FriendsSection({ invitees, streak }: { invitees: string[]; strea
     ].join("\n");
     if (await shareText(text)) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
-  // Invitees first, then everyone else you follow
-  const shown = [...list].sort((a, b) => Number(invitees.includes(b)) - Number(invitees.includes(a)));
+  // Who invited you, then people you invited, then everyone else you follow
+  const linked = (f: string) => (f === invitedBy ? 2 : invitees.includes(f) ? 1 : 0);
+  const shown = [...list].sort((a, b) => linked(b) - linked(a));
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -115,9 +116,10 @@ export function FriendsSection({ invitees, streak }: { invitees: string[]; strea
         <div className="mt-3 flex flex-wrap gap-1.5">
           {shown.map((f) => (
             <span key={f} className={`inline-flex items-center gap-1 rounded-full border pl-2.5 pr-1 py-1 text-xs font-semibold text-foreground ${
-              invitees.includes(f) ? "bg-primary/10 border-primary/40" : "bg-white/5 border-border"}`}>
+              linked(f) ? "bg-primary/10 border-primary/40" : "bg-white/5 border-border"}`}>
               {f}
-              {invitees.includes(f) && <span className="text-[10px] font-bold text-primary">joined via you</span>}
+              {f === invitedBy ? <span className="text-[10px] font-bold text-primary">invited you</span>
+                : invitees.includes(f) && <span className="text-[10px] font-bold text-primary">joined via you</span>}
               <button onClick={() => remove(f)} aria-label={`Remove ${f}`} className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-muted-foreground">
                 <X className="w-3 h-3" />
               </button>
