@@ -1,74 +1,68 @@
 rules_version = '2';
 
-// Firestore security rules for drapk.in
-//
-// To deploy:
-//   1) firebase login           (one-time, opens a browser)
-//   2) firebase init firestore  (one-time, point at this rules file; you can decline indexes)
-//   3) firebase deploy --only firestore:rules
-//
-// Or paste the contents of this file into the Rules editor at
-// https://console.firebase.google.com → Firestore Database → Rules tab → Publish.
-
+// Mirror of the rules in the Firebase console (publish there; this copy is what the
+// emulator tests in CI run against — keep them identical).
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users — username-only auth, no Firebase Auth required
-    match /users/{username} {
+    function isGuestDoc() {
+      return resource.data.username is string && resource.data.username.matches('guest-.*');
+    }
+    // Picking a name: a guest's game can be marked claimedBy, and nothing else about it changes
+    function onlyClaiming() {
+      return isGuestDoc() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimedBy']);
+    }
+
+    match /users/{userId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['username', 'avatar', 'createdAt'])
-                    && request.resource.data.username is string
-                    && request.resource.data.username.size() >= 2
-                    && request.resource.data.username.size() <= 30
-                    && request.resource.data.avatar is string
-                    && request.resource.data.avatar.size() <= 8;
+      allow create: if true;
       allow update, delete: if false;
     }
 
-    // Per-game scores — used by every game's leaderboard (incl. Arsenal quiz)
-    match /scores/{doc} {
+    match /scores/{scoreId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['username', 'game', 'score', 'timestamp'])
-                    && request.resource.data.username is string
-                    && request.resource.data.username.size() >= 1
-                    && request.resource.data.username.size() <= 30
-                    && request.resource.data.game in [
-                         'goalchain','slamchain','targetman','gridlock',
-                         'overlap','clubladder','griddle','arsenal-champions-2026'
-                       ]
-                    && request.resource.data.score is int
-                    && request.resource.data.score >= 0
-                    && request.resource.data.score <= 100000;
+      allow create: if true;
+      allow update: if onlyClaiming();
+      allow delete: if false;
+    }
+
+    match /daily-scores/{docId} {
+      allow read: if true;
+      allow create: if true;
+      // CentreCircle/Griddle save as you go: only an open score can be updated, it can only go up,
+      // and it can't be moved to another player/game/day. Finished scores stay locked.
+      // Guest games can also be marked claimedBy when the guest picks a name.
+      allow update: if (resource.data.open == true
+          && request.resource.data.score >= resource.data.score
+          && request.resource.data.key == resource.data.key
+          && request.resource.data.username == resource.data.username)
+        || onlyClaiming();
+      allow delete: if false;
+    }
+
+    match /friends/{username} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if false;
+    }
+
+    match /guest-plays/{playId} {
+      allow read: if true;
+      allow create: if true;
       allow update, delete: if false;
     }
 
-    // Daily-game scores (Griddle and other daily modes)
-    match /daily-scores/{doc} {
+    match /push-subs/{username} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['username', 'game', 'score', 'date', 'timestamp'])
-                    && request.resource.data.username is string
-                    && request.resource.data.game is string
-                    && request.resource.data.score is int
-                    && request.resource.data.score >= 0
-                    && request.resource.data.score <= 100000;
-      allow update, delete: if false;
+      allow create, update: if true;
+      allow delete: if false;
     }
 
-    // Anonymous quiz-play tracking. Every completed Arsenal quiz writes a record
-    // here, with a localStorage-generated anonId. Used for analytics only; the
-    // client never reads this collection back.
-    match /quiz_plays/{doc} {
+    // Anonymous quiz-play tracking (Arsenal quiz). Read-only on the server side;
+    // the client never reads this collection, only writes to it for analytics.
+    match /quiz_plays/{playId} {
       allow read: if false;
-      allow create: if request.resource.data.keys().hasOnly(['anonId', 'gameId', 'score', 'username', 'completedAt'])
-                    && request.resource.data.anonId is string
-                    && request.resource.data.anonId.size() <= 64
-                    && request.resource.data.gameId is string
-                    && request.resource.data.score is int
-                    && request.resource.data.score >= 0
-                    && request.resource.data.score <= 100
-                    && (request.resource.data.username == null
-                        || (request.resource.data.username is string
-                            && request.resource.data.username.size() <= 30));
+      allow create: if true;
       allow update, delete: if false;
     }
   }

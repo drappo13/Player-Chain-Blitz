@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, getCountFromServer } from "firebase/
 import { db, trackEvent } from "./firebase";
 import type { DailyGameSlug } from "./daily-score";
 import { shareLink } from "./user-context";
-import { isGuestName } from "./guest";
+import { isGuestName, WRITES_ENABLED } from "./guest";
 
 // --- The daily set ---
 // Order is the order of the home tiles and of the "Next up" chain on end screens.
@@ -311,7 +311,8 @@ function localHistory(username: string): DailyEntry[] {
 
 function fetchHistory(username: string): Promise<DailyEntry[]> {
   const key = username.toLowerCase();
-  if (isGuestName(key)) return Promise.resolve(localHistory(key));
+  // Guests are read from Firestore like anyone; only a test build that doesn't write uses the device
+  if (isGuestName(key) && !WRITES_ENABLED) return Promise.resolve(localHistory(key));
   const hit = historyFetches.get(key);
   if (hit && Date.now() - hit.at < HISTORY_TTL) return hit.promise;
   const promise = getDocs(query(collection(db, "daily-scores"), where("username", "==", key))).then((snap) => {
@@ -329,6 +330,8 @@ function fetchHistory(username: string): Promise<DailyEntry[]> {
   historyFetches.set(key, { at: Date.now(), promise });
   return promise;
 }
+
+if (typeof window !== "undefined") window.addEventListener("pcb-account-changed", () => historyFetches.clear());
 
 /** Forget the cached history (after a late play or claiming a name) so the next read refetches. */
 export function invalidateHistory(username?: string) {
