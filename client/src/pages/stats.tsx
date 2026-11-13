@@ -14,12 +14,11 @@ import type { DailyGameSlug } from "@/lib/daily-score";
 // only what's new since the last visit is fetched, so refreshing costs a handful of reads.
 const ADMINS = ["tiger"];
 const WINDOW_DAYS = 14;
-const CACHE_KEY = "pcb-stats-cache-v2";
+const CACHE_KEY = "pcb-stats-cache-v3";
 const OVERLAP_MS = 5 * 60 * 1000; // re-read a few minutes back in case of late server timestamps
 
 const C = { signups: "#a78bfa", players: "#38bdf8", grid: "rgba(255,255,255,0.06)", axis: "#8a8a86" };
 const BANDS = [
-  { key: "g0", label: "0 (signed up only)", colour: "#3f3f46" },
   { key: "g1", label: "1 game", colour: "#1e5a7a" },
   { key: "g2", label: "2 games", colour: "#2b84b4" },
   { key: "g3", label: "3 games", colour: "#38bdf8" },
@@ -27,7 +26,25 @@ const BANDS = [
 ] as const;
 
 interface Play { id: string; user: string; game: DailyGameSlug; day: string; score: number; at: number }
-interface Cache { plays: Record<string, Play>; users: Record<string, { at: number; ref?: string }>; playsUntil: number; usersUntil: number }
+interface ArcadePlay { user: string; game: string; at: number }
+interface Cache {
+  plays: Record<string, Play>;
+  arcade: Record<string, ArcadePlay>;
+  users: Record<string, { at: number; ref?: string }>;
+  playsUntil: number;
+  usersUntil: number;
+}
+
+const ARCADE: { slug: string; name: string; colour: string }[] = [
+  { slug: "clubladder", name: "Ladder Up", colour: "#2a78d6" },
+  { slug: "goalchain", name: "GoalChain", colour: "#eb6834" },
+  { slug: "overlap", name: "Overlap", colour: "#1baf7a" },
+  { slug: "targetman", name: "TargetMan", colour: "#eda100" },
+  { slug: "slamchain", name: "Slam16", colour: "#e87ba4" },
+  { slug: "gridlock", name: "GridLock", colour: "#6250d6" },
+  { slug: "arsenal-champions-2026", name: "Champions Quiz", colour: "#e34948" },
+];
+const DAILY_COLOURS: Record<string, string> = { careerpath: "#8b5cf6", photofinish: "#fbbf24", centrecircle: "#34d399", griddle: "#38bdf8" };
 
 const dayStart = (k: string) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d).getTime(); };
 const localDay = (ms: number) => { const t = new Date(ms); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`; };
@@ -43,13 +60,19 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   const old = readCache();
   const cache: Cache = old && old.playsUntil > start
     ? old
-    : { plays: {}, users: {}, playsUntil: start, usersUntil: start };
+    : { plays: {}, arcade: {}, users: {}, playsUntil: start, usersUntil: start };
   const now = Date.now();
-  const [p, u] = await Promise.all([
-    getDocs(query(collection(db, "daily-scores"), where("timestamp", ">=", Timestamp.fromMillis(Math.max(start, cache.playsUntil - OVERLAP_MS))))),
+  const since = Timestamp.fromMillis(Math.max(start, cache.playsUntil - OVERLAP_MS));
+  const [p, a, u] = await Promise.all([
+    getDocs(query(collection(db, "daily-scores"), where("timestamp", ">=", since))),
+    getDocs(query(collection(db, "scores"), where("timestamp", ">=", since))),
     getDocs(query(collection(db, "users"), where("createdAt", ">=", Timestamp.fromMillis(Math.max(start, cache.usersUntil - OVERLAP_MS))))),
   ]);
-  if (p.metadata.fromCache || u.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
+  if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
+  a.docs.forEach((d) => {
+    const x = d.data() as { username?: string; game?: string; timestamp?: Timestamp };
+    cache.arcade[d.id] = { user: (x.username ?? "").toLowerCase(), game: x.game ?? "?", at: x.timestamp?.toMillis() ?? now };
+  });
   p.docs.forEach((d) => {
     const x = d.data() as { username: string; game: DailyGameSlug; dateKey: string; score: number; timestamp?: Timestamp };
     cache.plays[d.id] = { id: d.id, user: x.username.toLowerCase(), game: x.game, day: x.dateKey, score: x.score, at: x.timestamp?.toMillis() ?? now };
@@ -60,11 +83,12 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   });
   // Drop anything that has fallen out of the window
   for (const [id, x] of Object.entries(cache.plays)) if (x.at < start) delete cache.plays[id];
+  for (const [id, x] of Object.entries(cache.arcade)) if (x.at < start) delete cache.arcade[id];
   for (const [id, x] of Object.entries(cache.users)) if (x.at < start) delete cache.users[id];
   cache.playsUntil = now;
   cache.usersUntil = now;
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch { /* ignore */ }
-  return { cache, reads: p.size + u.size };
+  return { cache, reads: p.size + a.size + u.size };
 }
 
 function crunch(cache: Cache) {
@@ -102,14 +126,53 @@ function crunch(cache: Cache) {
     Players: byDay.get(d)?.size ?? 0,
   }));
 
-  // Games per player per day (0 = signed up that day, finished nothing)
+  // Games per player per day, and sign-ups who finished nothing that day ("bounced")
   const spread = days7.map((d) => {
     const m = byDay.get(d) ?? new Map<string, number>();
-    const row: Record<string, number | string> = { label: dayLabel(d), g0: 0, g1: 0, g2: 0, g3: 0, g4: 0 };
+    const row: Record<string, number | string> = { label: dayLabel(d), g1: 0, g2: 0, g3: 0, g4: 0 };
     for (const n of m.values()) row[`g${Math.min(4, n)}`] = (row[`g${Math.min(4, n)}`] as number) + 1;
-    for (const [name, sd] of signupDay) if (sd === d && !m.has(name)) row.g0 = (row.g0 as number) + 1;
     return row;
   });
+  const bounce = days7.map((d) => {
+    const signed = [...signupDay].filter(([, sd]) => sd === d).map(([n]) => n);
+    const none = signed.filter((n) => !byDay.get(d)?.has(n)).length;
+    return { label: dayLabel(d), signed: signed.length, none };
+  });
+
+  // Returning vs new players: returning = finished a daily game on an earlier day
+  const firstDay = new Map<string, string>();
+  for (const [d, m] of [...byDay].sort(([a], [b]) => a.localeCompare(b))) for (const u of m.keys()) if (!firstDay.has(u)) firstDay.set(u, d);
+  const returning = days7.map((d) => {
+    const m = byDay.get(d) ?? new Map<string, number>();
+    let back = 0;
+    for (const u of m.keys()) if ((firstDay.get(u) ?? d) < d) back++;
+    return { label: dayLabel(d), Returning: back, New: m.size - back };
+  });
+
+  // Daily games finished per day, by game
+  const gamesByDay = days7.map((d) => {
+    const row: Record<string, number | string> = { label: dayLabel(d) };
+    for (const g of DAILY_GAMES) row[g.slug] = plays.filter((p) => p.day === d && p.game === g.slug).length;
+    return row;
+  });
+
+  // Arcade: games per day by game, today's totals
+  const arcadePlays = Object.values(cache.arcade);
+  const arcadeByDay = days7.map((d) => {
+    const row: Record<string, number | string> = { label: dayLabel(d) };
+    for (const g of ARCADE) row[g.slug] = arcadePlays.filter((p) => localDay(p.at) === d && p.game === g.slug).length;
+    return row;
+  });
+  const arcadeToday = arcadePlays.filter((p) => localDay(p.at) === today);
+  const arcadeWeek = arcadePlays.filter((p) => localDay(p.at) >= days7[0]);
+  const arcade = {
+    today: arcadeToday.length,
+    todayPlayers: new Set(arcadeToday.map((p) => p.user)).size,
+    week: arcadeWeek.length,
+    weekPlayers: new Set(arcadeWeek.map((p) => p.user)).size,
+    byGame: ARCADE.map((g) => ({ ...g, week: arcadeWeek.filter((p) => p.game === g.slug).length, players: new Set(arcadeWeek.filter((p) => p.game === g.slug).map((p) => p.user)).size }))
+      .sort((a, b) => b.week - a.week),
+  };
 
   // Cohorts: everyone who signed up on a day, and when they played after
   const cohortDays = Array.from({ length: 10 }, (_, i) => shiftDay(today, -i)).filter((d) => [...signupDay.values()].includes(d));
@@ -137,10 +200,11 @@ function crunch(cache: Cache) {
   const invites = users.filter(([, x]) => x.ref).sort((a, b) => b[1].at - a[1].at).map(([n, x]) => ({ user: n, by: x.ref!, at: x.at }));
 
   return {
-    last24, week, spread, cohorts, perGame, invites,
+    last24, week, spread, bounce, returning, gamesByDay, arcadeByDay, arcade, cohorts, perGame, invites,
     tiles: {
       players: todayPlayers.size,
       playersY: yPlayers.size,
+      returningToday: returning[returning.length - 1].Returning,
       signups: newToday.length,
       newPlayed: newToday.filter((n) => todayPlayers.has(n)).length,
       back, backOf: yPlayers.size,
@@ -205,6 +269,26 @@ function TwoLines({ data }: { data: { label: string; Signups: number; Players: n
   );
 }
 
+function StackedBars({ data, series, height = "h-56" }: { data: Record<string, number | string>[]; series: { key: string; label: string; colour: string }[]; height?: string }) {
+  return (
+    <div className={height}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+          <CartesianGrid stroke={C.grid} vertical={false} />
+          <XAxis dataKey="label" tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
+          <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }}
+            formatter={(v: number, k: string) => [v, series.find((x) => x.key === k)?.label ?? k]} />
+          {series.map((x, i) => (
+            <Bar key={x.key} dataKey={x.key} stackId="a" fill={x.colour} maxBarSize={44}
+              radius={i === series.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function cellStyle(p: number | null) {
   if (p === null) return {};
   return { background: `rgba(56,189,248,${0.08 + (p / 100) * 0.62})` };
@@ -250,7 +334,7 @@ export default function StatsPage() {
       {s && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.playersY} yesterday`} accent="text-sky-300" />
+            <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.returningToday} returning · ${s.tiles.playersY} yesterday`} accent="text-sky-300" />
             <Tile label="Sign-ups today" value={s.tiles.signups} sub={`${pct(s.tiles.newPlayed, s.tiles.signups)}% finished a game`} accent="text-violet-300" />
             <Tile label="Back from yesterday" value={`${pct(s.tiles.back, s.tiles.backOf)}%`} sub={`${s.tiles.back} of ${s.tiles.backOf} players`} />
             <Tile label="Full sets today" value={s.tiles.fullSets} sub="finished all four" accent="text-emerald-300" />
@@ -267,22 +351,31 @@ export default function StatsPage() {
             </Card>
           </div>
 
-          <Card title="How much people play" note="Each day: people by daily games finished. 0 = signed up that day but finished nothing">
-            <Legend items={BANDS.map((b) => ({ label: b.label, colour: b.colour }))} />
-            <div className="h-56 mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={s.spread} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke={C.grid} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                    formatter={(v: number, k: string) => [v, BANDS.find((b) => b.key === k)?.label ?? k]} />
-                  {BANDS.map((b, i) => (
-                    <Bar key={b.key} dataKey={b.key} stackId="a" fill={b.colour} maxBarSize={44}
-                      radius={i === BANDS.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+          <Card title="Returning vs new players" note="Different people finishing a daily game each day. Returning = had already played on an earlier day. This is the number that has to hold up without Reddit posts"
+            right={<Legend items={[{ label: "Returning", colour: "#34d399" }, { label: "New", colour: "#2b84b4" }]} />}>
+            <StackedBars data={s.returning} series={[{ key: "Returning", label: "Returning", colour: "#34d399" }, { key: "New", label: "New", colour: "#2b84b4" }]} />
+          </Card>
+
+          <div className="grid lg:grid-cols-2 gap-x-4">
+            <Card title="Daily games finished" note="Per day, by game">
+              <Legend items={DAILY_GAMES.map((g) => ({ label: g.name, colour: DAILY_COLOURS[g.slug] }))} />
+              <div className="mt-2"><StackedBars data={s.gamesByDay} series={DAILY_GAMES.map((g) => ({ key: g.slug, label: g.name, colour: DAILY_COLOURS[g.slug] }))} /></div>
+            </Card>
+            <Card title="How much people play" note="Players each day by how many daily games they finished">
+              <Legend items={BANDS.map((b) => ({ label: b.label, colour: b.colour }))} />
+              <div className="mt-2"><StackedBars data={s.spread} series={BANDS.map((b) => ({ key: b.key, label: b.label, colour: b.colour }))} /></div>
+            </Card>
+          </div>
+
+          <Card title="Sign-ups who finished nothing" note="Share of each day's new accounts that didn't finish a daily game that day. Includes people who bounced at the sign-up screen">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+              {s.bounce.map((b) => (
+                <div key={b.label} className="rounded-xl bg-white/[0.03] border border-border px-2 py-2 text-center">
+                  <p className="text-[10px] text-muted-foreground">{b.label}</p>
+                  <p className="text-lg font-black tabular-nums text-foreground">{b.signed ? `${pct(b.none, b.signed)}%` : "–"}</p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">{b.none} of {b.signed}</p>
+                </div>
+              ))}
             </div>
           </Card>
 
@@ -316,6 +409,20 @@ export default function StatsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Card>
+
+          <Card title="Arcade" note="Arcade games finished per day, by game"
+            right={<div className="text-right text-xs text-muted-foreground tabular-nums"><p><span className="text-foreground font-black">{s.arcade.today}</span> today · {s.arcade.todayPlayers} players</p><p>{s.arcade.week} this week · {s.arcade.weekPlayers} players</p></div>}>
+            <Legend items={ARCADE.map((g) => ({ label: g.name, colour: g.colour }))} />
+            <div className="mt-2"><StackedBars data={s.arcadeByDay} series={ARCADE.map((g) => ({ key: g.slug, label: g.name, colour: g.colour }))} height="h-48" /></div>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {s.arcade.byGame.filter((g) => g.week > 0).map((g) => (
+                <div key={g.slug} className="rounded-xl bg-white/[0.03] border border-border px-3 py-2">
+                  <p className="text-[11px] font-bold" style={{ color: g.colour }}>{g.name}</p>
+                  <p className="text-sm text-foreground tabular-nums"><span className="font-black">{g.week}</span> <span className="text-muted-foreground text-xs">games · {g.players} players</span></p>
+                </div>
+              ))}
             </div>
           </Card>
 
