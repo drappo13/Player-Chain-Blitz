@@ -120,6 +120,19 @@ Config (root):
 ```
 - `key` field = composite key for single-field lookups (avoids composite indexes)
 - One per user/game/day, enforced client-side via `where("key", "==", ...)`
+- `state` (JSON of the game's saved state) lets another device show full results
+- `late: true` = played as Yesterday's set: counts for streaks, filtered out of leaderboards and /stats per-day numbers
+- `open: true` = CentreCircle/Griddle saved as you go (`saveLiveScore` in `lib/daily-score.ts`). These docs use the
+  key as their doc ID so later saves update the same doc; Finish writes `open: false`. Rules only let an open doc's score go up.
+
+**`friends`** — `friends/{username}` = `{ list: string[], updatedAt }` (one-way follows, max 50; `lib/friends.ts`).
+Invitees are merged in automatically; a new account from an invite link starts with the inviter.
+
+**`guest-plays`** — one anonymous doc per game a guest finishes: `{ guest, game, dateKey, score, late, at }`.
+Only used by /stats to count guest players.
+
+**`push-subs`** — `push-subs/{username}` = `{ endpoint, keys, tz, streak, morning, dead, updatedAt }` for reminders
+(`lib/push.ts`). Sent by `scripts/push/send.mjs` (VAPID private key lives outside the repo in `~/.drapkin/vapid.json`).
 
 ### Security Rules (Firebase Console)
 
@@ -129,7 +142,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId}        { allow read, create: if true; allow update, delete: if false; }
     match /scores/{scoreId}      { allow read, create: if true; allow update, delete: if false; }
-    match /daily-scores/{docId}  { allow read, create: if true; allow update, delete: if false; }
+    match /daily-scores/{docId} {
+      allow read, create: if true;
+      allow update: if resource.data.open == true
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.key == resource.data.key
+        && request.resource.data.username == resource.data.username;
+      allow delete: if false;
+    }
+    match /friends/{u}          { allow read, create, update: if true; allow delete: if false; }
+    match /guest-plays/{id}     { allow read, create: if true; allow update, delete: if false; }
+    match /push-subs/{u}        { allow read, create, update: if true; allow delete: if false; }
   }
 }
 ```
@@ -232,7 +255,10 @@ Beginner (1%) → Amateur (3%) → Acceptable (5%) → Decent (9%) → Knowledge
 - Photo Finish follows the same pattern (`photofinish-{username}-{dateKey}`). Photos are the lead images of BBC Sport PL match reports, hotlinked (not stored): `client/src/data/photo-finish.json` holds 551 (20 per season from 2000/01, 11 from 1999/00, built by `scripts/build-photo-finish.py`) and `photo-finish-classics.json` 24 iconic moments from the BBC's "30 years of the Premier League in pictures". The pool is cut by date into 10 era bands; each day takes one photo per band, dealt from a seeded shuffle starting at `PF_EPOCH`, so 50 days pass before any repeat and later cycles reshuffle. The day's classic replaces the photo from its own era. Score: 100 for the exact season, then 80/60/45/30/15/5 by seasons out (max 1,000). The `entries` field stores the number of exact guesses.
 - Career Path follows the same pattern (`careerpath-{username}-{dateKey}`). `client/src/data/career-path.json` holds every PL player's season-by-season apps/goals/assists per club (from the PL stats API, filtered by season and team) and five answer tiers. Each answer is a player plus five straight PL seasons; tiers rank players (4k+ monthly Wikipedia views, `wikiViews` in pl-players.json) by a recency quintile of the five seasons plus a views quintile, cut into fifths (spells ending before 2008 only for the most viewed fifth, so hard rounds are recent squad players rather than old names); about 1 in 5 answers is a single-club spell (`scripts/career-path/`: `fetch-careers.py`, then `build-career-path.py`; the per-season final tables come from the PL standings endpoint, see the note in `fetch-careers.py`). Round k (multiplier 1, 1.5, 2, 2.5, 3) draws from tier k, dealt from a seeded shuffle from `CP_EPOCH`. Five guesses per player; each miss unlocks a clue (clubs for seasons 1–2, seasons 3–5, position & nation, whole PL career). Points 10/8/6/4/2 by guess × multiplier, max 100. `entries` stores players solved.
 - Today's progress: every daily game calls `recordDaily()` (`lib/daily.ts`) whenever its state changes, writing a small summary (status, score, detail, level, progress 0–1) to `pcb-day-{username}-{dateKey}`. The home tiles, set tracker and Next-up read this. Games finished on another device come from the user's `daily-scores` docs instead.
-- Streaks: `useStreak()` reads all the user's `daily-scores` (cached in `pcb-dailyhist-{username}`) plus today's local progress. A streak is consecutive days with at least one finished daily game, alive until the end of the day after the last play. Days played = distinct dates.
+- Counts for today: CentreCircle and Griddle count (streak, set, badges) at 5 names/players while still open — `counted: true` in the progress, `countsToday()` everywhere that used to check `status === "done"`. Their score is saved as they go once counted; "Finish" locks the game and shows answers.
+- Yesterday's set: any daily game opened with `?set=yesterday` plays the previous day (`puzzleDay()` in `lib/daily.ts`), shows a `LateBanner`, submits with `late: true` and counts for the streak (so a missed day can be repaired the day after).
+- Guests: first-time visitors play as a guest (`lib/guest.ts`, `guest-xxxxxxxx` username, can't collide with real names). Their leaderboard writes are queued in `pcb-pending`; picking a name (or logging in) renames every local key to the account and sends the queue (earlier days as `late`). Guest history comes from local progress. The pick-a-name sheet opens by itself at the first finish and once on a later day (`ClaimCard`, `lib/asks.ts` — one ask per visit).
+- Streaks: `useStreak()` reads all the user's `daily-scores` (cached in `pcb-dailyhist-{username}`) plus today's and yesterday's local progress. A streak is consecutive days with at least one finished daily game, alive until the end of the day after the last play. Days played = distinct dates.
 - Adding a daily game to the set: add it to `DAILY_GAMES` in `lib/daily.ts` (order = home tile order and Next-up chain), an icon in `components/game-icons.tsx`, and a `recordDaily()` call in its persist effect plus `<DailyNext current=… />` on its end screen.
 - Firebase: single write via `submitDailyScore()` on "I'm Done"
 - Cross-device: `hasDailySubmission()` checks Firebase on load. Also detects failed writes (local says submitted but Firebase empty → resets to allow retry)
@@ -369,13 +395,22 @@ Events go to Google Analytics, not Firestore (free, no read/write cost). `trackE
 | `next_up_click` | `DailyNext` | from, to, done_today |
 | `share` | `shareLink()` (every share message) | path, source (`game` / `day` / `invite`) |
 | `invite_landing` | `?ref=` on load (`user-context`) | ref, path, signed_in |
-| `signup_prompt_view` | sign-up screen shown to someone with no account (`username-picker`) | path, invited |
+| `signup_prompt_view` | pick-a-name sheet shown (`username-picker`) | path, invited |
+| `guest_start` | first visit, guest created (`lib/guest.ts`) | path |
+| `claim_prompt_view` / `claim_prompt_click` | pick-a-name asked / tapped | source, guest_games, game |
+| `game_counted` | CentreCircle/Griddle reached 5 (counts for today) | game, mode, count, score, seconds, set_position |
+| `yesterday_open` | Yesterday's set link on Today | from, savable |
+| `friend_add` / `friend_remove` | Friends on Me, or automatically via invite | method, friends |
+| `install_guide_open` | Add to Home Screen guide opened | source, kind |
+| `reminder_ask_view` / `_yes` / `_no` | end-screen ask on day 2+ (install on iPhone browser, else reminders) | kind |
+| `reminders_set` | reminder settings saved | streak, morning, source |
+| `push_open` | opened from a reminder (`?src=push_*`) | kind |
 | `signup_typing` | first keystroke in the username box | mode (`signup` / `login`) |
-| `sign_up` / `login` | `user-context` | invited, ref |
+| `sign_up` / `login` | `user-context` | invited, ref, from_guest, guest_games, source |
 | `install_click` / `install_result` / `app_installed` | Add to Home Screen card on `/me` (`lib/install.ts`) | method (`prompt` / `ios` / `android`), outcome |
 | `badge_unlock` | `BadgeGrid` (first view after unlocking) | badge |
 
-User ID = lowercase username (so retention counts people, not devices). User properties: `acquisition` (invite/organic), `referred_by`, `signup_month` (set at sign-up), `current_streak`, `best_streak`, `days_played`, `days_played_band`, `daily_done_today`, `display_mode` (`home_screen` / `browser`) (refreshed by `AnalyticsIdentity` in `App.tsx`).
+User ID = lowercase username (so retention counts people, not devices). User properties: `acquisition` (invite/organic), `referred_by`, `signup_month` (set at sign-up), `current_streak`, `best_streak`, `days_played`, `days_played_band`, `daily_done_today`, `display_mode` (`home_screen` / `browser`), `account` (`guest` / `named`) (refreshed by `AnalyticsIdentity` in `App.tsx`).
 
 ---
 

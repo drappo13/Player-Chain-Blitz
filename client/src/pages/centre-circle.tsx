@@ -9,8 +9,12 @@ import { normalizeName } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
-import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
-import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
+import { LateBanner } from "@/components/daily-next";
+
+/** Names found before the board counts for today (streak, set) — still open after that. */
+const COUNT_AT = 5;
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -372,7 +376,7 @@ const finePointer = () => typeof window !== "undefined" && window.matchMedia?.("
 export default function CentreCircle() {
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const dateKey = useMemo(() => getTodayStr(), []);
+  const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const board = useMemo(() => boardFor(dateKey), [dateKey]);
   const answers = useMemo(() => answersFor(board), [board]);
   const answerByKey = useMemo(() => new Map(answers.map(a => [a.key, a] as [string, Answer])), [answers]);
@@ -429,6 +433,7 @@ export default function CentreCircle() {
     saveState(state, user?.username);
     recordDaily(user?.username, "centrecircle", dateKey, state.submitted || state.found.length > 0 ? {
       status: state.submitted ? "done" : "playing",
+      counted: !state.submitted && state.found.length >= COUNT_AT,
       score: state.score,
       detail: `${state.found.length}/${answers.length} found`,
       level: getRank(state.score, maxScore).label,
@@ -465,10 +470,32 @@ export default function CentreCircle() {
     showFeedbackMsg({ type: sound ? "neutral" : "wrong", message });
   }, [showFeedbackMsg]);
 
+  // Once it counts for today, the score goes on the leaderboard and keeps up as it rises
+  useEffect(() => {
+    if (!user?.username || state.submitted || state.found.length < COUNT_AT) return;
+    saveLiveScore({ username: user.username, game: "centrecircle", dateKey, score: state.score, found: state.found.length, total: answers.length,
+      state: { boardHash: state.boardHash, found: state.found }, late });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.found.length, state.submitted, user?.username]);
+
+  // "That's today done" the moment it starts counting
+  const [countedToast, setCountedToast] = useState(false);
+  const prevFound = useRef(state.found.length);
+  useEffect(() => {
+    if (prevFound.current < COUNT_AT && state.found.length >= COUNT_AT && !state.submitted) {
+      setCountedToast(true);
+      const t = setTimeout(() => setCountedToast(false), 3200);
+      prevFound.current = state.found.length;
+      return () => clearTimeout(t);
+    }
+    prevFound.current = state.found.length;
+  }, [state.found.length, state.submitted]);
+
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
     setSubmitting(true);
-    if (!IS_LOCAL) await submitDailyScore(user.username, "centrecircle", dateKey, state.score, state.found.length, answers.length, { boardHash: state.boardHash, found: state.found });
+    await finishLiveScore({ username: user.username, game: "centrecircle", dateKey, score: state.score, found: state.found.length, total: answers.length,
+      state: { boardHash: state.boardHash, found: state.found }, late });
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
@@ -584,6 +611,15 @@ export default function CentreCircle() {
       </div>
       <div className="flex items-center gap-2">
       </div>
+      {late && <LateBanner dateKey={dateKey} />}
+      <AnimatePresence>
+        {countedToast && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-black shadow-lg shadow-emerald-500/30">
+            {late ? "That's yesterday done \u2713" : "That's today done \u2713"} Keep going for more points
+          </motion.div>
+        )}
+      </AnimatePresence>
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-green-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
           <span className="font-semibold text-green-300">Test build</span>
@@ -628,12 +664,12 @@ export default function CentreCircle() {
               <RuleItem icon="🟢" text={`Use the centre letter (${board.centre.toUpperCase()}) for double points`} />
               <RuleItem icon="★" text={`Legends double it again: anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
-              <RuleItem icon="🏁" text="When you're done, tap Submit (the flag, next to the hints button) to post your score to the leaderboard" />
+              <RuleItem icon="🏁" text={`${COUNT_AT} names and today counts for your streak. Your score goes on the leaderboard as you play; tap Finish (the flag) when you're done to see the answers`} />
             </div>
 
             <Button className="w-full text-lg py-6 shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
               onClick={() => setShowRules(false)}>
-              {state.found.length > 0 ? "Back to today's board" : "Play today's board"}
+              {state.found.length > 0 ? `Back to ${late ? "yesterday's" : "today's"} board` : `Play ${late ? "yesterday's" : "today's"} board`}
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>
@@ -660,16 +696,16 @@ export default function CentreCircle() {
               className="bg-card border border-border rounded-xl p-6 max-w-sm w-full text-center"
               onClick={e => e.stopPropagation()}>
               <Flag className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <h3 className="text-lg font-bold mb-2">Submit your score?</h3>
+              <h3 className="text-lg font-bold mb-2">Finish {late ? "yesterday's" : "today's"} board?</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Your score of <span className="font-bold text-foreground">{state.score}</span> will be submitted to the leaderboard.
-                You won't be able to add more names today.
+                You'll finish on <span className="font-bold text-foreground">{state.score}</span> and see the answers.
+                You won't be able to add more names after that.
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>Keep playing</Button>
                 <Button className="flex-1 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
                   onClick={handleFinish} disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit"}
+                  {submitting ? "Finishing..." : "Finish"}
                 </Button>
               </div>
             </motion.div>
@@ -820,9 +856,9 @@ export default function CentreCircle() {
           {!isFinished && (
             <div className="flex items-center gap-1.5">
               {state.found.length > 0 && (
-                <button type="button" onClick={() => setShowConfirm(true)} title="I'm done — submit score"
+                <button type="button" onClick={() => setShowConfirm(true)} title="I'm done — finish and see the answers"
                   className="h-[34px] px-2.5 inline-flex items-center gap-1.5 rounded-lg bg-card/80 border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-green-500/50 transition-colors">
-                  <Flag className="w-4 h-4" /> Submit
+                  <Flag className="w-4 h-4" /> Finish
                 </button>
               )}
             </div>

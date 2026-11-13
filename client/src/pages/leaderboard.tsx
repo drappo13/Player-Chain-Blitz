@@ -5,6 +5,8 @@ import { useUser } from "@/lib/user-context";
 import { useGameLeaderboard, useGlobalLeaderboard, type LeaderboardPeriod } from "@/lib/use-leaderboard";
 import { useDailyLeaderboard, type DailyPeriod } from "@/lib/use-daily-leaderboard";
 import { LeaderboardTable } from "@/components/leaderboard-table";
+import { useFriendsDay } from "@/lib/friends";
+import { shiftDay, todayKey } from "@/lib/daily";
 import type { GameSlug } from "@/lib/save-score";
 import type { DailyGameSlug } from "@/lib/daily-score";
 
@@ -27,7 +29,7 @@ const DAILY_TABS: { slug: DailyGameSlug; label: string; accent: string }[] = [
 ];
 
 export default function Leaderboard() {
-  const { user } = useUser();
+  const { user, isGuest, openClaim } = useUser();
   const [mode, setMode] = useState<LeaderboardMode>("daily");
   const [arcadeTab, setArcadeTab] = useState<GameSlug | "global">("targetman");
   const [arcadePeriod, setArcadePeriod] = useState<LeaderboardPeriod>("alltime");
@@ -56,6 +58,14 @@ export default function Leaderboard() {
           <Trophy className="w-5 h-5 text-amber-400" />
           <h1 className="text-xl font-black text-foreground">Leaderboards</h1>
         </div>
+
+        {isGuest && (
+          <button onClick={() => openClaim("leaderboard")}
+            className="w-full mb-4 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground text-left flex items-center justify-between">
+            <span>Pick a name to get on the leaderboards</span>
+            <span className="rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-black">Pick a name</span>
+          </button>
+        )}
 
         {/* Mode toggle: Daily / Arcade */}
         <div className="flex justify-center gap-1 mb-4">
@@ -155,9 +165,26 @@ function DailySection({ game, period, onPeriodChange, currentUser, accentBg }: {
   accentBg: string;
 }) {
   const { entries, loading } = useDailyLeaderboard(game, period, 20);
+  const today = todayKey();
+  const { friends, day } = useFriendsDay(currentUser, period === "today" ? today : shiftDay(today, -1), true);
+  const [who, setWho] = useState<"friends" | "everyone" | null>(null);
+  const showFriends = friends.length > 0 && (who ?? "friends") === "friends";
+  const friendRows = (day[game] ?? []).map((r) => ({ username: r.username, avatar: r.avatar, score: r.score }));
 
   return (
     <div>
+      {friends.length > 0 && (
+        <div className="flex justify-center mb-2">
+          <div className="flex rounded-full bg-white/5 p-0.5 text-xs font-bold">
+            {(["friends", "everyone"] as const).map((k) => (
+              <button key={k} onClick={() => setWho(k)}
+                className={`rounded-full px-3 py-1 ${(showFriends ? "friends" : "everyone") === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                {k === "friends" ? "Friends" : "Everyone"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex justify-center gap-1 mb-4">
         {(["today", "yesterday"] as const).map(p => (
           <button
@@ -172,8 +199,8 @@ function DailySection({ game, period, onPeriodChange, currentUser, accentBg }: {
         ))}
       </div>
       <LeaderboardTable
-        entries={entries}
-        loading={loading}
+        entries={showFriends ? friendRows : entries}
+        loading={showFriends ? false : loading}
         period="today"
         onPeriodChange={() => {}}
         currentUser={currentUser}

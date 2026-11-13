@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, trackEvent, identify } from "./firebase";
+import {
+  getOrCreateGuest, readGuest, clearGuest, migrateGuestKeys, readPending, clearPending, guestGamesFinished, type GuestUser,
+} from "./guest";
+import { submitDailyScore, type DailyGameSlug } from "./daily-score";
+import { saveScore, type GameSlug } from "./save-score";
+import { startFriendsFromInvite } from "./friends";
 
 // Invite links look like drapk.in/?ref=username; remember the inviter until sign-up
 const REF_KEY = "pcb-ref";
@@ -29,22 +35,34 @@ function readReferrer(): string | null {
 export interface User {
   username: string;
   avatar: string;
+  guest?: boolean;
 }
 
 interface UserContextType {
+  /** The named account, or the device's guest when there isn't one */
   user: User | null;
+  /** True while playing as a guest (no name picked yet) */
+  isGuest: boolean;
   loading: boolean;
   login: (username: string) => Promise<{ ok: boolean; error?: string }>;
   signup: (username: string, avatar: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
+  /** Open the "pick a name" sheet; `source` is for analytics (e.g. "end_screen", "me") */
+  openClaim: (source: string) => void;
+  closeClaim: () => void;
+  claimSource: string | null;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  isGuest: false,
   loading: true,
   login: async () => ({ ok: false }),
   signup: async () => ({ ok: false }),
   logout: () => {},
+  openClaim: () => {},
+  closeClaim: () => {},
+  claimSource: null,
 });
 
 export const useUser = () => useContext(UserContext);
@@ -60,17 +78,44 @@ function withTimeout<T>(p: Promise<T>): Promise<T> {
   return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS))]);
 }
 
+/** Send everything a guest did to the new account: their finished games land on the boards. */
+async function adoptGuest(guest: GuestUser | null, username: string) {
+  if (!guest) return;
+  const pending = readPending();
+  migrateGuestKeys(guest.username, username);
+  clearPending();
+  clearGuest();
+  for (const p of pending) {
+    try {
+      if (p.kind === "daily") await submitDailyScore(username, p.game as DailyGameSlug, p.dateKey, p.score, p.found, p.total, p.state, { late: p.late });
+      else await saveScore(username, p.game as GameSlug, p.score);
+    } catch { /* keep going */ }
+  }
+  // History and ranks were cached for the guest name: refetch for the account
+  window.dispatchEvent(new Event("pcb-account-changed"));
+}
+
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [account, setAccount] = useState<User | null>(null);
+  const [guest, setGuest] = useState<GuestUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [claimSource, setClaimSource] = useState<string | null>(null);
 
   useEffect(() => {
+    let named: User | null = null;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setUser(JSON.parse(saved));
+      if (saved) named = JSON.parse(saved);
     } catch {}
+    setAccount(named);
+    // No account on this device: play as a guest straight away
+    if (!named) setGuest(getOrCreateGuest());
     setLoading(false);
   }, []);
+
+  const user: User | null = account ?? guest;
+  const isGuest = !account && !!guest;
+  const setUser = (u: User) => { setAccount(u); setGuest(null); setClaimSource(null); };
 
   const login = async (username: string): Promise<{ ok: boolean; error?: string }> => {
     const key = username.toLowerCase().trim();
@@ -79,9 +124,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const snap = await withTimeout(getDoc(doc(db, "users", key)));
       if (!snap.exists()) return { ok: false, error: "Username not found" };
       const data = snap.data() as User;
-      setUser(data);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      trackEvent("login", { method: "username" });
+      const g = readGuest();
+      const guestGames = guestGamesFinished();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ username: data.username, avatar: data.avatar }));
+      await adoptGuest(g, data.username);
+      setUser({ username: data.username, avatar: data.avatar });
+      trackEvent("login", { method: "username", from_guest: !!g, guest_games: g ? guestGames : undefined, source: claimSource ?? undefined });
       return { ok: true };
     } catch {
       return { ok: false, error: UNREACHABLE };
@@ -111,10 +159,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         await withTimeout(setDoc(doc(db, "users", key), record));
       }
-      setUser(userData);
+      const g = readGuest();
+      const guestGames = guestGamesFinished();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      await adoptGuest(g, trimmed);
+      setUser(userData);
       const invited = !!ref && ref !== key;
-      trackEvent("sign_up", { method: "username", invited, ref: invited ? ref! : undefined, path: window.location.pathname });
+      trackEvent("sign_up", {
+        method: "username", invited, ref: invited ? ref! : undefined, path: window.location.pathname,
+        from_guest: !!g, guest_games: g ? guestGames : undefined, source: claimSource ?? undefined,
+      });
+      if (invited) startFriendsFromInvite(key, ref!);
       const now = new Date();
       identify(key, {
         signup_month: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
@@ -128,13 +183,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setUser(null);
+    setAccount(null);
     localStorage.removeItem(STORAGE_KEY);
     window.location.href = "/";
   };
 
+  const openClaim = (source: string) => {
+    trackEvent("claim_prompt_view", { source, guest_games: guestGamesFinished() });
+    setClaimSource(source);
+  };
+  const closeClaim = () => setClaimSource(null);
+
   return (
-    <UserContext.Provider value={{ user, loading, login, signup, logout }}>
+    <UserContext.Provider value={{ user, isGuest, loading, login, signup, logout, openClaim, closeClaim, claimSource }}>
       {children}
     </UserContext.Provider>
   );

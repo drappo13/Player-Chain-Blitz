@@ -10,8 +10,12 @@ import { normalizeName, getCommonSurname, PL_MONONYMS, PL_ALTERNATES, PL_PRIORIT
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
-import { submitDailyScore, hasDailySubmission } from "@/lib/daily-score";
-import { recordDaily, hasPlayedBefore } from "@/lib/daily";
+import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
+import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
+import { LateBanner } from "@/components/daily-next";
+
+/** Players found before the grid counts for today (streak, set) — still open after that. */
+const COUNT_AT = 5;
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -445,7 +449,7 @@ function getHitDotBg(hits: number): string {
 export default function Griddle() {
   const [, navigate] = useLocation();
   const { user } = useUser();
-  const dateKey = useMemo(() => getTodayStr(), []);
+  const { dateKey, late } = useMemo(() => puzzleDay(), []);
   const boardClubs = useMemo(() => generateBoard(dateKey), [dateKey]);
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const validAnswers = useMemo(() => getValidAnswers(boardClubs), [boardClubs]);
@@ -505,6 +509,7 @@ export default function Griddle() {
     const found = state.foundPlayers.length;
     recordDaily(user?.username, "griddle", dateKey, isFinished || found > 0 ? {
       status: isFinished ? "done" : "playing",
+      counted: !isFinished && found >= COUNT_AT,
       score: state.score,
       detail: isFinished ? `${found} found` : `${found} found \u00B7 ${state.livesLeft} ${state.livesLeft === 1 ? "life" : "lives"} left`,
       level: getCurrentTier(found, totalValid).current?.label ?? "Unranked",
@@ -542,18 +547,30 @@ export default function Griddle() {
     feedbackTimeout.current = setTimeout(() => setFeedback(null), duration);
   }, []);
 
+  // Once it counts for today, the score goes on the leaderboard and keeps up as it rises
+  useEffect(() => {
+    if (!user?.username || isFinished || state.foundPlayers.length < COUNT_AT) return;
+    saveLiveScore({ username: user.username, game: "griddle", dateKey, score: state.score, found: state.foundPlayers.length, total: totalValid, state, late });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.foundPlayers.length, state.score, isFinished, user?.username]);
+
+  const [countedToast, setCountedToast] = useState(false);
+  const prevFound = useRef(state.foundPlayers.length);
+  useEffect(() => {
+    if (prevFound.current < COUNT_AT && state.foundPlayers.length >= COUNT_AT && !isFinished) {
+      setCountedToast(true);
+      const t = setTimeout(() => setCountedToast(false), 3200);
+      prevFound.current = state.foundPlayers.length;
+      return () => clearTimeout(t);
+    }
+    prevFound.current = state.foundPlayers.length;
+  }, [state.foundPlayers.length, isFinished]);
+
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
     setSubmitting(true);
-    await submitDailyScore(
-      user.username,
-      "griddle",
-      dateKey,
-      state.score,
-      state.foundPlayers.length,
-      totalValid,
-      { ...state, submitted: true },
-    );
+    await finishLiveScore({ username: user.username, game: "griddle", dateKey, score: state.score, found: state.foundPlayers.length, total: totalValid,
+      state: { ...state, submitted: true }, late });
     setState(prev => ({ ...prev, submitted: true }));
     setShowConfirm(false);
     setSubmitting(false);
@@ -814,11 +831,11 @@ export default function Griddle() {
               ) : (
                 <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
               )}
-              <RuleItem icon="🏁" text="When you're done, tap the flag to submit your score to the leaderboard" />
+              <RuleItem icon="🏁" text={`${COUNT_AT} players and today counts for your streak. Your score goes on the leaderboard as you play; tap the flag to finish and see the answers`} />
             </div>
 
             <Button className={`w-full text-lg py-6 ${theme.primaryBtn}`} onClick={() => setShowRules(false)}>
-              Play today's board
+              Play {late ? "yesterday's" : "today's"} board
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </motion.div>
@@ -838,6 +855,15 @@ export default function Griddle() {
       <ScreenFlash show={flashColor !== null} color={flashColor || "bg-blue-500"} />
 
       {/* Tier + Coverage overlays are rendered inside the grid container below */}
+      {late && <LateBanner dateKey={dateKey} />}
+      <AnimatePresence>
+        {countedToast && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-black shadow-lg shadow-emerald-500/30">
+            {late ? "That's yesterday done \u2713" : "That's today done \u2713"} Keep going for more points
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Confirm modal */}
       <AnimatePresence>
@@ -849,10 +875,10 @@ export default function Griddle() {
               className="bg-card border border-border rounded-xl p-6 max-w-sm w-full text-center"
               onClick={e => e.stopPropagation()}>
               <Flag className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-              <h3 className="text-lg font-bold mb-2">Submit your score?</h3>
+              <h3 className="text-lg font-bold mb-2">Finish {late ? "yesterday's" : "today's"} grid?</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Your score of <span className="font-bold text-foreground">{state.score}</span> will be submitted to the leaderboard.
-                You won't be able to add more guesses today.
+                You'll finish on <span className="font-bold text-foreground">{state.score}</span> and see the answers.
+                You won't be able to add more guesses after that.
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>
@@ -863,7 +889,7 @@ export default function Griddle() {
                   onClick={handleFinish}
                   disabled={submitting}
                 >
-                  {submitting ? "Submitting..." : "Submit"}
+                  {submitting ? "Finishing..." : "Finish"}
                 </Button>
               </div>
             </motion.div>
@@ -1070,7 +1096,7 @@ export default function Griddle() {
             {state.foundPlayers.length > 0 && (
               <button type="button" onClick={() => setShowConfirm(true)}
                 className="px-3 py-3 rounded-xl bg-card/80 border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-colors"
-                title="I'm done — submit score">
+                title="I'm done — finish and see the answers">
                 <Flag className="w-5 h-5" />
               </button>
             )}

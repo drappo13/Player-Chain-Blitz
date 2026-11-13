@@ -3,8 +3,10 @@ import { collection, doc, getCountFromServer, getDoc, query, where } from "fireb
 import { db } from "@/lib/firebase";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone, Share, SquarePlus, EllipsisVertical } from "lucide-react";
-import { useInstall } from "@/lib/install";
+import { Flame, CalendarDays, Award, CheckCircle2, LogOut, UserPlus, Smartphone } from "lucide-react";
+import { useInstall, openInstallGuide } from "@/lib/install";
+import { FriendsSection } from "@/components/friends";
+import { RemindersCard } from "@/components/reminders";
 import { pushState, enablePush, currentSubscription, localTestNotification, swVersion, updateSw, lastPush } from "@/lib/push";
 import { Bell } from "lucide-react";
 import { useUser, shareLink } from "@/lib/user-context";
@@ -123,19 +125,12 @@ function InviteCard({ username, streak, invites }: { username: string; streak: n
 /** "Add to Home Screen": native prompt where the browser offers one, else the steps. Hidden once installed. */
 function InstallCard() {
   const { mode, install } = useInstall();
-  const [open, setOpen] = useState(false);
   if (mode === "installed" || mode === "none") return null;
   const onClick = () => {
     if (mode === "prompt") { install(); return; }
-    if (!open) install(); // logs the click; no native dialog on these browsers
-    setOpen((o) => !o);
+    install(); // logs the click; these browsers have no install dialog
+    openInstallGuide("me");
   };
-  const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
-    <li className="flex items-center gap-2 text-xs text-foreground">
-      <span className="w-5 h-5 rounded-full bg-white/10 text-[11px] font-black flex items-center justify-center shrink-0">{n}</span>
-      <span className="flex items-center gap-1 flex-wrap">{children}</span>
-    </li>
-  );
   return (
     <section className="rounded-2xl border border-border bg-card p-4 mb-6">
       <div className="flex items-center gap-3">
@@ -144,28 +139,12 @@ function InstallCard() {
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-black text-foreground">Add to Home Screen</p>
-          <p className="text-xs text-muted-foreground">Opens like an app. One tap to today's set</p>
+          <p className="text-xs text-muted-foreground">Opens like an app, straight to today's set</p>
         </div>
         <button onClick={onClick} className="shrink-0 rounded-full bg-emerald-500 text-white px-4 py-2 text-sm font-black">
-          {mode === "prompt" ? "Add" : open ? "Done" : "How"}
+          {mode === "prompt" ? "Add" : "How"}
         </button>
       </div>
-      {open && (
-        <ol className="mt-3 pt-3 border-t border-border space-y-2">
-          {mode === "ios" ? (
-            <>
-              <Step n={1}>Tap <Share className="w-4 h-4 text-sky-400" /> Share in Safari's toolbar (in Chrome it's top right)</Step>
-              <Step n={2}>Scroll down and tap <SquarePlus className="w-4 h-4" /> <b>Add to Home Screen</b></Step>
-              <Step n={3}>Open drapk.in from your home screen. You may need to log in once with your username</Step>
-            </>
-          ) : (
-            <>
-              <Step n={1}>Tap the <EllipsisVertical className="w-4 h-4" /> menu in your browser</Step>
-              <Step n={2}>Tap <b>Add to Home screen</b> or <b>Install app</b></Step>
-            </>
-          )}
-        </ol>
-      )}
     </section>
   );
 }
@@ -241,12 +220,14 @@ function useMemberSince(username: string | undefined, firstDay?: string): string
 
 export default function Me() {
   const [, navigate] = useLocation();
-  const { user, logout } = useUser();
+  const { user, logout, isGuest, openClaim } = useUser();
   const { current, best, daysPlayed, entries, today } = useStreak(user?.username);
-  const { stats } = useUserStats(user?.username);
+  // Guests have nothing in Firestore: skip those reads
+  const named = isGuest ? undefined : user?.username;
+  const { stats } = useUserStats(named);
 
   const firstDay = useMemo(() => entries.map((e) => e.dateKey).sort()[0], [entries]);
-  const memberSince = useMemberSince(user?.username, firstDay);
+  const memberSince = useMemberSince(named, firstDay);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -264,7 +245,7 @@ export default function Me() {
     };
   });
   const fullSets = [...counts.values()].filter((n) => n >= DAILY_GAMES.length).length;
-  const invites = useInviteCount(user?.username);
+  const invites = useInviteCount(named);
   const arcadePlays = Object.values(stats).reduce((sum, s) => sum + (s?.plays ?? 0), 0)
     - DAILY_GAMES.reduce((sum, g) => sum + (stats[g.slug]?.plays ?? 0), 0);
   const badgeCtx: BadgeContext = useMemo(
@@ -279,8 +260,8 @@ export default function Me() {
       <div className="flex items-center gap-3 mb-5">
         <span className="w-14 h-14 rounded-2xl bg-card border border-border flex items-center justify-center text-3xl">{user.avatar}</span>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-black text-foreground truncate">{user.username}</h1>
-          <p className="text-sm text-muted-foreground">{memberSince ? `Member since ${memberSince}` : "Your stats live here"}</p>
+          <h1 className="text-2xl font-black text-foreground truncate">{isGuest ? "Guest" : user.username}</h1>
+          <p className="text-sm text-muted-foreground">{isGuest ? "Playing as a guest on this device" : memberSince ? `Member since ${memberSince}` : "Your stats live here"}</p>
         </div>
       </div>
 
@@ -291,13 +272,27 @@ export default function Me() {
         <StatTile icon={CheckCircle2} label="Full sets" value={fullSets} accent="text-emerald-300" delay={0.2} />
       </div>
 
-      <BadgeGrid ctx={badgeCtx} username={user.username} />
+      {isGuest ? (
+        <section className="rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-4 mb-6">
+          <p className="text-base font-black text-foreground">Pick a name</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Get on the leaderboards, add friends, earn badges and keep your streak on any device. Everything you've played so far comes with you.
+          </p>
+          <button onClick={() => openClaim("me")} className="mt-3 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-black">
+            Pick a name
+          </button>
+        </section>
+      ) : (
+        <>
+          <BadgeGrid ctx={badgeCtx} username={user.username} />
+          <InviteCard username={user.username} streak={current} invites={invites} />
+          <FriendsSection />
+          <InstallCard />
+          <RemindersCard />
+        </>
+      )}
 
-      <InviteCard username={user.username} streak={current} invites={invites} />
-
-      <InstallCard />
-
-      {user.username.toLowerCase() === "tiger" && <PushTestCard />}
+      {!isGuest && user.username.toLowerCase() === "tiger" && <PushTestCard />}
 
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex items-center justify-between mb-3 gap-3">
@@ -334,7 +329,7 @@ export default function Me() {
         </div>
       </section>
 
-      <section className="mb-8">
+      {!isGuest && <section className="mb-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Arcade high scores</h2>
         <div className="rounded-2xl border border-border bg-card divide-y divide-border">
           {ARCADE_NAMES.map((g) => {
@@ -351,16 +346,16 @@ export default function Me() {
             );
           })}
         </div>
-      </section>
+      </section>}
 
-      <div className="text-center">
+      {!isGuest && <div className="text-center">
         <button
           onClick={() => { logout(); navigate("/"); }}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
         >
           <LogOut className="w-4 h-4" /> Log out
         </button>
-      </div>
+      </div>}
     </HubPage>
   );
 }

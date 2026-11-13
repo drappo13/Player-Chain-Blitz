@@ -2893,7 +2893,9 @@ function ChampionsCloser() {
 
 export default function ArsenalChampions() {
   const [, setLocation] = useLocation();
-  const { user } = useUser();
+  // The quiz has its own optional sign-up, so a guest counts as signed out here
+  const { user: anyUser, isGuest } = useUser();
+  const user = isGuest ? null : anyUser;
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentRound, setCurrentRound] = useState(0);
   const [roundScores, setRoundScores] = useState<number[]>([]);
