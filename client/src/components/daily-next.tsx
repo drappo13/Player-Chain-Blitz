@@ -69,7 +69,8 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
   const { view: todayView, today, current: streak, entries, daysPlayed } = useStreak(user?.username);
   const yesterday = shiftDay(today, -1);
   const yDay = useDayProgress(user?.username, yesterday);
-  const day = late ? withFinished(yDay, entries, yesterday) : todayView;
+  const yView = withFinished(yDay, entries, yesterday);
+  const day = late ? yView : todayView;
   const countdown = useCountdown();
   const [copied, setCopied] = useState(false);
 
@@ -142,6 +143,14 @@ export function DailyNext({ current, late = puzzleDay().late, score }: { current
             <Share2 className="w-4 h-4" /> {copied ? "Copied!" : "Share my day"}
           </button>
         </motion.div>
+      )}
+
+      {!late && !countsToday(yView[current]) && (
+        <button
+          onClick={() => { trackEvent("yesterday_open", { from: "end_screen", game: current }); navigate(gameHref(DAILY_META[current].href, true)); }}
+          className="mt-3 w-full text-center text-xs font-semibold text-sky-300 hover:text-sky-200">
+          Liked it? Play yesterday's {DAILY_META[current].name} ›
+        </button>
       )}
 
       <div className="text-center">
