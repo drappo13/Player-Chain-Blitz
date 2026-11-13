@@ -61,21 +61,23 @@ export function useGameTips(game: string, firstTime: boolean, tips: TipDef[]) {
 }
 
 const ACCENTS = {
-  green: { border: "border-green-400/45", btn: "bg-green-400 text-green-950" },
-  blue: { border: "border-sky-400/45", btn: "bg-sky-400 text-sky-950" },
-  violet: { border: "border-violet-400/45", btn: "bg-violet-400 text-violet-950" },
-  amber: { border: "border-amber-400/45", btn: "bg-amber-400 text-amber-950" },
+  green: { border: "border-green-400/60", btn: "bg-green-400 text-green-950", tint: "from-green-400/20", arrow: "bg-[#1f2b24]" },
+  blue: { border: "border-sky-400/60", btn: "bg-sky-400 text-sky-950", tint: "from-sky-400/20", arrow: "bg-[#1d2732]" },
+  violet: { border: "border-violet-400/60", btn: "bg-violet-400 text-violet-950", tint: "from-violet-400/20", arrow: "bg-[#262236]" },
+  amber: { border: "border-amber-400/60", btn: "bg-amber-400 text-amber-950", tint: "from-amber-400/20", arrow: "bg-[#2c2820]" },
 } as const;
 export type TipAccent = keyof typeof ACCENTS;
 
 /** Wrap the element a tip points at. The bubble floats above or below it (left/centre/right), in the
  *  game's colour, with everything inside it: the tip, "Skip tips" and a Got it button. */
-export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", arrow = true, accent = "green", className = "" }: {
+export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom", align = "center", arrow = true, accent = "green", full = false, className = "" }: {
   show: boolean; children: ReactNode; text?: ReactNode; onOk?: () => void; onSkip?: () => void;
-  place?: "top" | "bottom"; align?: "start" | "center" | "end"; arrow?: boolean; accent?: TipAccent; className?: string;
+  place?: "top" | "bottom"; align?: "start" | "center" | "end"; arrow?: boolean; accent?: TipAccent;
+  /** Span the anchor's full width (how-to tips under a full-width row) instead of a compact bubble */
+  full?: boolean; className?: string;
 }) {
   const a = ACCENTS[accent];
-  const x = align === "start" ? "left-0" : align === "end" ? "right-0" : "left-1/2 -translate-x-1/2";
+  const x = full ? "left-0 right-0" : align === "start" ? "left-0" : align === "end" ? "right-0" : "left-1/2 -translate-x-1/2";
   const arrowX = align === "start" ? "left-6" : align === "end" ? "right-6" : "left-1/2 -translate-x-1/2";
   return (
     <div className={`relative ${className}`}>
@@ -83,18 +85,19 @@ export function TipAnchor({ show, children, text, onOk, onSkip, place = "bottom"
       <AnimatePresence>
         {show && text && (
           // Positioning lives on a plain box: framer's transform would otherwise wipe out the centring
-          <div className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2" : "bottom-full mb-2"} w-[min(300px,calc(100vw-2rem))]`}>
+          <div className={`absolute z-40 ${x} ${place === "bottom" ? "top-full mt-2" : "bottom-full mb-2"} ${full ? "" : "w-[min(300px,calc(100vw-2rem))]"}`}>
             <motion.div
               initial={{ opacity: 0, y: place === "bottom" ? -4 : 4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className={`relative rounded-2xl border ${a.border} bg-[#16191f] shadow-2xl shadow-black/60 px-3.5 pt-3 pb-2.5`}
+              className={`relative rounded-2xl border ${a.border} bg-[#1b1f26] shadow-2xl shadow-black/60 px-3.5 pt-3 pb-2.5`}
               role="status"
             >
+              <span aria-hidden className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${a.tint} to-transparent pointer-events-none`} />
               {arrow && (
-                <span className={`absolute ${arrowX} w-3 h-3 rotate-45 bg-[#16191f] border ${a.border} ${
+                <span className={`absolute ${arrowX} w-3 h-3 rotate-45 ${a.arrow} border ${a.border} ${
                   place === "bottom" ? "-top-[7px] border-r-0 border-b-0" : "-bottom-[7px] border-l-0 border-t-0"}`} />
               )}
-              <p className="relative text-[13px] leading-snug text-foreground/90">{text}</p>
+              <p className="relative text-[13px] leading-snug text-foreground">{text}</p>
               <div className="relative mt-2.5 flex items-center justify-between">
                 <button type="button" onClick={onSkip} className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">
                   Skip tips
