@@ -33,7 +33,7 @@ Data we have (13 Nov 2026):
    on a schedule is the next step.
 9. **Copy:** no "counted" wording — tile shows "✓ 640 · keep going"; toast "That's today done ✓ Keep going for
    more points". Name ask: "Pick a name to put 780 on the leaderboard". No "Can you beat 780?".
-10a. **Complete target (after testing):** per board instead of a flat 5 — CentreCircle ~5% of names (4–10; boards
+10a. **Complete target (after testing): now flat 6 (CentreCircle) / 10 (Griddle)** — effort doesn't scale with board size. Earlier idea: per board instead of a flat 5 — CentreCircle ~5% of names (4–10; boards
    range 49–185 names), Griddle ~3.5% (5–10, ≈8 on a normal board). Roughly the bottom fifth of submitters.
    No toast: an in-game line "Find 8 to complete today" → "✓ Today complete · keep going for more points".
 10b. **Yesterday's set (after testing):** day-0 players only, after their first finished game, and just for fun
