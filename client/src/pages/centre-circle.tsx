@@ -11,11 +11,9 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner } from "@/components/daily-next";
+import { LateBanner, TodayGoal, completeTarget } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
-/** Names found before the board counts for today (streak, set) — still open after that. */
-const COUNT_AT = 5;
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -380,6 +378,8 @@ export default function CentreCircle() {
   const answers = useMemo(() => answersFor(board), [board]);
   const answerByKey = useMemo(() => new Map(answers.map(a => [a.key, a] as [string, Answer])), [answers]);
   const maxScore = useMemo(() => answers.reduce((s, a) => s + a.points, 0), [answers]);
+  /** Names that make today count (streak, set); the board stays open after that */
+  const countAt = completeTarget("centrecircle", answers.length);
 
   const [state, setState] = useState<HiveState>(() => loadState(dateKey, board, user?.username));
   const [input, setInput] = useState("");
@@ -432,7 +432,7 @@ export default function CentreCircle() {
     saveState(state, user?.username);
     recordDaily(user?.username, "centrecircle", dateKey, state.submitted || state.found.length > 0 ? {
       status: state.submitted ? "done" : "playing",
-      counted: !state.submitted && state.found.length >= COUNT_AT,
+      counted: !state.submitted && state.found.length >= countAt,
       score: state.score,
       detail: `${state.found.length}/${answers.length} found`,
       level: getRank(state.score, maxScore).label,
@@ -471,24 +471,12 @@ export default function CentreCircle() {
 
   // Once it counts for today, the score goes on the leaderboard and keeps up as it rises
   useEffect(() => {
-    if (!user?.username || state.submitted || state.found.length < COUNT_AT) return;
+    if (!user?.username || state.submitted || state.found.length < countAt) return;
     saveLiveScore({ username: user.username, game: "centrecircle", dateKey, score: state.score, found: state.found.length, total: answers.length,
       state: { boardHash: state.boardHash, found: state.found }, late });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.found.length, state.submitted, user?.username]);
 
-  // "That's today done" the moment it starts counting
-  const [countedToast, setCountedToast] = useState(false);
-  const prevFound = useRef(state.found.length);
-  useEffect(() => {
-    if (prevFound.current < COUNT_AT && state.found.length >= COUNT_AT && !state.submitted) {
-      setCountedToast(true);
-      const t = setTimeout(() => setCountedToast(false), 3200);
-      prevFound.current = state.found.length;
-      return () => clearTimeout(t);
-    }
-    prevFound.current = state.found.length;
-  }, [state.found.length, state.submitted]);
 
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
@@ -611,14 +599,6 @@ export default function CentreCircle() {
       <div className="flex items-center gap-2">
       </div>
       {late && <LateBanner dateKey={dateKey} />}
-      <AnimatePresence>
-        {countedToast && !late && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-black shadow-lg shadow-emerald-500/30">
-            {late ? "That's yesterday done \u2713" : "That's today done \u2713"} Keep going for more points
-          </motion.div>
-        )}
-      </AnimatePresence>
       {IS_LOCAL && (
         <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 whitespace-nowrap rounded-full border border-green-500/40 bg-background/90 px-3 py-1.5 text-xs shadow-lg">
           <span className="font-semibold text-green-300">Test build</span>
@@ -663,7 +643,7 @@ export default function CentreCircle() {
               <RuleItem icon="🟢" text={`Use the centre letter (${board.centre.toUpperCase()}) for double points`} />
               <RuleItem icon="★" text={`Legends double it again: anyone with ${LEGEND_APPS}+ PL apps or ${LEGEND_GOALS}+ PL goals`} />
               <RuleItem icon="🆓" text="Wrong guesses are free. Players who share a surname count as one answer" />
-              <RuleItem icon="🏁" text={`${COUNT_AT} names and today counts for your streak. Your score goes on the leaderboard as you play; tap Finish (the flag) when you're done to see the answers`} />
+              <RuleItem icon="🏁" text={`Find ${countAt} names to complete today (that keeps your streak). Keep going for more points: your score goes on the leaderboard as you play. Tap Finish (the flag) when you're done to see the answers`} />
             </div>
 
             <Button className="w-full text-lg py-6 shadow-xl shadow-green-500/20 bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-green-950 font-bold"
@@ -845,6 +825,8 @@ export default function CentreCircle() {
             </button>
           </div>
         )}
+
+        {!isFinished && !late && <TodayGoal found={state.found.length} target={countAt} />}
 
         {/* Found header + tracker / submit */}
         <div className="w-full flex items-center justify-between mb-2">

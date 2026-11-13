@@ -51,6 +51,39 @@ export function SetSegments({ day, className = "h-2" }: { day: DayProgress; clas
   );
 }
 
+/** How many answers make CentreCircle/Griddle count for today: a share of the board (about the
+ *  bottom fifth of players who submit), within sensible bounds. */
+export function completeTarget(game: "centrecircle" | "griddle", total: number): number {
+  return game === "centrecircle"
+    ? Math.min(10, Math.max(4, Math.round(total * 0.05)))
+    : Math.min(10, Math.max(5, Math.round(total * 0.035)));
+}
+
+/** In-game line for the open-ended games: "Find 8 to complete today" with progress, then a tick. */
+export function TodayGoal({ found, target }: { found: number; target: number }) {
+  const done = found >= target;
+  return (
+    <div className={`w-full flex items-center gap-2 text-xs font-semibold mb-3 ${done ? "text-emerald-300" : "text-muted-foreground"}`}>
+      {done ? (
+        <motion.span initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          className="inline-flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-emerald-400 text-emerald-950 flex items-center justify-center"><Check className="w-3 h-3" strokeWidth={3.5} /></span>
+          Today complete · keep going for more points
+        </motion.span>
+      ) : (
+        <>
+          <span className="shrink-0">Find {target} to complete today</span>
+          <span className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden min-w-[40px]">
+            <motion.span className="block h-full rounded-full bg-emerald-400" initial={false}
+              animate={{ width: `${(found / target) * 100}%` }} transition={{ duration: 0.3 }} />
+          </span>
+          <span className="shrink-0 tabular-nums">{found}/{target}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Small pill on a daily game page when you're playing yesterday's set. */
 export function LateBanner({ dateKey }: { dateKey: string }) {
   const [y, m, d] = dateKey.split("-").map(Number);

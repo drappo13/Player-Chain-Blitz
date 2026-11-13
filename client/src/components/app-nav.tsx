@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CalendarCheck, Gamepad2, Trophy, UserRound, Flame } from "lucide-react";
@@ -70,7 +71,18 @@ export function SetChip() {
   const { user } = useUser();
   const { view } = useStreak(user?.username);
   const done = DAILY_GAMES.map((g) => countsToday(view[g.slug]));
+  const n = done.filter(Boolean).length;
+  // Pulse when a game starts counting (e.g. CentreCircle hits its target mid-game)
+  const prev = useRef(n);
+  const [bump, setBump] = useState(0);
+  useEffect(() => {
+    if (n > prev.current) setBump((b) => b + 1);
+    prev.current = n;
+  }, [n]);
   return (
+    <motion.span key={bump} className="inline-flex rounded-full" initial={bump ? { scale: 1 } : false}
+      animate={bump ? { scale: [1, 1.18, 1], boxShadow: ["0 0 0 0 rgba(52,211,153,0)", "0 0 0 6px rgba(52,211,153,0.35)", "0 0 0 0 rgba(52,211,153,0)"] } : undefined}
+      transition={{ duration: 0.7 }}>
     <Link
       href="/"
       aria-label={`Today's set, ${done.filter(Boolean).length} of ${DAILY_GAMES.length} done`}
@@ -90,6 +102,7 @@ export function SetChip() {
       <span className="font-black tabular-nums text-foreground">{done.filter(Boolean).length}/{DAILY_GAMES.length}</span>
       <span className="font-semibold text-muted-foreground">Today</span>
     </Link>
+    </motion.span>
   );
 }
 

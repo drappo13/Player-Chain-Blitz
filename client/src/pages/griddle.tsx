@@ -12,11 +12,9 @@ import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
 import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
-import { LateBanner } from "@/components/daily-next";
+import { LateBanner, TodayGoal, completeTarget } from "@/components/daily-next";
 import { EndBoard } from "@/components/end-board";
 
-/** Players found before the grid counts for today (streak, set) — still open after that. */
-const COUNT_AT = 5;
 import { trackEvent } from "@/lib/firebase";
 import { DailyNext } from "@/components/daily-next";
 import { SetChip } from "@/components/app-nav";
@@ -453,6 +451,8 @@ export default function Griddle() {
   const playerLookup = useMemo(() => buildPlayerLookup(), []);
   const validAnswers = useMemo(() => getValidAnswers(boardClubs), [boardClubs]);
   const totalValid = validAnswers.length;
+  /** Players that make today count (streak, set); the grid stays open after that */
+  const countAt = completeTarget("griddle", totalValid);
 
   const [state, setState] = useState<GriddleState>(() => loadState(dateKey, boardClubs, user?.username));
   const [input, setInput] = useState("");
@@ -508,7 +508,7 @@ export default function Griddle() {
     const found = state.foundPlayers.length;
     recordDaily(user?.username, "griddle", dateKey, isFinished || found > 0 ? {
       status: isFinished ? "done" : "playing",
-      counted: !isFinished && found >= COUNT_AT,
+      counted: !isFinished && found >= countAt,
       score: state.score,
       detail: isFinished ? `${found} found` : `${found} found \u00B7 ${state.livesLeft} ${state.livesLeft === 1 ? "life" : "lives"} left`,
       level: getCurrentTier(found, totalValid).current?.label ?? "Unranked",
@@ -548,22 +548,11 @@ export default function Griddle() {
 
   // Once it counts for today, the score goes on the leaderboard and keeps up as it rises
   useEffect(() => {
-    if (!user?.username || isFinished || state.foundPlayers.length < COUNT_AT) return;
+    if (!user?.username || isFinished || state.foundPlayers.length < countAt) return;
     saveLiveScore({ username: user.username, game: "griddle", dateKey, score: state.score, found: state.foundPlayers.length, total: totalValid, state, late });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.foundPlayers.length, state.score, isFinished, user?.username]);
 
-  const [countedToast, setCountedToast] = useState(false);
-  const prevFound = useRef(state.foundPlayers.length);
-  useEffect(() => {
-    if (prevFound.current < COUNT_AT && state.foundPlayers.length >= COUNT_AT && !isFinished) {
-      setCountedToast(true);
-      const t = setTimeout(() => setCountedToast(false), 3200);
-      prevFound.current = state.foundPlayers.length;
-      return () => clearTimeout(t);
-    }
-    prevFound.current = state.foundPlayers.length;
-  }, [state.foundPlayers.length, isFinished]);
 
   const handleFinish = useCallback(async () => {
     if (!user?.username) return;
@@ -830,7 +819,7 @@ export default function Griddle() {
               ) : (
                 <RuleItem icon="❌" text="Wrong guesses cost -1 (only if the player has 0 clubs on the board)" />
               )}
-              <RuleItem icon="🏁" text={`${COUNT_AT} players and today counts for your streak. Your score goes on the leaderboard as you play; tap the flag to finish and see the answers`} />
+              <RuleItem icon="🏁" text={`Find ${countAt} players to complete today (that keeps your streak). Keep going for more points: your score goes on the leaderboard as you play. Tap the flag to finish and see the answers`} />
             </div>
 
             <Button className={`w-full text-lg py-6 ${theme.primaryBtn}`} onClick={() => setShowRules(false)}>
@@ -855,14 +844,6 @@ export default function Griddle() {
 
       {/* Tier + Coverage overlays are rendered inside the grid container below */}
       {late && <LateBanner dateKey={dateKey} />}
-      <AnimatePresence>
-        {countedToast && !late && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap rounded-full bg-emerald-400 text-emerald-950 px-4 py-2 text-sm font-black shadow-lg shadow-emerald-500/30">
-            {late ? "That's yesterday done \u2713" : "That's today done \u2713"} Keep going for more points
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Confirm modal */}
       <AnimatePresence>
@@ -1172,6 +1153,8 @@ export default function Griddle() {
             </div>
           );
         })()}
+
+        {!isFinished && !late && <TodayGoal found={state.foundPlayers.length} target={countAt} />}
 
         {/* Found players list */}
         {state.foundPlayers.length > 0 && (
