@@ -126,7 +126,7 @@ Config (root):
 - `open: true` = CentreCircle/Griddle saved as you go (`saveLiveScore` in `lib/daily-score.ts`). These docs use the
   key as their doc ID so later saves update the same doc; Finish writes `open: false`. Rules only let an open doc's score go up.
 
-**`friends`** — `friends/{username}` = `{ list: string[], updatedAt }` (one-way follows, max 50; `lib/friends.ts`).
+**`friends`** — `friends/{username}` = `{ list: string[], updatedAt, added: { name: { at, via: "username" | "invite" } } }` (one-way follows, max 50; `lib/friends.ts`). `added` is an add log for /stats, merged on each add and kept after a removal; lists from before 14 Nov 2026 have none (/stats dates those by `updatedAt`).
 Invitees are merged in automatically; a new account from an invite link starts with the inviter.
 
 **`guest-plays`** — retired (first guest release only). Guests now write ordinary `daily-scores`/`scores`.
