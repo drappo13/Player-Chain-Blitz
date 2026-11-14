@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import careerData from "@/data/career-path.json";
 import plPlayers from "@/data/pl-players.json";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Calendar, Home, Trophy, ChevronRight, Info, Lock, Lightbulb, Share2, Check, X, ArrowUp, ArrowDown, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -360,6 +360,12 @@ export default function CareerPath() {
   const done = roundDone(round);
   const total = totalOf(state.rounds);
   const shownTotal = useCountUp(total, 900);
+  const scorePulse = useAnimationControls();
+  const prevTotal = useRef(total);
+  useEffect(() => {
+    if (total > prevTotal.current) scorePulse.start({ scale: [1, 1.18, 1], transition: { duration: 0.4 } });
+    prevTotal.current = total;
+  }, [total, scorePulse]);
   const suggestions = useMemo(() => search(query, new Set(round.guesses)), [query, round.guesses]);
   const windowClubs = useMemo(() => [...new Set(puzzle.rows.map(r => r.club))], [puzzle]);
 
@@ -552,7 +558,6 @@ export default function CareerPath() {
   }
 
   const years = Array.from({ length: WINDOW }, (_, i) => puzzle.start + i);
-  const prize = STAGE_POINTS[round.stage] * MULTIPLIERS[current];
 
   // --- Playing Screen ---
   return (
@@ -578,37 +583,30 @@ export default function CareerPath() {
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-24 flex-1">
         {header}
 
-        {/* Round (n/5 + progress dots), points and clue ladder in one panel */}
-        <div className="w-full rounded-2xl border border-white/10 bg-card/60 px-4 pt-3 pb-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground whitespace-nowrap">
-                Round <span className="text-white tabular-nums">{current + 1}</span>/{ROUNDS}
-              </span>
-              <MultBadge k={current} />
-              <RoundDots rounds={state.rounds} current={current} />
-            </div>
-            <div className="flex flex-col items-end shrink-0">
-            <motion.div key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="flex items-baseline gap-1 origin-right">
-              {done && !round.solved ? (
-                <span className="text-sm font-bold text-red-300">Missed · 0 pts</span>
-              ) : (
-                <>
-                  <span className="text-2xl font-black tabular-nums text-white">{done ? `+${fmtPts(roundPoints(round, current))}` : fmtPts(prize)}</span>
-                  <span className="text-xs text-muted-foreground">pts</span>
-                </>
-              )}
+        {/* One panel: round dots · score (centre, like the other games) · multiplier, then the clue
+            ladder with what a right answer is worth at each step */}
+        <div className="w-full rounded-2xl border border-white/10 bg-card/60 px-4 pt-2.5 pb-2.5">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <RoundDots rounds={state.rounds} current={current} />
+            <motion.div animate={scorePulse} aria-label={`Score ${fmtPts(total)}`}
+              className="text-3xl font-black tabular-nums text-white leading-none">
+              {fmtPts(shownTotal)}
             </motion.div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold tabular-nums" aria-label={`Score ${fmtPts(total)}`}>
-              Score <span className="text-white font-black">{fmtPts(shownTotal)}</span>
-            </div>
-            </div>
+            <div className="flex justify-end"><MultBadge k={current} big /></div>
           </div>
-          <div className="grid grid-cols-5 gap-1.5 mt-2">
+          <div className="grid grid-cols-5 gap-1.5 mt-2.5">
             {CLUES.map((c, i) => {
               const on = i <= round.stage || done;
+              const pts = fmtPts(STAGE_POINTS[i] * MULTIPLIERS[current]);
+              // Worth now = white; already gone (or the round missed) = struck through; still to come = dim
+              const won = done && round.solved && i === round.stage;
+              const live = !done && i === round.stage;
+              const gone = done ? !won : i < round.stage;
               return (
                 <div key={c.label}>
+                  <div className={`text-[11px] mb-0.5 font-black tabular-nums leading-none transition-colors ${won ? "text-fuchsia-200" : live ? "text-white" : gone ? "text-muted-foreground/40 line-through" : "text-muted-foreground/70"}`}>
+                    {won ? `+${pts}` : pts}
+                  </div>
                   <div className={`h-1 rounded-full transition-colors duration-300 ${on ? "bg-gradient-to-r from-violet-400 to-fuchsia-400" : "bg-white/10"}`} />
                   <div className={`text-[9px] mt-1 font-semibold uppercase tracking-wide truncate ${on ? "text-fuchsia-200" : "text-muted-foreground/50"}`}>{c.label}</div>
                 </div>
@@ -711,14 +709,14 @@ function Backdrop({ tint }: { tint: string }) {
 // One dot per round in its colour: filled when named, red when missed, ringed for the current one
 function RoundDots({ rounds, current }: { rounds: RoundState[]; current: number }) {
   return (
-    <div className="flex items-center gap-1.5 ml-0.5" aria-hidden>
+    <div className="flex items-center gap-1.5 ml-0.5" role="img" aria-label={`Round ${current + 1} of ${rounds.length}`}>
       {rounds.map((r, i) => {
         const isCur = i === current && !roundDone(r);
         const style: React.CSSProperties = r.solved ? { background: roundGradient(i) }
           : isCur ? { boxShadow: `0 0 0 2px ${ROUND_THEMES[i].to}, 0 0 10px ${ROUND_THEMES[i].to}` } : {};
         return (
           <motion.span key={i} style={style} initial={false} animate={{ scale: isCur ? 1.15 : 1 }}
-            className={`block w-2 h-2 rounded-full ${r.solved ? "" : r.failed ? "bg-red-500/80" : isCur ? "bg-white/90" : "bg-white/15"}`} />
+            className={`block w-2.5 h-2.5 rounded-full ${r.solved ? "" : r.failed ? "bg-red-500/80" : isCur ? "bg-white/90" : "bg-white/15"}`} />
         );
       })}
     </div>
@@ -726,9 +724,9 @@ function RoundDots({ rounds, current }: { rounds: RoundState[]; current: number 
 }
 
 // "×2" chip in the round's colour
-function MultBadge({ k, dim = false, onDark = false }: { k: number; dim?: boolean; onDark?: boolean }) {
+function MultBadge({ k, dim = false, onDark = false, big = false }: { k: number; dim?: boolean; onDark?: boolean; big?: boolean }) {
   return (
-    <span className={`inline-flex items-center px-1.5 py-px rounded-md text-[10px] font-black leading-tight tabular-nums text-white ${dim ? "opacity-40" : ""} ${onDark ? "ring-1 ring-white/40" : ""}`}
+    <span className={`inline-flex items-center rounded-md font-black leading-tight tabular-nums text-white ${big ? "px-2 py-0.5 text-sm" : "px-1.5 py-px text-[10px]"} ${dim ? "opacity-40" : ""} ${onDark ? "ring-1 ring-white/40" : ""}`}
       style={{ background: roundGradient(k) }}>
       ×{MULTIPLIERS[k]}
     </span>
