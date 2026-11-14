@@ -493,7 +493,7 @@ export default function CareerPath() {
   const tint = ROUND_THEMES[current].to;
 
   const header = (
-    <div className="w-full flex items-center justify-between mb-4">
+    <div className="w-full flex items-center justify-between mb-3">
       <div className="flex items-center gap-1">
         <SetChip />
         {!showRules && (
@@ -617,8 +617,8 @@ export default function CareerPath() {
 
         {/* Season rows */}
         <motion.div key={`cards-${current}-${shake}`} animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : {}} transition={{ duration: 0.35 }}
-          className="w-full mt-3 rounded-2xl border border-white/10 bg-card/60 overflow-hidden">
-          <div className="flex items-center gap-3 px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+          className="w-full mt-2.5 rounded-2xl border border-white/10 bg-card/60 overflow-hidden">
+          <div className="flex items-center gap-3 px-3 pt-1.5 pb-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
             <span className="w-11">Season</span><span className="flex-1">Club</span>
             <span className="w-9 text-center">Apps</span><span className="w-8 text-center">G</span><span className="w-8 text-center">A</span>
           </div>
@@ -643,12 +643,12 @@ export default function CareerPath() {
 
         {/* Guess box, or the answer */}
         {!done ? (
-          <div className="w-full mt-4">
+          <div className="w-full mt-3">
             <TipAnchor show={tips.tip?.id === "start"} text={tips.tip?.text} onOk={tips.ok} onSkip={tips.skip} accent="violet" place="bottom" align="start" full>
             <div className="relative">
               <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={onKeyDown}
                 placeholder="Who is it?" aria-label="Guess a player" autoComplete="off" autoCorrect="off" spellCheck={false}
-                className="w-full h-14 rounded-2xl border border-violet-400/30 bg-card/80 px-5 text-lg font-semibold outline-none focus:border-fuchsia-400/70 focus:shadow-[0_0_30px_-6px_rgba(217,70,239,0.5)] transition-all placeholder:text-muted-foreground/50" />
+                className="w-full h-12 rounded-2xl border border-violet-400/30 bg-card/80 px-5 text-lg font-semibold outline-none focus:border-fuchsia-400/70 focus:shadow-[0_0_30px_-6px_rgba(217,70,239,0.5)] transition-all placeholder:text-muted-foreground/50" />
               <AnimatePresence>
                 {suggestions.length > 0 && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
@@ -739,7 +739,7 @@ function SeasonRows({ index, year, rows, shown }: { index: number; year: number;
       transition={{ type: "spring", stiffness: 300, damping: 24, delay: index * 0.05 }}
       className="border-t border-white/5">
       {rows.map((row, k) => (
-        <div key={row.club} className="flex items-center gap-3 px-3 py-2">
+        <div key={row.club} className={`flex items-center gap-3 px-3 ${k === 0 ? "py-1.5" : "pb-1.5"}`}>
           <div className="w-11 shrink-0 text-sm font-black tabular-nums">{k === 0 ? shortSeason(year) : <span className="text-[10px] font-bold text-fuchsia-300">+ also</span>}</div>
           <div className="flex-1 min-w-0"><ClubBadge club={row.club} open={shown(row)} /></div>
           <Stat value={row.apps} className="w-9 text-muted-foreground" />
@@ -752,23 +752,23 @@ function SeasonRows({ index, year, rows, shown }: { index: number; year: number;
 }
 
 function Stat({ value, className = "" }: { value: number; className?: string }) {
-  return <div className={`shrink-0 text-center text-lg font-black tabular-nums ${value === 0 ? "opacity-35" : ""} ${className}`}>{value}</div>;
+  return <div className={`shrink-0 text-center text-base font-black tabular-nums ${value === 0 ? "opacity-35" : ""} ${className}`}>{value}</div>;
 }
 
 function ClubBadge({ club, open }: { club: string; open: boolean }) {
   return (
-    <div className="relative h-7 [perspective:600px]">
+    <div className="relative h-6 [perspective:600px]">
       <AnimatePresence mode="wait" initial={false}>
         {open ? (
           <motion.div key="open" initial={{ rotateX: -95, opacity: 0 }} animate={{ rotateX: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 18 }}
-            className="absolute inset-0 flex items-center px-3 rounded-lg text-sm font-black truncate"
+            className="absolute inset-0 flex items-center px-2.5 rounded-md text-[13px] font-black truncate"
             style={{ background: `linear-gradient(135deg, ${clubColour(club)}, ${clubColour(club)}cc)`, color: clubText(club), boxShadow: `0 6px 20px -8px ${clubColour(club)}` }}>
             {club}
           </motion.div>
         ) : (
           <motion.div key="locked" exit={{ rotateX: 95, opacity: 0 }} transition={{ duration: 0.18 }}
-            className="absolute inset-0 flex items-center gap-1.5 px-3 rounded-lg bg-white/[0.05] border border-white/10 text-muted-foreground/50 text-xs font-semibold">
+            className="absolute inset-0 flex items-center gap-1.5 px-2.5 rounded-md bg-white/[0.05] border border-white/10 text-muted-foreground/50 text-xs font-semibold">
             <Lock className="w-3 h-3" /> Hidden
           </motion.div>
         )}
