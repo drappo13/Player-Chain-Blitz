@@ -435,7 +435,7 @@ export default function GridLock() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Name a driver..."
+                placeholder="Type a driver…"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"

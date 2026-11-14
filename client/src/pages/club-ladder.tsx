@@ -866,7 +866,7 @@ export default function ClubLadder() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => { setInputValue(e.target.value); setFailFeedback(null); }}
-                placeholder="Name a goalscorer..."
+                placeholder="Type a goalscorer…"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"

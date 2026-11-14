@@ -836,7 +836,7 @@ export default function TargetMan() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Name a player..."
+                placeholder="Type a player…"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
