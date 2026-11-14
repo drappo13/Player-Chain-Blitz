@@ -111,6 +111,9 @@ function InstallCard() {
   );
 }
 
+/** Off for now; flip on to test push again from tiger's Me page. */
+const SHOW_PUSH_TEST = false;
+
 /** Admin-only push test: turn on, fire a local test, copy the subscription for a server-sent test. */
 function PushTestCard() {
   const [state, setState] = useState(pushState());
@@ -261,7 +264,7 @@ export default function Me() {
         <FriendsSection invitees={inviteeNames} invitedBy={invitedBy} streak={current} />
       )}
 
-      {!isGuest && user.username.toLowerCase() === "tiger" && <PushTestCard />}
+      {SHOW_PUSH_TEST && !isGuest && user.username.toLowerCase() === "tiger" && <PushTestCard />}
 
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex items-center justify-between mb-3 gap-3">

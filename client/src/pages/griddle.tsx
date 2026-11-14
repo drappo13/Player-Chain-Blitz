@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from "react";
 import plPlayers from "@/data/pl-players.json";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { Calendar, Home, Flag, Trophy, ChevronRight, Info, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -487,6 +487,13 @@ export default function Griddle() {
   const livesMode = dateKey >= LIVES_FROM;
   const outOfLives = livesMode && state.livesLeft <= 0;
   const isFinished = state.submitted || outOfLives;
+  // Shake the lives pill when one goes, without remounting it (see the score below)
+  const livesShake = useAnimationControls();
+  const prevLives = useRef(state.livesLeft);
+  useEffect(() => {
+    if (state.livesLeft < prevLives.current) livesShake.start({ x: [0, -4, 4, -2, 0], transition: { duration: 0.35 } });
+    prevLives.current = state.livesLeft;
+  }, [state.livesLeft, livesShake]);
   const goal = useCompleteGoal(state.foundPlayers.length, countAt, !isFinished && !late);
 
   // First-time tips, in order, each at the moment it's useful
@@ -934,9 +941,10 @@ export default function Griddle() {
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Griddle</span>
           </h1>
           <div className="relative flex flex-col items-center">
+            {/* One stable node (no key={score}): remounting it on every score left a stale copy
+                painted on iOS once (10 stacked over 15) */}
             <motion.div
-              key={state.score}
-              animate={scorePulse ? { scale: [1, 1.15, 1] } : {}}
+              animate={scorePulse ? { scale: [1, 1.15, 1] } : { scale: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               className={`text-3xl font-black tabular-nums ${theme.accent}`}
             >
@@ -944,10 +952,7 @@ export default function Griddle() {
             </motion.div>
             {livesMode && (
               <motion.div
-                key={state.livesLeft}
-                initial={{ x: 0 }}
-                animate={state.livesLeft < LIVES ? { x: [0, -4, 4, -2, 0] } : { x: 0 }}
-                transition={{ duration: 0.35 }}
+                animate={livesShake}
                 aria-label={`${state.livesLeft} lives left`}
                 className={`mt-0.5 text-xs font-bold tabular-nums whitespace-nowrap px-2 py-0.5 rounded-full border ${
                   state.livesLeft <= 3 ? "text-red-300 bg-red-500/15 border-red-500/40"
@@ -1102,7 +1107,7 @@ export default function Griddle() {
             onOk={tips.ok} onSkip={tips.skip} accent="blue" place="bottom" align="start" full className="w-full mb-3">
           <form onSubmit={handleSubmit} className="w-full flex gap-2">
             <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)}
-              placeholder="Enter a player name..."
+              placeholder="Type a player…"
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
               className={`flex-1 min-w-0 px-4 py-3 rounded-xl bg-card/80 border border-border text-foreground placeholder:text-muted-foreground/50 outline-none transition-all text-base ${theme.inputFocus}`}
             />
