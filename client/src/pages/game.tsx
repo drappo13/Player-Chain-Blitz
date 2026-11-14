@@ -515,7 +515,7 @@ export default function Game() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type a surname..."
+                placeholder="Type a player…"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"

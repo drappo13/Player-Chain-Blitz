@@ -108,6 +108,8 @@ export function UsernamePicker({ signupTitle, signupSubtitle, onClose, initialMo
                 setTakenUsername("");
               }}
               placeholder="Username"
+              // No passwords on this site: keep iOS/Android from offering saved logins or contacts
+              autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore data-lpignore="true"
               autoFocus
               maxLength={15}
               className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"

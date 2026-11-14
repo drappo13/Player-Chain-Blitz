@@ -981,7 +981,7 @@ export default function Overlap() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => { setInputValue(e.target.value); setShowOneClub(null); }}
-                placeholder="Name a player..."
+                placeholder="Type a player…"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"

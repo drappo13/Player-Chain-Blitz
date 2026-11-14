@@ -809,7 +809,7 @@ export default function CentreCircle() {
               ) : <span className="text-base font-medium normal-case tracking-normal text-muted-foreground/40">{finePointer() ? "Type or tap a surname" : "Tap the letters to spell a surname"}</span>}
             </div>
             {/* Read-only on phones: letters come from the board, so the keyboard never pops up over it */}
-            <input ref={inputRef} value={input} aria-label="Surname" readOnly={!finePointer()}
+            <input ref={inputRef} value={input} aria-label="Your answer" readOnly={!finePointer()}
               onChange={e => setInput(e.target.value.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "").slice(0, 24))}
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); submitWord(); } }}
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
