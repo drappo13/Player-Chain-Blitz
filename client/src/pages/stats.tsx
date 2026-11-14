@@ -538,24 +538,22 @@ export default function StatsPage() {
               <TwoLines data={s.week} />
             </Card>
           </div>
-          <div className="grid lg:grid-cols-2 gap-x-4">
-            <Card title="Today by game" note="Daily games finished today">
-              <div className="space-y-2">
-                {s.perGame.map(({ game, n }) => {
-                  const max = Math.max(1, ...s.perGame.map((x) => x.n));
-                  return (
-                    <div key={game.slug}>
-                      <div className="text-sm"><span className={`font-bold ${game.accent}`}>{game.name}</span></div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${game.bar}`} style={{ width: `${(n / max) * 100}%` }} /></div>
-                        <span className="w-9 text-right text-sm font-black tabular-nums">{n}</span>
-                      </div>
+          <Card title="Today by game" note="Daily games finished today">
+            <div className="space-y-2">
+              {s.perGame.map(({ game, n }) => {
+                const max = Math.max(1, ...s.perGame.map((x) => x.n));
+                return (
+                  <div key={game.slug}>
+                    <div className="text-sm"><span className={`font-bold ${game.accent}`}>{game.name}</span></div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${game.bar}`} style={{ width: `${(n / max) * 100}%` }} /></div>
+                      <span className="w-9 text-right text-sm font-black tabular-nums">{n}</span>
                     </div>
-                  );
-                })}
-              </div>
-            </Card>
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
 
           <SectionHead title="Engagement" />
           <Card title="Returning vs new players" note="Different people finishing a daily game each day. Returning = had already played on an earlier day. This is the number that has to hold up without Reddit posts"
