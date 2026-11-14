@@ -5,7 +5,9 @@ import { avatarsFor, type DailyGameSlug, type DailyScoreDoc } from "./daily-scor
 import { isGuestName } from "./guest";
 
 // Friends: follow anyone by username (one-way, no approval; scores are public anyway).
-// Stored as one doc per player: friends/{username} = { list: string[] }.
+// Stored as one doc per player: friends/{username} = { list: string[], added: { name: { at, via } } }.
+// `added` is a log for the stats page (when and how each friend was added, kept after a removal);
+// written with merge so earlier entries stay. Lists from before 14 Nov 2026 have no log.
 // Joining through someone's invite link makes you friends both ways.
 
 export const MAX_FRIENDS = 50;
@@ -26,9 +28,13 @@ function writeList(u: string, list: string[]) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** Save first, then show it: a failed save never leaves a friend on screen that isn't really there. */
-async function saveList(u: string, list: string[]) {
-  await setDoc(doc(db, "friends", u.toLowerCase()), { list, updatedAt: serverTimestamp() });
+type AddedVia = "username" | "invite";
+const addedLog = (names: string[], via: AddedVia) => Object.fromEntries(names.map((n) => [n, { at: serverTimestamp(), via }]));
+
+/** Save first, then show it: a failed save never leaves a friend on screen that isn't really there.
+ *  The list is replaced; `added` entries merge into the log. */
+async function saveList(u: string, list: string[], newNames: string[] = [], via: AddedVia = "username") {
+  await setDoc(doc(db, "friends", u.toLowerCase()), { list, updatedAt: serverTimestamp(), ...(newNames.length ? { added: addedLog(newNames, via) } : {}) }, { merge: true });
   writeList(u, list);
 }
 
@@ -54,8 +60,9 @@ async function loadList(u: string): Promise<string[]> {
       const added: string[] = JSON.parse(localStorage.getItem(invitesCheckedKey(key)) || "[]");
       const names = inv.docs.map((d) => d.id).filter((n) => n !== key && !list.includes(n) && !added.includes(n));
       if (names.length) {
-        list = [...list, ...names].slice(0, MAX_FRIENDS);
-        await setDoc(doc(db, "friends", key), { list, updatedAt: serverTimestamp() });
+        const room = names.slice(0, Math.max(0, MAX_FRIENDS - list.length));
+        list = [...list, ...room];
+        await setDoc(doc(db, "friends", key), { list, updatedAt: serverTimestamp(), added: addedLog(room, "invite") }, { merge: true });
       }
       localStorage.setItem(invitesCheckedKey(key), JSON.stringify([...new Set([...added, ...inv.docs.map((d) => d.id)])]));
     } catch { /* ignore */ }
@@ -94,7 +101,7 @@ export function useFriends(username: string | undefined) {
     try {
       const snap = await getDoc(doc(db, "users", name));
       if (!snap.exists()) return "No one has that username";
-      await saveList(username!, [...current, name]);
+      await saveList(username!, [...current, name], [name], "username");
       try { localStorage.removeItem(todayCacheKey(username!, new Date().toISOString().slice(0, 10))); } catch { /* ignore */ }
       trackEvent("friend_add", { method: "username", friends: current.length + 1 });
       return null;
@@ -142,7 +149,7 @@ export function useInvitees(username: string | undefined): string[] {
  *  picks up the other direction next time their list loads). */
 export async function startFriendsFromInvite(username: string, ref: string) {
   try {
-    await setDoc(doc(db, "friends", username.toLowerCase()), { list: [ref.toLowerCase()], updatedAt: serverTimestamp() });
+    await setDoc(doc(db, "friends", username.toLowerCase()), { list: [ref.toLowerCase()], updatedAt: serverTimestamp(), added: addedLog([ref.toLowerCase()], "invite") }, { merge: true });
     writeList(username, [ref.toLowerCase()]);
     trackEvent("friend_add", { method: "invite", friends: 1 });
   } catch { /* ignore */ }
