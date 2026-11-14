@@ -92,6 +92,63 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
   return { cache, reads: p.size + a.size + u.size };
 }
 
+// All-time totals: one slim entry per game and per account, kept on this device like the window above.
+// The first load reads every doc once (~4k on 14 Nov 2026); after that only docs newer than the last refresh.
+const ALL_KEY = "pcb-stats-alltime-v1";
+interface AllTime {
+  games: Record<string, { u: string; d?: string; g?: string }>; // doc id ("d:" daily / "a:" arcade) → user, local day played, fromGuest
+  users: Record<string, { g?: string }>;                         // username → fromGuest
+  until: number;
+}
+function readAllTime(): AllTime | null {
+  try { return JSON.parse(localStorage.getItem(ALL_KEY) || "null"); } catch { return null; }
+}
+async function refreshAllTime(): Promise<{ all: AllTime; reads: number }> {
+  const all: AllTime = readAllTime() ?? { games: {}, users: {}, until: 0 };
+  const first = all.until === 0;
+  const since = Timestamp.fromMillis(Math.max(0, all.until - OVERLAP_MS));
+  // First time: whole collections (old docs may predate the timestamp fields)
+  const [p, a, u] = await Promise.all([
+    getDocs(first ? collection(db, "daily-scores") : query(collection(db, "daily-scores"), where("timestamp", ">=", since))),
+    getDocs(first ? collection(db, "scores") : query(collection(db, "scores"), where("timestamp", ">=", since))),
+    getDocs(first ? collection(db, "users") : query(collection(db, "users"), where("createdAt", ">=", since))),
+  ]);
+  if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
+  const now = Date.now();
+  const add = (prefix: string) => (d: { id: string; data: () => unknown }) => {
+    const x = d.data() as { username?: string; timestamp?: Timestamp; playedAt?: Timestamp; fromGuest?: string };
+    if (!x.username) return;
+    const at = (x.playedAt ?? x.timestamp)?.toMillis?.();
+    all.games[prefix + d.id] = { u: x.username.toLowerCase(), d: at ? localDay(at) : undefined, g: x.fromGuest };
+  };
+  p.docs.forEach(add("d:"));
+  a.docs.forEach(add("a:"));
+  u.docs.forEach((d) => { const x = d.data() as { fromGuest?: string }; all.users[d.id.toLowerCase()] = { g: x.fromGuest }; });
+  all.until = now;
+  try { localStorage.setItem(ALL_KEY, JSON.stringify(all)); } catch { /* ignore */ }
+  return { all, reads: p.size + a.size + u.size };
+}
+
+function crunchAllTime(all: AllTime) {
+  const isGuest = (u: string) => u.startsWith("guest-");
+  // Guests who picked a name had their games copied to the account: count the account's copies only
+  const converted = new Set<string>();
+  for (const x of Object.values(all.users)) if (x.g) converted.add(x.g);
+  for (const x of Object.values(all.games)) if (x.g) converted.add(x.g);
+  const games = Object.values(all.games).filter((x) => !(isGuest(x.u) && converted.has(x.u)));
+  const days = new Map<string, Set<string>>();
+  for (const x of games) {
+    if (!days.has(x.u)) days.set(x.u, new Set());
+    if (x.d) days.get(x.u)!.add(x.d);
+  }
+  const players = [...days.keys()];
+  const guests = players.filter(isGuest).length;
+  const signups = Object.keys(all.users).length;
+  const signupsPlayed = Object.keys(all.users).filter((n) => days.has(n)).length;
+  const multiDay = [...days.values()].filter((d) => d.size >= 2).length;
+  return { games: games.length, players: players.length, guests, signups, signupsPlayed, multiDay };
+}
+
 function crunch(cache: Cache) {
   const today = todayKey();
   const isGuest = (u: string) => u.startsWith("guest-");
@@ -348,20 +405,24 @@ export default function StatsPage() {
   const { user } = useUser();
   const isAdmin = !!user && ADMINS.includes(user.username.toLowerCase());
   const [cache, setCache] = useState<Cache | null>(() => readCache());
+  const [allTime, setAllTime] = useState<AllTime | null>(() => readAllTime());
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [updated, setUpdated] = useState<Date | null>(null);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    refreshData()
-      .then(({ cache, reads }) => { setCache(cache); setUpdated(new Date()); setNote(`${reads} new records fetched`); })
+    Promise.all([refreshData(), refreshAllTime()])
+      .then(([{ cache, reads }, { all, reads: allReads }]) => {
+        setCache(cache); setAllTime(all); setUpdated(new Date()); setNote(`${reads + allReads} new records fetched`);
+      })
       .catch((e) => setNote(String(e?.message ?? e)))
       .finally(() => setLoading(false));
   }, []);
   useEffect(() => { if (isAdmin) refresh(); }, [isAdmin, refresh]);
 
   const s = useMemo(() => (cache ? crunch(cache) : null), [cache]);
+  const t = useMemo(() => (allTime ? crunchAllTime(allTime) : null), [allTime]);
 
   if (!isAdmin) return <HubPage><p className="text-muted-foreground">Nothing to see here.</p></HubPage>;
 
@@ -381,8 +442,21 @@ export default function StatsPage() {
         </button>
       </div>
 
+      {t && (
+        <>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">All time</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <Tile label="Games played" value={t.games.toLocaleString("en-GB")} sub="daily + arcade, every game saved" accent="text-amber-300" />
+            <Tile label="Players" value={t.players.toLocaleString("en-GB")} sub={`played 1+ game · ${t.players - t.guests} named · ${t.guests} guests`} accent="text-sky-300" />
+            <Tile label="Sign-ups" value={t.signups.toLocaleString("en-GB")} sub={`${pct(t.signupsPlayed, t.signups)}% have played a game`} accent="text-violet-300" />
+            <Tile label="Played on 2+ days" value={`${pct(t.multiDay, t.players)}%`} sub={`${t.multiDay} of ${t.players} players`} accent="text-emerald-300" />
+          </div>
+        </>
+      )}
+
       {s && (
         <>
+          {t && <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Today</p>}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.named} named · ${s.tiles.guests} guests · ${s.tiles.returningToday} returning`} accent="text-sky-300" />
             <Tile label="Sign-ups today" value={s.tiles.signups} sub={`${pct(s.tiles.newPlayed, s.tiles.signups)}% finished a game`} accent="text-violet-300" />
