@@ -94,9 +94,9 @@ async function refreshData(): Promise<{ cache: Cache; reads: number }> {
 
 // All-time totals: one slim entry per game and per account, kept on this device like the window above.
 // The first load reads every doc once (~4k on 14 Nov 2026); after that only docs newer than the last refresh.
-const ALL_KEY = "pcb-stats-alltime-v1";
+const ALL_KEY = "pcb-stats-alltime-v2"; // v2: games carry their game slug
 interface AllTime {
-  games: Record<string, { u: string; d?: string; g?: string }>; // doc id ("d:" daily / "a:" arcade) → user, local day played, fromGuest
+  games: Record<string, { u: string; d?: string; g?: string; k?: string }>; // doc id ("d:" daily / "a:" arcade) → user, local day played, fromGuest, game
   users: Record<string, { g?: string }>;                         // username → fromGuest
   // username → current list, last change, and the add log (when + how; none for lists before 14 Nov 2026)
   friends?: Record<string, { list: string[]; at?: number; added: Record<string, { at?: number; via?: string }> }>;
@@ -121,10 +121,10 @@ async function refreshAllTime(): Promise<{ all: AllTime; reads: number }> {
   if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache || f.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
   const now = Date.now();
   const add = (prefix: string) => (d: { id: string; data: () => unknown }) => {
-    const x = d.data() as { username?: string; timestamp?: Timestamp; playedAt?: Timestamp; fromGuest?: string };
+    const x = d.data() as { username?: string; game?: string; timestamp?: Timestamp; playedAt?: Timestamp; fromGuest?: string };
     if (!x.username) return;
     const at = (x.playedAt ?? x.timestamp)?.toMillis?.();
-    all.games[prefix + d.id] = { u: x.username.toLowerCase(), d: at ? localDay(at) : undefined, g: x.fromGuest };
+    all.games[prefix + d.id] = { u: x.username.toLowerCase(), d: at ? localDay(at) : undefined, g: x.fromGuest, k: x.game };
   };
   p.docs.forEach(add("d:"));
   a.docs.forEach(add("a:"));
@@ -148,7 +148,8 @@ function crunchAllTime(all: AllTime) {
   const converted = new Set<string>();
   for (const x of Object.values(all.users)) if (x.g) converted.add(x.g);
   for (const x of Object.values(all.games)) if (x.g) converted.add(x.g);
-  const games = Object.values(all.games).filter((x) => !(isGuest(x.u) && converted.has(x.u)));
+  const entries = Object.entries(all.games).filter(([, x]) => !(isGuest(x.u) && converted.has(x.u)));
+  const games = entries.map(([, x]) => x);
   const days = new Map<string, Set<string>>();
   for (const x of games) {
     if (!days.has(x.u)) days.set(x.u, new Set());
@@ -160,7 +161,16 @@ function crunchAllTime(all: AllTime) {
   const signupsPlayed = Object.keys(all.users).filter((n) => days.has(n)).length;
   const multiDay = [...days.values()].filter((d) => d.size >= 2).length;
   const friends = crunchFriends(all.friends ?? {}, days);
-  return { friends, games: games.length, players: players.length, guests, signups, signupsPlayed, multiDay };
+  // Each daily game, plus the arcade as one row: games ever, and how many different people played it
+  const daily = entries.filter(([id]) => id.startsWith("d:")).map(([, x]) => x);
+  const arcade = entries.filter(([id]) => id.startsWith("a:")).map(([, x]) => x);
+  const row = (rows: typeof games) => ({ games: rows.length, players: new Set(rows.map((x) => x.u)).size });
+  const byGame = {
+    daily: DAILY_GAMES.map((g) => ({ slug: g.slug, name: g.name, colour: DAILY_COLOURS[g.slug], ...row(daily.filter((x) => x.k === g.slug)) })),
+    dailyTotal: row(daily),
+    arcade: row(arcade),
+  };
+  return { friends, byGame, games: games.length, players: players.length, guests, signups, signupsPlayed, multiDay };
 }
 
 // Friends uptake. Every add ever = the add log, plus anyone on a list from before the log existed
@@ -499,8 +509,8 @@ export default function StatsPage() {
 
       {t && (
         <>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">All time</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <SectionHead title="All time" first />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
             <Tile label="Games played" value={t.games.toLocaleString("en-GB")} sub="daily + arcade, every game saved" accent="text-amber-300" />
             <Tile label="Players" value={t.players.toLocaleString("en-GB")} sub={`played 1+ game · ${t.players - t.guests} named · ${t.guests} guests`} accent="text-sky-300" />
             <Tile label="Sign-ups" value={t.signups.toLocaleString("en-GB")} sub={`${pct(t.signupsPlayed, t.signups)}% have played a game`} accent="text-violet-300" />
@@ -509,18 +519,15 @@ export default function StatsPage() {
         </>
       )}
 
-      {t && <FriendsSection f={t.friends} />}
-
       {s && (
         <>
-          {t && <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Today</p>}
+          <SectionHead title="Today" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <Tile label="Players today" value={s.tiles.players} sub={`${s.tiles.named} named · ${s.tiles.guests} guests · ${s.tiles.returningToday} returning`} accent="text-sky-300" />
             <Tile label="Sign-ups today" value={s.tiles.signups} sub={`${pct(s.tiles.newPlayed, s.tiles.signups)}% finished a game`} accent="text-violet-300" />
             <Tile label="Back from yesterday" value={`${pct(s.tiles.back, s.tiles.backOf)}%`} sub={`${s.tiles.back} of ${s.tiles.backOf} players`} />
             <Tile label="Full sets today" value={s.tiles.fullSets} sub="finished all four" accent="text-emerald-300" />
           </div>
-
           <div className="grid lg:grid-cols-2 gap-x-4">
             <Card title="Last 24 hours" note="Per hour: new accounts, and different people finishing a daily game (guests = no name yet)"
               right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }, { label: "Guests", colour: C.guests }]} />}>
@@ -531,12 +538,30 @@ export default function StatsPage() {
               <TwoLines data={s.week} />
             </Card>
           </div>
+          <div className="grid lg:grid-cols-2 gap-x-4">
+            <Card title="Today by game" note="Daily games finished today">
+              <div className="space-y-2">
+                {s.perGame.map(({ game, n }) => {
+                  const max = Math.max(1, ...s.perGame.map((x) => x.n));
+                  return (
+                    <div key={game.slug}>
+                      <div className="text-sm"><span className={`font-bold ${game.accent}`}>{game.name}</span></div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${game.bar}`} style={{ width: `${(n / max) * 100}%` }} /></div>
+                        <span className="w-9 text-right text-sm font-black tabular-nums">{n}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
 
+          <SectionHead title="Engagement" />
           <Card title="Returning vs new players" note="Different people finishing a daily game each day. Returning = had already played on an earlier day. This is the number that has to hold up without Reddit posts"
             right={<Legend items={[{ label: "Returning", colour: "#34d399" }, { label: "New", colour: "#2b84b4" }]} />}>
             <StackedBars data={s.returning} series={[{ key: "Returning", label: "Returning", colour: "#34d399" }, { key: "New", label: "New", colour: "#2b84b4" }]} />
           </Card>
-
           <div className="grid lg:grid-cols-2 gap-x-4">
             <Card title="Daily games finished" note="Per day, by game">
               <Legend items={DAILY_GAMES.map((g) => ({ label: g.name, colour: DAILY_COLOURS[g.slug] }))} />
@@ -547,7 +572,22 @@ export default function StatsPage() {
               <div className="mt-2"><StackedBars data={s.spread} series={BANDS.map((b) => ({ key: b.key, label: b.label, colour: b.colour }))} /></div>
             </Card>
           </div>
+          {t && <AllTimeGames games={t.byGame} players={t.players} />}
+          <Card title="Arcade" note="Arcade games finished per day, by game"
+            right={<div className="text-right text-xs text-muted-foreground tabular-nums"><p><span className="text-foreground font-black">{s.arcade.today}</span> today · {s.arcade.todayPlayers} players</p><p>{s.arcade.week} this week · {s.arcade.weekPlayers} players</p></div>}>
+            <Legend items={ARCADE.map((g) => ({ label: g.name, colour: g.colour }))} />
+            <div className="mt-2"><StackedBars data={s.arcadeByDay} series={ARCADE.map((g) => ({ key: g.slug, label: g.name, colour: g.colour }))} height="h-48" /></div>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {s.arcade.byGame.filter((g) => g.week > 0).map((g) => (
+                <div key={g.slug} className="rounded-xl bg-white/[0.03] border border-border px-3 py-2">
+                  <p className="text-[11px] font-bold" style={{ color: g.colour }}>{g.name}</p>
+                  <p className="text-sm text-foreground tabular-nums"><span className="font-black">{g.week}</span> <span className="text-muted-foreground text-xs">games · {g.players} players</span></p>
+                </div>
+              ))}
+            </div>
+          </Card>
 
+          <SectionHead title="Retention" />
           <Card title="Sign-ups who finished nothing" note="Share of each day's new accounts that didn't finish a daily game that day (most people now play as a guest before picking a name)">
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {s.bounce.map((b) => (
@@ -559,9 +599,7 @@ export default function StatsPage() {
               ))}
             </div>
           </Card>
-
           <CohortCard cohorts={s.cohorts} />
-
           <Card title="Guests" note="Last 7 days. Guests play without a name. Picked a name = signed up from a guest on that device. Staying guest = played on 2+ days without picking a name (happy as they are)">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               {[
@@ -594,40 +632,10 @@ export default function StatsPage() {
             </table>
           </Card>
 
-          <Card title="Arcade" note="Arcade games finished per day, by game"
-            right={<div className="text-right text-xs text-muted-foreground tabular-nums"><p><span className="text-foreground font-black">{s.arcade.today}</span> today · {s.arcade.todayPlayers} players</p><p>{s.arcade.week} this week · {s.arcade.weekPlayers} players</p></div>}>
-            <Legend items={ARCADE.map((g) => ({ label: g.name, colour: g.colour }))} />
-            <div className="mt-2"><StackedBars data={s.arcadeByDay} series={ARCADE.map((g) => ({ key: g.slug, label: g.name, colour: g.colour }))} height="h-48" /></div>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {s.arcade.byGame.filter((g) => g.week > 0).map((g) => (
-                <div key={g.slug} className="rounded-xl bg-white/[0.03] border border-border px-3 py-2">
-                  <p className="text-[11px] font-bold" style={{ color: g.colour }}>{g.name}</p>
-                  <p className="text-sm text-foreground tabular-nums"><span className="font-black">{g.week}</span> <span className="text-muted-foreground text-xs">games · {g.players} players</span></p>
-                </div>
-              ))}
-            </div>
-          </Card>
-
+          <SectionHead title="Social" />
+          {t && <FriendsSection f={t.friends} />}
           <div className="grid lg:grid-cols-2 gap-x-4">
-            <Card title="Today by game" note="Daily games finished today">
-              <div className="space-y-2">
-                {s.perGame.map(({ game, n, avg, best }) => {
-                  const max = Math.max(1, ...s.perGame.map((x) => x.n));
-                  return (
-                    <div key={game.slug}>
-                      <div className="flex items-baseline justify-between text-sm">
-                        <span className={`font-bold ${game.accent}`}>{game.name}</span>
-                        <span className="text-xs text-muted-foreground tabular-nums">avg {avg ?? "–"} · best {best ?? "–"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${game.bar}`} style={{ width: `${(n / max) * 100}%` }} /></div>
-                        <span className="w-9 text-right text-sm font-black tabular-nums">{n}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
+            {t && <WhoHasFriends who={t.friends.who} />}
             <Card title={`Invites (${s.invites.length})`} note="Sign-ups that came through someone's link, last two weeks">
               {s.invites.length === 0 ? <p className="text-sm text-muted-foreground">None yet</p> : (
                 <ul className="text-sm space-y-1.5">
@@ -654,15 +662,14 @@ function FriendsSection({ f }: { f: ReturnType<typeof crunchFriends> }) {
   const FR = { username: "#f472b6", invite: "#a78bfa", early: "#64748b" };
   const r = (x: { n: number; back: number }) => `${pct(x.back, x.n)}%`;
   return (
-    <div className="mb-6">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Friends · all time</p>
+    <div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Tile label="Players with friends" value={f.people} sub={`${pct(f.people, f.namedPlayers)}% of ${f.namedPlayers} named players`} accent="text-pink-300" />
         <Tile label="Friends added" value={f.adds} sub={f.people ? `${Math.round((f.links / f.people) * 10) / 10} each on average (now)` : "none yet"} accent="text-pink-300" />
         <Tile label="Both ways" value={`${pct(f.mutual, f.links)}%`} sub={`${f.mutual / 2} mutual pairs of ${f.links} follows`} />
         <Tile label="With friends: played 2+ days" value={r(f.withRet)} sub={`vs ${r(f.withoutRet)} without friends · ${f.withRet.n} vs ${f.withoutRet.n} players`} accent="text-emerald-300" />
       </div>
-      <div className="grid lg:grid-cols-2 gap-x-4">
+      <div>
         <Card title="Friends added per day" note={`Last two weeks · since tracking began (14 Nov): ${f.viaUsername} by username, ${f.viaInvite} from invite links. Earlier adds are dated by their list's last change`}
           right={<Legend items={[{ label: "Username", colour: FR.username }, { label: "Invite link", colour: FR.invite }, { label: "Before tracking", colour: FR.early }]} />}>
           <StackedBars height="h-48" data={f.byDay} series={[
@@ -671,23 +678,57 @@ function FriendsSection({ f }: { f: ReturnType<typeof crunchFriends> }) {
             { key: "early", label: "Before tracking", colour: FR.early },
           ]} />
         </Card>
-        <Card title={`Who has friends (${f.who.length})`} note="Friends on their list now, how many follow them back, and days they've played">
-          {f.who.length === 0 ? <p className="text-sm text-muted-foreground">No one yet</p> : (
-            <div className="max-h-48 overflow-y-auto text-sm">
-              <div className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pb-1.5 border-b border-border">
-                <span>Player</span><span className="text-right">Friends</span><span className="text-right">Mutual</span><span className="text-right">Days</span>
-              </div>
-              {f.who.map((w) => (
-                <div key={w.user} className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 py-1.5 border-b border-border/40 tabular-nums">
-                  <span className="truncate font-semibold">{w.user}</span>
-                  <span className="text-right">{w.count}</span><span className="text-right">{w.mutual}</span><span className="text-right">{w.days}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
       </div>
     </div>
+  );
+}
+
+function WhoHasFriends({ who }: { who: ReturnType<typeof crunchFriends>["who"] }) {
+  return (
+    <Card title={`Who has friends (${who.length})`} note="Friends on their list now, how many follow them back, and days they've played">
+      {who.length === 0 ? <p className="text-sm text-muted-foreground">No one yet</p> : (
+        <div className="max-h-48 overflow-y-auto text-sm">
+          <div className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pb-1.5 border-b border-border">
+            <span>Player</span><span className="text-right">Friends</span><span className="text-right">Mutual</span><span className="text-right">Days</span>
+          </div>
+          {who.map((w) => (
+            <div key={w.user} className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 py-1.5 border-b border-border/40 tabular-nums">
+              <span className="truncate font-semibold">{w.user}</span>
+              <span className="text-right">{w.count}</span><span className="text-right">{w.mutual}</span><span className="text-right">{w.days}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** Small uppercase heading that starts each section of the page. */
+function SectionHead({ title, first = false }: { title: string; first?: boolean }) {
+  return <h2 className={`text-xs font-black uppercase tracking-[0.18em] text-muted-foreground mb-3 ${first ? "" : "mt-8 border-t border-border/60 pt-5"}`}>{title}</h2>;
+}
+
+/** All-time split across the four daily games (and the arcade as one row). */
+function AllTimeGames({ games, players }: { games: ReturnType<typeof crunchAllTime>["byGame"]; players: number }) {
+  const max = Math.max(1, ...games.daily.map((g) => g.games));
+  return (
+    <Card title="Daily games, all time" note={`${games.dailyTotal.games.toLocaleString("en-GB")} daily games finished by ${games.dailyTotal.players} people. Share = of all daily games · people = % of all ${players} players`}>
+      <div className="space-y-2.5">
+        {games.daily.map((g) => (
+          <div key={g.slug}>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-bold" style={{ color: g.colour }}>{g.name}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{pct(g.games, games.dailyTotal.games)}% of games · {g.players} people ({pct(g.players, players)}%)</span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(g.games / max) * 100}%`, background: g.colour }} /></div>
+              <span className="w-12 text-right text-sm font-black tabular-nums">{g.games.toLocaleString("en-GB")}</span>
+            </div>
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground pt-1 tabular-nums">Arcade: <span className="text-foreground font-bold">{games.arcade.games.toLocaleString("en-GB")}</span> games by {games.arcade.players} people ({pct(games.arcade.players, players)}%)</p>
+      </div>
+    </Card>
   );
 }
 
