@@ -28,7 +28,7 @@ export function ClaimCard({ game, score }: { game: string; score?: number }) {
       </p>
       <button
         onClick={() => { trackEvent("claim_prompt_click", { source: "end_screen", game }); openClaim("end_screen"); }}
-        className="shrink-0 rounded-full bg-primary text-primary-foreground px-3.5 py-2 text-xs font-black"
+        className="shrink-0 whitespace-nowrap rounded-full bg-primary text-primary-foreground px-3.5 py-2 text-xs font-black"
       >
         Pick a name
       </button>

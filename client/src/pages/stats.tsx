@@ -378,8 +378,9 @@ function crunch(cache: Cache) {
 function Card({ title, note, children, right }: { title: string; note?: string; children: React.ReactNode; right?: React.ReactNode }) {
   return (
     <section className="rounded-3xl border border-border bg-card/80 p-4 sm:p-5 mb-4">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
+      {/* Title + note take the room; the toggle/legend drops underneath on narrow screens */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 mb-3">
+        <div className="min-w-0 flex-1 basis-64">
           <h2 className="text-base font-black text-foreground">{title}</h2>
           {note && <p className="text-xs text-muted-foreground mt-0.5">{note}</p>}
         </div>
@@ -699,8 +700,8 @@ function CohortCard({ cohorts }: { cohorts: { all: CohortRow[]; played: CohortRo
     ? "People who signed up and finished a daily game that same day, and the share who finished one on each day after. Leaves out sign-up bounces. Ever back = played on any later day"
     : "Everyone who signed up on a day, and the share who finished a daily game on each day after. Ever back = played on any later day";
   const toggle = (
-    <div className="flex rounded-full bg-white/5 p-0.5 text-[11px] font-bold">
-      {([["played", "Players"], ["all", "All sign-ups"]] as const).map(([k, label]) => (
+    <div className="flex shrink-0 rounded-full bg-white/5 p-0.5 text-[11px] font-bold whitespace-nowrap">
+      {([["played", "Players"], ["all", "Sign-ups"]] as const).map(([k, label]) => (
         <button key={k} onClick={() => setMode(k)} className={`rounded-full px-2.5 py-1 ${mode === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>
       ))}
     </div>

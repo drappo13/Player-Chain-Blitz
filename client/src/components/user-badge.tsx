@@ -3,7 +3,7 @@ import { Flame } from "lucide-react";
 import { useUser } from "@/lib/user-context";
 import { cachedStreak } from "@/lib/daily";
 
-const CHIP = "fixed top-3 right-3 z-40 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-sm transition-colors shadow-sm";
+const CHIP = "fixed top-3 right-3 z-40 whitespace-nowrap flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-sm transition-colors shadow-sm";
 
 /** Floating chip on game pages: your streak and name, linking to your stats (guests: pick a name). */
 export function UserBadge() {

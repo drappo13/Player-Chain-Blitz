@@ -118,7 +118,7 @@ export function AppNav() {
   const userChip = user && (isGuest ? (
     // Tapping it is asking to pick a name: always open the sheet (and land on Me underneath)
     <Link href="/me" onClick={() => { trackEvent("claim_prompt_click", { source: "nav_chip", streak: current }); openClaim("nav_chip"); }}
-      className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 pl-1.5 pr-2.5 py-1 hover:bg-primary/25 transition-colors">
+      className="shrink-0 whitespace-nowrap flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 pl-1.5 pr-2.5 py-1 hover:bg-primary/25 transition-colors">
       <span className="text-base leading-none">{user.avatar}</span>
       <span className="text-xs font-bold text-foreground">{current > 0 ? "Save your streak" : "Pick a name"}</span>
     </Link>

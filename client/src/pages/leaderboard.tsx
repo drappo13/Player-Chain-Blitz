@@ -61,9 +61,9 @@ export default function Leaderboard() {
 
         {isGuest && (
           <button onClick={() => openClaim("leaderboard")}
-            className="w-full mb-4 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground text-left flex items-center justify-between">
-            <span>Pick a name to get on the leaderboards</span>
-            <span className="rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-black">Pick a name</span>
+            className="w-full mb-4 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-bold text-foreground text-left flex items-center justify-between gap-3">
+            <span className="min-w-0">Pick a name to get on the leaderboards</span>
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-black">Pick a name</span>
           </button>
         )}
 
