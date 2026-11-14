@@ -660,7 +660,7 @@ function FriendsSection({ f }: { f: ReturnType<typeof crunchFriends> }) {
         <Tile label="Players with friends" value={f.people} sub={`${pct(f.people, f.namedPlayers)}% of ${f.namedPlayers} named players`} accent="text-pink-300" />
         <Tile label="Friends added" value={f.adds} sub={f.people ? `${Math.round((f.links / f.people) * 10) / 10} each on average (now)` : "none yet"} accent="text-pink-300" />
         <Tile label="Both ways" value={`${pct(f.mutual, f.links)}%`} sub={`${f.mutual / 2} mutual pairs of ${f.links} follows`} />
-        <Tile label="Played on 2+ days" value={`${r(f.withRet)} vs ${r(f.withoutRet)}`} sub={`with friends (${f.withRet.n}) vs without (${f.withoutRet.n})`} accent="text-emerald-300" />
+        <Tile label="With friends: played 2+ days" value={r(f.withRet)} sub={`vs ${r(f.withoutRet)} without friends · ${f.withRet.n} vs ${f.withoutRet.n} players`} accent="text-emerald-300" />
       </div>
       <div className="grid lg:grid-cols-2 gap-x-4">
         <Card title="Friends added per day" note={`Last two weeks · since tracking began (14 Nov): ${f.viaUsername} by username, ${f.viaInvite} from invite links. Earlier adds are dated by their list's last change`}
