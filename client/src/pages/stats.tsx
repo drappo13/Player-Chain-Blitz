@@ -98,6 +98,8 @@ const ALL_KEY = "pcb-stats-alltime-v1";
 interface AllTime {
   games: Record<string, { u: string; d?: string; g?: string }>; // doc id ("d:" daily / "a:" arcade) → user, local day played, fromGuest
   users: Record<string, { g?: string }>;                         // username → fromGuest
+  // username → current list, last change, and the add log (when + how; none for lists before 14 Nov 2026)
+  friends?: Record<string, { list: string[]; at?: number; added: Record<string, { at?: number; via?: string }> }>;
   until: number;
 }
 function readAllTime(): AllTime | null {
@@ -108,12 +110,15 @@ async function refreshAllTime(): Promise<{ all: AllTime; reads: number }> {
   const first = all.until === 0;
   const since = Timestamp.fromMillis(Math.max(0, all.until - OVERLAP_MS));
   // First time: whole collections (old docs may predate the timestamp fields)
-  const [p, a, u] = await Promise.all([
+  all.friends ??= {};
+  const firstFriends = Object.keys(all.friends).length === 0;
+  const [p, a, u, f] = await Promise.all([
     getDocs(first ? collection(db, "daily-scores") : query(collection(db, "daily-scores"), where("timestamp", ">=", since))),
     getDocs(first ? collection(db, "scores") : query(collection(db, "scores"), where("timestamp", ">=", since))),
     getDocs(first ? collection(db, "users") : query(collection(db, "users"), where("createdAt", ">=", since))),
+    getDocs(firstFriends ? collection(db, "friends") : query(collection(db, "friends"), where("updatedAt", ">=", since))),
   ]);
-  if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
+  if (p.metadata.fromCache || a.metadata.fromCache || u.metadata.fromCache || f.metadata.fromCache) throw new Error("Offline: showing the last saved numbers");
   const now = Date.now();
   const add = (prefix: string) => (d: { id: string; data: () => unknown }) => {
     const x = d.data() as { username?: string; timestamp?: Timestamp; playedAt?: Timestamp; fromGuest?: string };
@@ -124,9 +129,17 @@ async function refreshAllTime(): Promise<{ all: AllTime; reads: number }> {
   p.docs.forEach(add("d:"));
   a.docs.forEach(add("a:"));
   u.docs.forEach((d) => { const x = d.data() as { fromGuest?: string }; all.users[d.id.toLowerCase()] = { g: x.fromGuest }; });
+  f.docs.forEach((d) => {
+    const x = d.data() as { list?: string[]; updatedAt?: Timestamp; added?: Record<string, { at?: Timestamp; via?: string }> };
+    all.friends![d.id.toLowerCase()] = {
+      list: (x.list ?? []).map((n) => n.toLowerCase()),
+      at: x.updatedAt?.toMillis?.(),
+      added: Object.fromEntries(Object.entries(x.added ?? {}).map(([n, v]) => [n.toLowerCase(), { at: v?.at?.toMillis?.(), via: v?.via }])),
+    };
+  });
   all.until = now;
   try { localStorage.setItem(ALL_KEY, JSON.stringify(all)); } catch { /* ignore */ }
-  return { all, reads: p.size + a.size + u.size };
+  return { all, reads: p.size + a.size + u.size + f.size };
 }
 
 function crunchAllTime(all: AllTime) {
@@ -146,7 +159,48 @@ function crunchAllTime(all: AllTime) {
   const signups = Object.keys(all.users).length;
   const signupsPlayed = Object.keys(all.users).filter((n) => days.has(n)).length;
   const multiDay = [...days.values()].filter((d) => d.size >= 2).length;
-  return { games: games.length, players: players.length, guests, signups, signupsPlayed, multiDay };
+  const friends = crunchFriends(all.friends ?? {}, days);
+  return { friends, games: games.length, players: players.length, guests, signups, signupsPlayed, multiDay };
+}
+
+// Friends uptake. Every add ever = the add log, plus anyone on a list from before the log existed
+// (dated by the list's last change, so those dates are approximate).
+function crunchFriends(fr: NonNullable<AllTime["friends"]>, days: Map<string, Set<string>>) {
+  const adds: { by: string; name: string; day?: string; via: "username" | "invite" | "early" }[] = [];
+  for (const [by, x] of Object.entries(fr)) {
+    const names = new Set([...Object.keys(x.added), ...x.list]);
+    for (const name of names) {
+      const log = x.added[name];
+      const at = log?.at ?? x.at;
+      adds.push({ by, name, day: at ? localDay(at) : undefined, via: log ? (log.via === "invite" ? "invite" : "username") : "early" });
+    }
+  }
+  const withFriends = Object.entries(fr).filter(([, x]) => x.list.length > 0).map(([u]) => u);
+  const has = new Set(withFriends);
+  const follows = (a: string, b: string) => !!fr[a]?.list.includes(b);
+  let links = 0, mutual = 0;
+  for (const [a, x] of Object.entries(fr)) for (const b of x.list) { links++; if (follows(b, a)) mutual++; }
+  const named = [...days.keys()].filter((u) => !u.startsWith("guest-"));
+  const ret = (group: string[]) => ({ n: group.length, back: group.filter((u) => (days.get(u)?.size ?? 0) >= 2).length });
+  const today = todayKey();
+  const byDay = Array.from({ length: WINDOW_DAYS }, (_, i) => shiftDay(today, i - (WINDOW_DAYS - 1))).map((d) => {
+    const on = adds.filter((x) => x.day === d);
+    return {
+      label: dayLabel(d),
+      username: on.filter((x) => x.via === "username").length,
+      invite: on.filter((x) => x.via === "invite").length,
+      early: on.filter((x) => x.via === "early").length,
+    };
+  });
+  const who = withFriends
+    .map((u) => ({ user: u, count: fr[u].list.length, mutual: fr[u].list.filter((b) => follows(b, u)).length, days: days.get(u)?.size ?? 0 }))
+    .sort((a, b) => b.count - a.count || a.user.localeCompare(b.user));
+  return {
+    adds: adds.length, links, mutual, people: withFriends.length, namedPlayers: named.length,
+    viaInvite: adds.filter((x) => x.via === "invite").length, viaUsername: adds.filter((x) => x.via === "username").length,
+    withRet: ret(named.filter((u) => has.has(u))), withoutRet: ret(named.filter((u) => !has.has(u))),
+    byDay, who,
+  };
 }
 
 function crunch(cache: Cache) {
@@ -454,6 +508,8 @@ export default function StatsPage() {
         </>
       )}
 
+      {t && <FriendsSection f={t.friends} />}
+
       {s && (
         <>
           {t && <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Today</p>}
@@ -592,6 +648,47 @@ export default function StatsPage() {
 }
 
 type CohortRow = { day: string; size: number; d: (number | null)[]; everBack: number; open: boolean };
+
+function FriendsSection({ f }: { f: ReturnType<typeof crunchFriends> }) {
+  const FR = { username: "#f472b6", invite: "#a78bfa", early: "#64748b" };
+  const r = (x: { n: number; back: number }) => `${pct(x.back, x.n)}%`;
+  return (
+    <div className="mb-6">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Friends · all time</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <Tile label="Players with friends" value={f.people} sub={`${pct(f.people, f.namedPlayers)}% of ${f.namedPlayers} named players`} accent="text-pink-300" />
+        <Tile label="Friends added" value={f.adds} sub={f.people ? `${Math.round((f.links / f.people) * 10) / 10} each on average (now)` : "none yet"} accent="text-pink-300" />
+        <Tile label="Both ways" value={`${pct(f.mutual, f.links)}%`} sub={`${f.mutual / 2} mutual pairs of ${f.links} follows`} />
+        <Tile label="Played on 2+ days" value={`${r(f.withRet)} vs ${r(f.withoutRet)}`} sub={`with friends (${f.withRet.n}) vs without (${f.withoutRet.n})`} accent="text-emerald-300" />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-x-4">
+        <Card title="Friends added per day" note={`Last two weeks · since tracking began (14 Nov): ${f.viaUsername} by username, ${f.viaInvite} from invite links. Earlier adds are dated by their list's last change`}
+          right={<Legend items={[{ label: "Username", colour: FR.username }, { label: "Invite link", colour: FR.invite }, { label: "Before tracking", colour: FR.early }]} />}>
+          <StackedBars height="h-48" data={f.byDay} series={[
+            { key: "username", label: "Username", colour: FR.username },
+            { key: "invite", label: "Invite link", colour: FR.invite },
+            { key: "early", label: "Before tracking", colour: FR.early },
+          ]} />
+        </Card>
+        <Card title={`Who has friends (${f.who.length})`} note="Friends on their list now, how many follow them back, and days they've played">
+          {f.who.length === 0 ? <p className="text-sm text-muted-foreground">No one yet</p> : (
+            <div className="max-h-48 overflow-y-auto text-sm">
+              <div className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pb-1.5 border-b border-border">
+                <span>Player</span><span className="text-right">Friends</span><span className="text-right">Mutual</span><span className="text-right">Days</span>
+              </div>
+              {f.who.map((w) => (
+                <div key={w.user} className="grid grid-cols-[1fr_3rem_3rem_2.5rem] gap-x-4 py-1.5 border-b border-border/40 tabular-nums">
+                  <span className="truncate font-semibold">{w.user}</span>
+                  <span className="text-right">{w.count}</span><span className="text-right">{w.mutual}</span><span className="text-right">{w.days}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
 
 function CohortCard({ cohorts }: { cohorts: { all: CohortRow[]; played: CohortRow[] } }) {
   const [mode, setMode] = useState<"played" | "all">("played");
