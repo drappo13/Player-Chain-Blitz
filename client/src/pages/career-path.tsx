@@ -496,12 +496,6 @@ export default function CareerPath() {
             <Info className="w-4 h-4" />
           </button>
         )}
-        {!showRules && !showEndScreen && !state.submitted && (
-          <div className="ml-1 flex items-baseline gap-1 rounded-full border border-white/10 bg-card/60 px-2.5 py-1" aria-label={`Score ${fmtPts(total)}`}>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Score</span>
-            <span className="text-sm font-black tabular-nums text-white">{fmtPts(shownTotal)}</span>
-          </div>
-        )}
       </div>
       {late && <LateBanner dateKey={dateKey} />}
       {IS_LOCAL && (
@@ -594,6 +588,7 @@ export default function CareerPath() {
               <MultBadge k={current} />
               <RoundDots rounds={state.rounds} current={current} />
             </div>
+            <div className="flex flex-col items-end shrink-0">
             <motion.div key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="flex items-baseline gap-1 origin-right">
               {done && !round.solved ? (
                 <span className="text-sm font-bold text-red-300">Missed · 0 pts</span>
@@ -604,6 +599,10 @@ export default function CareerPath() {
                 </>
               )}
             </motion.div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold tabular-nums" aria-label={`Score ${fmtPts(total)}`}>
+              Score <span className="text-white font-black">{fmtPts(shownTotal)}</span>
+            </div>
+            </div>
           </div>
           <div className="grid grid-cols-5 gap-1.5 mt-2">
             {CLUES.map((c, i) => {
