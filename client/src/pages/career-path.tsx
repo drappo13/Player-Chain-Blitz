@@ -496,8 +496,12 @@ export default function CareerPath() {
             <Info className="w-4 h-4" />
           </button>
         )}
-      </div>
-      <div className="flex items-center gap-2">
+        {!showRules && !showEndScreen && !state.submitted && (
+          <div className="ml-1 flex items-baseline gap-1 rounded-full border border-white/10 bg-card/60 px-2.5 py-1" aria-label={`Score ${fmtPts(total)}`}>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Score</span>
+            <span className="text-sm font-black tabular-nums text-white">{fmtPts(shownTotal)}</span>
+          </div>
+        )}
       </div>
       {late && <LateBanner dateKey={dateKey} />}
       {IS_LOCAL && (
@@ -580,14 +584,15 @@ export default function CareerPath() {
       <div className="relative z-10 flex flex-col items-center w-full max-w-lg mx-auto px-4 pt-4 pb-24 flex-1">
         {header}
 
-        <RoundTrack rounds={state.rounds} current={current} total={shownTotal} />
-
-        {/* Round, points and clue ladder in one panel */}
-        <div className="w-full mt-3 rounded-2xl border border-white/10 bg-card/60 px-4 pt-3 pb-2.5">
-          <div className="flex items-baseline justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">Round {current + 1}</span>
+        {/* Round (n/5 + progress dots), points and clue ladder in one panel */}
+        <div className="w-full rounded-2xl border border-white/10 bg-card/60 px-4 pt-3 pb-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground whitespace-nowrap">
+                Round <span className="text-white tabular-nums">{current + 1}</span>/{ROUNDS}
+              </span>
               <MultBadge k={current} />
+              <RoundDots rounds={state.rounds} current={current} />
             </div>
             <motion.div key={`${current}-${round.stage}-${done}`} initial={{ scale: 1.25 }} animate={{ scale: 1 }} className="flex items-baseline gap-1 origin-right">
               {done && !round.solved ? (
@@ -704,38 +709,19 @@ function Backdrop({ tint }: { tint: string }) {
 }
 
 // The day's five rounds: number in the circle, multiplier badge underneath
-function RoundTrack({ rounds, current, total }: { rounds: RoundState[]; current: number; total: number }) {
+// One dot per round in its colour: filled when named, red when missed, ringed for the current one
+function RoundDots({ rounds, current }: { rounds: RoundState[]; current: number }) {
   return (
-    <div className="w-full flex items-start gap-2">
-      <div className="flex-1 flex items-start">
-        {rounds.map((r, i) => {
-          const isCur = i === current;
-          const style: React.CSSProperties = r.solved ? { background: roundGradient(i), borderColor: "transparent" }
-            : isCur && !r.failed ? { borderColor: ROUND_THEMES[i].to, boxShadow: `0 0 16px -2px ${ROUND_THEMES[i].to}` } : {};
-          return (
-            <div key={i} className="flex items-start flex-1 last:flex-none">
-              <div className="flex flex-col items-center gap-1">
-                <div style={style}
-                  className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${r.solved ? "text-white"
-                    : r.failed ? "bg-red-500/20 text-red-300 border-red-500/50" : isCur ? "bg-white/[0.06] text-white" : "bg-card/40 text-muted-foreground border-white/10"}`}>
-                  {r.solved ? <Check className="w-4 h-4" /> : r.failed ? <X className="w-4 h-4" /> : <span className="text-sm font-black">{i + 1}</span>}
-                </div>
-                <MultBadge k={i} dim={!isCur && !roundDone(r)} />
-              </div>
-              {i < rounds.length - 1 && (
-                <div className="flex-1 h-0.5 mx-1 mt-[17px] rounded-full bg-white/10 overflow-hidden">
-                  <motion.div className="h-full" style={{ background: `linear-gradient(90deg, ${ROUND_THEMES[i].to}, ${ROUND_THEMES[i + 1].from})` }}
-                    animate={{ width: roundDone(r) ? "100%" : "0%" }} transition={{ duration: 0.5 }} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="text-right shrink-0 pl-1">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Score</div>
-        <div className="text-xl font-black tabular-nums text-white">{fmtPts(total)}</div>
-      </div>
+    <div className="flex items-center gap-1.5 ml-0.5" aria-hidden>
+      {rounds.map((r, i) => {
+        const isCur = i === current && !roundDone(r);
+        const style: React.CSSProperties = r.solved ? { background: roundGradient(i) }
+          : isCur ? { boxShadow: `0 0 0 2px ${ROUND_THEMES[i].to}, 0 0 10px ${ROUND_THEMES[i].to}` } : {};
+        return (
+          <motion.span key={i} style={style} initial={false} animate={{ scale: isCur ? 1.15 : 1 }}
+            className={`block w-2 h-2 rounded-full ${r.solved ? "" : r.failed ? "bg-red-500/80" : isCur ? "bg-white/90" : "bg-white/15"}`} />
+        );
+      })}
     </div>
   );
 }
