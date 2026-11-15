@@ -291,7 +291,7 @@ export default function Home() {
   const yView = useDayProgress(user?.username, yesterday);
   const dayZero = !entries.some((e) => e.dateKey < today);
   const showYesterday = dayZero && DAILY_GAMES.every((g) => countsToday(view[g.slug]));
-  // First visit: point newcomers at Career Path (it has a clear end)
+  // First visit: point newcomers at Photo Finish (quickest and easiest way in)
   const newcomer = entries.length === 0 && !DAILY_GAMES.some((g) => view[g.slug]);
 
   // Keep the countdown honest across midnight: reload into the new day
@@ -325,7 +325,7 @@ export default function Home() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {DAILY_GAMES.map((g, i) => (
           <DailyTile key={g.slug} game={g} p={view[g.slug as DailyGameSlug]} rank={ranks[g.slug]} index={i}
-            friend={friendsDay[g.slug as DailyGameSlug]?.[0]} startHere={newcomer && g.slug === "careerpath"} />
+            friend={friendsDay[g.slug as DailyGameSlug]?.[0]} startHere={newcomer && g.slug === "photofinish"} />
         ))}
       </div>
 
