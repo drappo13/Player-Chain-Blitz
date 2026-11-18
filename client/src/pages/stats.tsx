@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Rectangle,
 } from "recharts";
 import { RefreshCw } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -328,9 +328,16 @@ function crunch(cache: Cache) {
     return { day: d, size: members.length, d: Array.from({ length: 7 }, (_, i) => playedOn(i)), everBack, open: d === today };
   };
   const signedUpOn = (d: string) => [...signupDay].filter(([, sd]) => sd === d).map(([n]) => n);
+  // Players: everyone (guests included) by the day they first finished a daily game. Named accounts
+  // older than this page's 14-day window aren't new, so only accounts made inside it (or guests) count.
+  const firstPlay = new Map<string, string>();
+  for (const [d, m] of [...byDay].sort(([a], [b]) => a.localeCompare(b))) for (const u of m.keys()) if (!firstPlay.has(u)) firstPlay.set(u, d);
+  const isNewPlayer = (u: string) => u.startsWith("guest-") || signupDay.has(u);
+  const firstPlayedOn = (d: string) => [...firstPlay].filter(([u, fd]) => fd === d && isNewPlayer(u)).map(([u]) => u);
+  const playerDays = Array.from({ length: 10 }, (_, i) => shiftDay(today, -i));
   const cohorts = {
     all: cohortDays.map((d) => cohortRow(d, signedUpOn(d))),
-    played: cohortDays.map((d) => cohortRow(d, signedUpOn(d).filter((n) => byDay.get(d)?.has(n)))).filter((c) => c.size > 0),
+    played: playerDays.map((d) => cohortRow(d, firstPlayedOn(d))).filter((c) => c.size > 0),
   };
 
   // Today: tiles and per-game
@@ -442,7 +449,11 @@ function StackedBars({ data, series, height = "h-56", totalLabel }: { data: Reco
               totalLabel ? `${l} · ${(payload ?? []).reduce((a, x) => a + Number(x.value ?? 0), 0)} ${totalLabel}` : l} />
           {series.map((x, i) => (
             <Bar key={x.key} dataKey={x.key} stackId="a" fill={x.colour} maxBarSize={44}
-              radius={i === series.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
+              // Round the top of whichever segment is actually on top of this bar (others above may be 0)
+              shape={(props: { payload: Record<string, number | string> } & Record<string, unknown>) => {
+                const onTop = series.slice(i + 1).every((y) => !Number(props.payload[y.key]));
+                return <Rectangle {...props} radius={onTop ? [6, 6, 0, 0] : [0, 0, 0, 0]} />;
+              }} />
           ))}
         </BarChart>
       </ResponsiveContainer>
@@ -732,7 +743,7 @@ function CohortCard({ cohorts }: { cohorts: { all: CohortRow[]; played: CohortRo
   const first = mode === "played" ? 1 : 0; // Day 0 is 100% by definition for players
   const heads = ["Day 0", "Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6"].slice(first);
   const note = mode === "played"
-    ? "People who signed up and finished a daily game that same day, and the share who finished one on each day after. Leaves out sign-up bounces. Ever back = played on any later day"
+    ? "Everyone who finished their first daily game that day, guests included, and the share who finished one on each day after. Ever back = played on any later day"
     : "Everyone who signed up on a day, and the share who finished a daily game on each day after. Ever back = played on any later day";
   const toggle = (
     <div className="flex shrink-0 rounded-full bg-white/5 p-0.5 text-[11px] font-bold whitespace-nowrap">
@@ -747,7 +758,7 @@ function CohortCard({ cohorts }: { cohorts: { all: CohortRow[]; played: CohortRo
         <table className="w-full text-xs tabular-nums border-separate" style={{ borderSpacing: "3px" }}>
           <thead className="text-[10px] text-muted-foreground">
             <tr>
-              <th className="text-left font-semibold px-1">Signed up</th><th className="text-right font-semibold px-1">People</th>
+              <th className="text-left font-semibold px-1">{mode === "played" ? "First played" : "Signed up"}</th><th className="text-right font-semibold px-1">People</th>
               {heads.map((h) => <th key={h} className="font-semibold px-1">{h}</th>)}
               <th className="font-semibold px-1">Ever back</th>
             </tr>
