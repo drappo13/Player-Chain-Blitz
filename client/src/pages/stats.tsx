@@ -244,23 +244,27 @@ function crunch(cache: Cache) {
   const now = Date.now();
   const hourStart = new Date(now); hourStart.setMinutes(0, 0, 0);
   const hours = Array.from({ length: 24 }, (_, i) => hourStart.getTime() - (23 - i) * 3600e3);
+  // Everyone who finished a daily game, split three ways that don't overlap (so the bars stack to the
+  // real total): named players from earlier days, people who picked a name that day, and guests.
+  const split = (people: Set<string>, day: string) => {
+    let existing = 0, fresh = 0, guests = 0;
+    for (const u of people) {
+      if (isGuest(u)) guests++;
+      else if (signupDay.get(u) === day) fresh++;
+      else existing++;
+    }
+    return { Players: existing, New: fresh, Guests: guests };
+  };
   const last24 = hours.map((h) => {
     const inHour = (ms: number) => ms >= h && ms < h + 3600e3;
     return {
       label: new Date(h).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
-      Signups: users.filter(([, x]) => inHour(x.at)).length,
-      Players: new Set(plays.filter((p) => inHour(p.at) && !isGuest(p.user)).map((p) => p.user)).size,
-      Guests: new Set(guestPlays.filter((p) => inHour(p.at)).map((p) => p.user)).size,
+      ...split(new Set(plays.filter((p) => inHour(p.at)).map((p) => p.user)), localDay(h)),
     };
   });
 
   // Last 7 days
-  const week = days7.map((d) => ({
-    label: dayLabel(d),
-    Signups: users.filter(([, x]) => localDay(x.at) === d).length,
-    Players: namedOn(d),
-    Guests: guestsOn(d),
-  }));
+  const week = days7.map((d) => ({ label: dayLabel(d), ...split(new Set((byDay.get(d) ?? new Map()).keys()), d) }));
 
   // Games per player per day, and sign-ups who finished nothing that day ("bounced")
   const spread = days7.map((d) => {
@@ -423,25 +427,7 @@ function Tile({ label, value, sub, accent }: { label: string; value: string | nu
 
 const tooltipStyle = { background: "#16181e", border: "1px solid #2a2d35", borderRadius: 12, fontSize: 12 };
 
-function TwoLines({ data }: { data: { label: string; Signups: number; Players: number; Guests?: number }[] }) {
-  return (
-    <div className="h-52">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid stroke={C.grid} vertical={false} />
-          <XAxis dataKey="label" tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
-          <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
-          <Tooltip contentStyle={tooltipStyle} />
-          <Line type="monotone" dataKey="Signups" stroke={C.signups} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-          <Line type="monotone" dataKey="Players" stroke={C.players} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-          {data.some((d) => d.Guests) && <Line type="monotone" dataKey="Guests" stroke={C.guests} strokeWidth={2} strokeDasharray="4 3" dot={false} activeDot={{ r: 4 }} />}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function StackedBars({ data, series, height = "h-56" }: { data: Record<string, number | string>[]; series: { key: string; label: string; colour: string }[]; height?: string }) {
+function StackedBars({ data, series, height = "h-56", totalLabel }: { data: Record<string, number | string>[]; series: { key: string; label: string; colour: string }[]; height?: string; totalLabel?: string }) {
   return (
     <div className={height}>
       <ResponsiveContainer width="100%" height="100%">
@@ -450,7 +436,9 @@ function StackedBars({ data, series, height = "h-56" }: { data: Record<string, n
           <XAxis dataKey="label" tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
           <YAxis allowDecimals={false} tick={{ fill: C.axis, fontSize: 10 }} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }}
-            formatter={(v: number, k: string) => [v, series.find((x) => x.key === k)?.label ?? k]} />
+            formatter={(v: number, k: string) => [v, series.find((x) => x.key === k)?.label ?? k]}
+            labelFormatter={(l: string, payload: { value?: number }[]) =>
+              totalLabel ? `${l} · ${(payload ?? []).reduce((a, x) => a + Number(x.value ?? 0), 0)} ${totalLabel}` : l} />
           {series.map((x, i) => (
             <Bar key={x.key} dataKey={x.key} stackId="a" fill={x.colour} maxBarSize={44}
               radius={i === series.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]} />
@@ -529,13 +517,13 @@ export default function StatsPage() {
             <Tile label="Full sets today" value={s.tiles.fullSets} sub="finished all four" accent="text-emerald-300" />
           </div>
           <div className="grid lg:grid-cols-2 gap-x-4">
-            <Card title="Last 24 hours" note="Per hour: new accounts, and different people finishing a daily game (guests = no name yet)"
-              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }, { label: "Guests", colour: C.guests }]} />}>
-              <TwoLines data={s.last24} />
+            <Card title="Last 24 hours" note="Per hour: different people finishing a daily game. Bars stack to the total: named players, people who picked a name that day, and guests (no name yet)"
+              right={<Legend items={[{ label: "Players", colour: C.players }, { label: "New sign-ups", colour: C.signups }, { label: "Guests", colour: C.guests }]} />}>
+              <StackedBars data={s.last24} series={[{ key: "Players", label: "Players", colour: C.players }, { key: "New", label: "New sign-ups", colour: C.signups }, { key: "Guests", label: "Guests", colour: C.guests }]} height="h-52" totalLabel="players" />
             </Card>
-            <Card title="Last 7 days" note="Per day: new accounts, and different people finishing a daily game (guests = no name yet)"
-              right={<Legend items={[{ label: "Sign-ups", colour: C.signups }, { label: "Players", colour: C.players }, { label: "Guests", colour: C.guests }]} />}>
-              <TwoLines data={s.week} />
+            <Card title="Last 7 days" note="Per day: different people finishing a daily game. Bars stack to the total: named players, people who picked a name that day, and guests (no name yet)"
+              right={<Legend items={[{ label: "Players", colour: C.players }, { label: "New sign-ups", colour: C.signups }, { label: "Guests", colour: C.guests }]} />}>
+              <StackedBars data={s.week} series={[{ key: "Players", label: "Players", colour: C.players }, { key: "New", label: "New sign-ups", colour: C.signups }, { key: "Guests", label: "Guests", colour: C.guests }]} height="h-52" totalLabel="players" />
             </Card>
           </div>
           <Card title="Today by game" note="Daily games finished today">
