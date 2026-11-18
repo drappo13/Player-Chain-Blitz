@@ -339,8 +339,9 @@ function crunch(cache: Cache) {
   const back = [...yPlayers.keys()].filter((n) => todayPlayers.has(n)).length;
   const newToday = [...signupDay].filter(([, sd]) => sd === today).map(([n]) => n);
   const perGame = DAILY_GAMES.map((g) => {
-    const sc = plays.filter((p) => p.day === today && p.game === g.slug).map((p) => p.score);
-    return { game: g, n: sc.length, avg: sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null, best: sc.length ? Math.max(...sc) : null };
+    const todays = plays.filter((p) => p.day === today && p.game === g.slug);
+    const sc = todays.map((p) => p.score);
+    return { game: g, n: sc.length, guests: todays.filter((p) => isGuest(p.user)).length, avg: sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null, best: sc.length ? Math.max(...sc) : null };
   });
   // --- Guests: everyone who played without a name this week, and which of them picked one
   const rawGuestPlays = allPlays.filter((p) => isGuest(p.user));
@@ -526,15 +527,22 @@ export default function StatsPage() {
               <StackedBars data={s.week} series={[{ key: "Players", label: "Players", colour: C.players }, { key: "New", label: "New sign-ups", colour: C.signups }, { key: "Guests", label: "Guests", colour: C.guests }]} height="h-52" totalLabel="players" />
             </Card>
           </div>
-          <Card title="Today by game" note="Daily games finished today">
+          <Card title="Today by game" note="Daily games finished today. Solid = named players, striped = guests">
             <div className="space-y-2">
-              {s.perGame.map(({ game, n }) => {
+              {s.perGame.map(({ game, n, guests }) => {
                 const max = Math.max(1, ...s.perGame.map((x) => x.n));
                 return (
                   <div key={game.slug}>
-                    <div className="text-sm"><span className={`font-bold ${game.accent}`}>{game.name}</span></div>
+                    <div className="text-sm">
+                      <span className={`font-bold ${game.accent}`}>{game.name}</span>
+                      {guests > 0 && <span className="text-xs text-muted-foreground tabular-nums"> · {n - guests} named · {guests} guests</span>}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${game.bar}`} style={{ width: `${(n / max) * 100}%` }} /></div>
+                      <div className="flex-1 h-2.5 rounded-full bg-white/5 overflow-hidden flex">
+                        <div className={`h-full ${game.bar}`} style={{ width: `${((n - guests) / max) * 100}%` }} />
+                        <div className={`h-full ${game.bar} opacity-60`}
+                          style={{ width: `${(guests / max) * 100}%`, backgroundImage: "repeating-linear-gradient(-45deg, rgba(0,0,0,0.45) 0 3px, transparent 3px 6px)" }} />
+                      </div>
                       <span className="w-9 text-right text-sm font-black tabular-nums">{n}</span>
                     </div>
                   </div>
