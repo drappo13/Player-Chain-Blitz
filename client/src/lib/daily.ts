@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
 import { db, trackEvent } from "./firebase";
-import type { DailyGameSlug } from "./daily-score";
+import { flushPendingScores, type DailyGameSlug } from "./daily-score";
 import { shareLink } from "./user-context";
 import { isGuestName, WRITES_ENABLED } from "./guest";
 
@@ -449,6 +449,7 @@ const rankKey = (username: string, dateKey: string, game: DailyGameSlug) => `pcb
 /** Position on one game's daily board: two count queries (needs the dateKey+game+score index),
  *  falling back to reading that game's scores for the day if the index isn't there. */
 async function fetchRank(dateKey: string, game: DailyGameSlug, score: number): Promise<{ rank: number; of: number }> {
+  await flushPendingScores();
   const base = [where("dateKey", "==", dateKey), where("game", "==", game)];
   try {
     const [above, total] = await Promise.all([

@@ -9,7 +9,7 @@ import { normalizeName } from "@/lib/normalize";
 import type { PLPlayer } from "@/data/pl-player-types";
 import { ScreenFlash } from "@/components/screen-flash";
 import { useUser } from "@/lib/user-context";
-import { hasDailySubmission, saveLiveScore, finishLiveScore } from "@/lib/daily-score";
+import { hasDailySubmission, saveLiveScore, finishLiveScore, flushPendingScores } from "@/lib/daily-score";
 import { recordDaily, hasPlayedBefore, puzzleDay } from "@/lib/daily";
 import { LateBanner, completeTarget, useCompleteGoal, GoalCount, GoalSlot } from "@/components/daily-next";
 import { useGameTips, TipAnchor, useOnce } from "@/components/game-tip";
@@ -512,6 +512,9 @@ export default function CentreCircle() {
       state: { boardHash: state.boardHash, found: state.found }, late });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.found.length, state.submitted, user?.username]);
+
+  // Leaving the game (e.g. straight to the leaderboard) sends anything still waiting on the save throttle
+  useEffect(() => () => { flushPendingScores(); }, []);
 
 
   const handleFinish = useCallback(async () => {

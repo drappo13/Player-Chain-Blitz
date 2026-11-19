@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { collection, doc, getDoc, getDocs, query, setDoc, where, serverTimestamp } from "firebase/firestore";
 import { db, trackEvent } from "./firebase";
-import { avatarsFor, type DailyGameSlug, type DailyScoreDoc } from "./daily-score";
+import { avatarsFor, flushPendingScores, liveWroteAt, type DailyGameSlug, type DailyScoreDoc } from "./daily-score";
 import { isGuestName } from "./guest";
 
 // Friends: follow anyone by username (one-way, no approval; scores are public anyway).
@@ -163,10 +163,12 @@ export type FriendsDay = Partial<Record<DailyGameSlug, FriendScore[]>>;
 const dayLoads = new Map<string, Promise<FriendsDay>>();
 
 async function loadFriendsDay(me: string, friends: string[], dateKey: string): Promise<FriendsDay> {
+  await flushPendingScores();
   const ck = todayCacheKey(me, dateKey);
   try {
     const c = JSON.parse(localStorage.getItem(ck) || "null");
-    if (c && Date.now() - c.at < TODAY_TTL && c.sig === friends.join(",")) return c.data;
+    // A score saved since this was cached (yours) makes it stale
+    if (c && Date.now() - c.at < TODAY_TTL && c.at > liveWroteAt() && c.sig === friends.join(",")) return c.data;
   } catch { /* ignore */ }
   const memo = `${ck}|${friends.join(",")}`;
   if (dayLoads.has(memo)) return dayLoads.get(memo)!;

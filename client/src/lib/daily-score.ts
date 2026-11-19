@@ -114,13 +114,26 @@ export async function submitDailyScore(
 
 // --- Save as you go (CentreCircle, Griddle) ---
 // Once a game counts for today its score is written straight away, then kept up to date as it rises
-// (at most every 5 minutes, plus whenever the page is hidden and at Finish). Opening the game again
+// (at most every 5 minutes, plus whenever the page is hidden, the game is left, a board is read, and at Finish). Opening the game again
 // saves the current score at once, so a tab killed without warning only leaves the board briefly behind. The doc id is the key, so later saves update the same doc;
 // Firestore rules only let an open doc's score go up. Finish writes it one last time with open: false.
 
 type LiveArgs = { username: string; game: DailyGameSlug; dateKey: string; score: number; found: number; total: number; state?: unknown; late?: boolean };
 const LIVE_EVERY = 5 * 60 * 1000; // nobody watches the board live; leaving the page and Finish always save
 const live = new Map<string, { args: LiveArgs; last: number; timer?: ReturnType<typeof setTimeout> }>();
+const inflight = new Set<Promise<boolean>>();
+const WROTE_KEY = "pcb-live-wrote";
+
+/** When this device last saved a live score; caches of today's boards older than this are stale. */
+export function liveWroteAt(): number {
+  try { return Number(localStorage.getItem(WROTE_KEY)) || 0; } catch { return 0; }
+}
+
+function track(p: Promise<boolean>): Promise<boolean> {
+  inflight.add(p);
+  p.finally(() => inflight.delete(p));
+  return p;
+}
 
 async function writeLive(a: LiveArgs, final: boolean): Promise<boolean> {
   if (a.late) return true; // Yesterday's set is just for fun: nothing is sent
@@ -134,6 +147,7 @@ async function writeLive(a: LiveArgs, final: boolean): Promise<boolean> {
   };
   try {
     await setDoc(doc(db, "daily-scores", k), data);
+    try { localStorage.setItem(WROTE_KEY, String(Date.now())); } catch { /* ignore */ }
     return true;
   } catch {
     return false;
@@ -146,12 +160,20 @@ function flushLive(k: string) {
   if (e.timer) clearTimeout(e.timer);
   e.timer = undefined;
   e.last = Date.now();
-  writeLive(e.args, false);
+  track(writeLive(e.args, false));
+}
+
+/** Send any score still waiting on the 5-minute throttle, and wait for saves already on their way.
+ *  Called when a game is left and before any of today's boards are read, so you're always on them. */
+export async function flushPendingScores(): Promise<void> {
+  for (const [k, e] of live) if (e.timer) flushLive(k);
+  // Capped: offline, a write never resolves and the boards shouldn't hang on it
+  if (inflight.size) await Promise.race([Promise.all(Array.from(inflight)), new Promise((r) => setTimeout(r, 3000))]);
 }
 
 if (typeof document !== "undefined") {
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") for (const [k, e] of live) if (e.timer) flushLive(k);
+    if (document.visibilityState === "hidden") flushPendingScores();
   });
 }
 
@@ -159,7 +181,7 @@ if (typeof document !== "undefined") {
 export function saveLiveScore(a: LiveArgs) {
   const k = makeKey(a.username, a.game, a.dateKey);
   const e = live.get(k);
-  if (!e) { live.set(k, { args: a, last: Date.now() }); writeLive(a, false); return; }
+  if (!e) { live.set(k, { args: a, last: Date.now() }); track(writeLive(a, false)); return; }
   e.args = a;
   if (e.timer) return;
   const wait = Math.max(0, LIVE_EVERY - (Date.now() - e.last));
@@ -172,7 +194,7 @@ export async function finishLiveScore(a: LiveArgs): Promise<boolean> {
   const e = live.get(k);
   if (e?.timer) clearTimeout(e.timer);
   live.delete(k);
-  return writeLive(a, true);
+  return track(writeLive(a, true));
 }
 
 // Avatars rarely change, so remember them (in memory and on the device) instead of
@@ -202,6 +224,7 @@ type Row = { id: string; username: string; score: number; found: number; late?: 
 /** Top scores for one game on one day. Uses the dateKey+game+score index to read only the top
  *  rows; without it, reads that game's scores for the day and sorts them here. */
 async function topRows(game: DailyGameSlug, dateKey: string, max: number): Promise<Row[]> {
+  await flushPendingScores();
   const base = [where("dateKey", "==", dateKey), where("game", "==", game)];
   const toRow = (d: { id: string; data: () => unknown }): Row => {
     const x = d.data() as DailyScoreDoc;
